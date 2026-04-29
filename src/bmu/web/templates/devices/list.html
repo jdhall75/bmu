@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Devices - BMU{% endblock %}
 {% block content %}
-<div class="toolbar"><a class="btn" href="/devices/new">New device</a></div>
+<div class="toolbar">
+  <a class="btn" href="/devices/new">New device</a>
+  <a class="btn btn-secondary" href="/devices/import">Bulk import</a>
+</div>
 <table>
   <thead><tr><th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th></tr></thead>
   <tbody>
