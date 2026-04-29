@@ -1,0 +1,29 @@
+:root { --fg:#222; --bg:#fafafa; --acc:#1f6feb; --muted:#666; --bad:#c0392b; --ok:#27ae60; }
+* { box-sizing: border-box; }
+body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--bg); }
+header { padding:12px 24px; background:#fff; border-bottom:1px solid #ddd; display:flex; gap:24px; align-items:center; }
+header h1 { font-size:18px; margin:0; }
+header h1 a { color:var(--fg); text-decoration:none; }
+header nav a { margin-right:16px; color:var(--acc); text-decoration:none; }
+main { padding:24px; max-width:1100px; margin:0 auto; }
+table { width:100%; border-collapse:collapse; background:#fff; }
+th, td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+th { background:#f3f3f3; font-weight:600; }
+form { display:grid; grid-template-columns:160px 1fr; gap:8px 16px; max-width:720px; background:#fff; padding:16px; border:1px solid #eee; }
+form label { align-self:center; }
+form input[type=text], form input[type=number], form select, form textarea { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
+form textarea { min-height:120px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+form .actions { grid-column:1/-1; display:flex; gap:8px; }
+button, .btn { padding:6px 12px; background:var(--acc); color:#fff; border:0; border-radius:4px; cursor:pointer; text-decoration:none; display:inline-block; }
+.btn-secondary { background:#e5e5e5; color:var(--fg); }
+.cards { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+.card { background:#fff; border:1px solid #eee; padding:14px; border-radius:6px; }
+.card .num { font-size:28px; font-weight:600; }
+.card .lbl { color:var(--muted); font-size:12px; text-transform:uppercase; }
+.status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; text-transform:uppercase; }
+.status-success { background:#dff5e3; color:var(--ok); }
+.status-failed, .status-timeout, .status-cancelled { background:#fde2dd; color:var(--bad); }
+.status-running { background:#fff5cc; color:#9a7b00; }
+.status-pending { background:#e8e8e8; color:var(--muted); }
+pre { background:#0e1116; color:#d6dde7; padding:12px; border-radius:6px; overflow:auto; font-size:12px; }
+.toolbar { margin-bottom:12px; }

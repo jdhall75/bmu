@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Runs - BMU{% endblock %}
+{% block content %}
+<table>
+  <thead><tr><th>When</th><th>Device</th><th>Kind</th><th>Status</th><th>Bytes</th><th>Commit</th></tr></thead>
+  <tbody>
+  {% for r in runs %}
+    <tr>
+      <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td><a href="/runs/{{ r.id }}">{{ r.device.name if r.device else '-' }}</a></td>
+      <td>{{ r.kind }}</td>
+      <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
+      <td>{{ r.bytes_captured or '' }}</td>
+      <td>{{ r.commit_sha[:8] if r.commit_sha else '' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6">No runs yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

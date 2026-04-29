@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}New profile - BMU{% endblock %}
+{% block content %}
+<h2>New profile</h2>
+<form method="post" action="/profiles">
+  <label>Name</label><input type="text" name="name" required>
+  <label>Description</label><input type="text" name="description">
+  <label>Kind</label>
+  <select name="kind" required>
+    {% for k in kinds %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+  </select>
+
+  <label>Platform (CLI)</label>
+  <select name="platform">
+    <option value="">(none)</option>
+    {% for p in platforms %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+  </select>
+  <label>Transport</label>
+  <select name="transport">
+    <option value="">(default)</option>
+    {% for t in transports %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+  </select>
+  <label>Port</label><input type="number" name="port">
+  <label>Prompt pattern (generic only)</label><input type="text" name="prompt_pattern" placeholder="e.g. ^.*[#>]\s*$">
+  <label>Pre-commands (one per line)</label><textarea name="pre_commands" placeholder="enable&#10;terminal length 0"></textarea>
+  <label>Disable paging command</label><input type="text" name="disable_paging_command">
+  <label>Commands (one per line)</label><textarea name="commands" placeholder="show running-config"></textarea>
+
+  <label>Manufacturer (NETCONF)</label><input type="text" name="manufacturer">
+  <label>RPC (NETCONF)</label><textarea name="rpc"></textarea>
+
+  <label>Parser template</label>
+  <select name="parser_template_id">
+    <option value="">(none)</option>
+    {% for t in parsers %}<option value="{{ t.id }}">{{ t.name }} ({{ t.type.value }})</option>{% endfor %}
+  </select>
+
+  <div class="actions">
+    <button type="submit">Create</button>
+    <a class="btn btn-secondary" href="/profiles">Cancel</a>
+  </div>
+</form>
+{% endblock %}

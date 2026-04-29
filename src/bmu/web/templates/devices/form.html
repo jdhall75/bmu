@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}New device - BMU{% endblock %}
+{% block content %}
+<h2>New device</h2>
+<form method="post" action="/devices">
+  <label>Name</label><input type="text" name="name" required>
+  <label>Hostname</label><input type="text" name="hostname" required>
+  <label>Port</label><input type="number" name="port">
+  <label>Description</label><input type="text" name="description">
+  <label>Group</label>
+  <select name="group_id" required>
+    {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+  </select>
+  <label>Profile</label>
+  <select name="profile_id" required>
+    {% for p in profiles %}<option value="{{ p.id }}">{{ p.name }} ({{ p.kind.value }})</option>{% endfor %}
+  </select>
+  <label>Credential override</label>
+  <select name="credential_id">
+    <option value="">(use group default)</option>
+    {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+  </select>
+  <label>Enabled</label><input type="checkbox" name="enabled" value="1" checked>
+  <div class="actions">
+    <button type="submit">Create</button>
+    <a class="btn btn-secondary" href="/devices">Cancel</a>
+  </div>
+</form>
+{% endblock %}

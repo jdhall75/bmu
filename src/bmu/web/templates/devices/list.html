@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Devices - BMU{% endblock %}
+{% block content %}
+<div class="toolbar"><a class="btn" href="/devices/new">New device</a></div>
+<table>
+  <thead><tr><th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th></tr></thead>
+  <tbody>
+  {% for d in devices %}
+    <tr>
+      <td>{{ d.name }}</td>
+      <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
+      <td>{{ d.group.name if d.group else '-' }}</td>
+      <td>{{ d.profile.name if d.profile else '-' }}</td>
+      <td>{{ 'yes' if d.enabled else 'no' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5">No devices.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
