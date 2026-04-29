@@ -35,7 +35,13 @@ class Run(Base, TimestampMixin):
 
     kind: Mapped[str] = mapped_column(String(16), nullable=False)  # JobKind value
     status: Mapped[RunStatus] = mapped_column(
-        SAEnum(RunStatus, name="run_status"), default=RunStatus.PENDING, nullable=False
+        SAEnum(
+            RunStatus,
+            name="run_status",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        default=RunStatus.PENDING,
+        nullable=False,
     )
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

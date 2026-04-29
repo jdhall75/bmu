@@ -21,7 +21,12 @@ class Credential(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     provider: Mapped[CredentialProvider] = mapped_column(
-        SAEnum(CredentialProvider, name="credential_provider"), nullable=False
+        SAEnum(
+            CredentialProvider,
+            name="credential_provider",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
     )
     # For provider=local: opaque encrypted blob.
     # For provider=vault/bitwarden: pointer (path / id) is stored in `ref`.

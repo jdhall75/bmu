@@ -20,6 +20,11 @@ class ParserTemplate(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     type: Mapped[ParserType] = mapped_column(
-        SAEnum(ParserType, name="parser_type"), nullable=False
+        SAEnum(
+            ParserType,
+            name="parser_type",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
     )
     body: Mapped[str] = mapped_column(Text, nullable=False)

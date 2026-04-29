@@ -26,7 +26,14 @@ class Schedule(Base, TimestampMixin):
     )
     group = relationship("DeviceGroup", back_populates="schedules")
 
-    kind: Mapped[JobKind] = mapped_column(SAEnum(JobKind, name="job_kind"), nullable=False)
+    kind: Mapped[JobKind] = mapped_column(
+        SAEnum(
+            JobKind,
+            name="job_kind",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
+    )
     cron: Mapped[str] = mapped_column(String(64), nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), default="UTC", nullable=False)
 

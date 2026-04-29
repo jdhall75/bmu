@@ -36,14 +36,24 @@ class Profile(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     kind: Mapped[ProfileKind] = mapped_column(
-        SAEnum(ProfileKind, name="profile_kind"), nullable=False
+        SAEnum(
+            ProfileKind,
+            name="profile_kind",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
     )
 
     # ---- CLI fields ------------------------------------------------------
     # scrapli platform name; "generic" means use GenericDriver with overrides.
     platform: Mapped[str | None] = mapped_column(String(64), nullable=True)
     transport: Mapped[TransportProtocol | None] = mapped_column(
-        SAEnum(TransportProtocol, name="transport_protocol"), nullable=True
+        SAEnum(
+            TransportProtocol,
+            name="transport_protocol",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=True,
     )
     port: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Used when platform == "generic":
