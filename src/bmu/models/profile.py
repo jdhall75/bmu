@@ -80,3 +80,10 @@ class Profile(Base, TimestampMixin):
         ForeignKey("parser_templates.id", ondelete="SET NULL"), nullable=True
     )
     parser_template = relationship("ParserTemplate")
+
+    # ---- CVE scanning ----------------------------------------------------
+    # CPE vendor and product hints used to query the CVE API after the
+    # parser template extracts a version string from the device output.
+    # e.g. cve_vendor="cisco", cve_product="ios_xe"
+    cve_vendor: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    cve_product: Mapped[str | None] = mapped_column(String(64), nullable=True)

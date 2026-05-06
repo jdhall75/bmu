@@ -96,6 +96,8 @@ def _apply_profile_data(p: Profile, data: dict) -> None:
     p.manufacturer = data.get("manufacturer") or None
     p.rpc = data.get("rpc") or None
     p.parser_template_id = int(data["parser_template_id"]) if data.get("parser_template_id") else None
+    p.cve_vendor = data.get("cve_vendor") or None
+    p.cve_product = data.get("cve_product") or None
 
 
 @get("/new", dependencies={"db": provide_db})

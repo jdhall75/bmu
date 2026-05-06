@@ -50,6 +50,11 @@
     {% endfor %}
   </select>
 
+  <label>CVE vendor</label>
+  <input type="text" name="cve_vendor" value="{{ profile.cve_vendor if profile else '' }}" placeholder="e.g. cisco">
+  <label>CVE product</label>
+  <input type="text" name="cve_product" value="{{ profile.cve_product if profile else '' }}" placeholder="e.g. ios_xe">
+
   <div class="actions">
     <button type="submit">{% if profile %}Save{% else %}Create{% endif %}</button>
     <a class="btn btn-secondary" href="/profiles">Cancel</a>
