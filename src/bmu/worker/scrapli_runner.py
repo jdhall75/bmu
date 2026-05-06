@@ -32,7 +32,7 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial):
         "auth_password": cred.password or "",
         "auth_secondary": cred.enable_password or "",
         "auth_strict_key": False,
-        "transport": "asyncssh" if spec.transport != "telnet" else "telnet",
+        "transport": "system" if spec.transport != "telnet" else "telnet",
         "timeout_socket": settings.worker_connect_timeout,
         "timeout_transport": settings.worker_connect_timeout,
         "timeout_ops": settings.worker_command_timeout,
