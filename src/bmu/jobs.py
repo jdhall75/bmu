@@ -27,7 +27,7 @@ class JobSpec(BaseModel):
     hostname: str
     port: int | None = None
 
-    kind: Literal["backup", "collect"]
+    kind: Literal["backup", "collect", "cve_scan"]
 
     profile_id: int
     profile_kind: Literal["cli", "netconf"]
@@ -45,6 +45,10 @@ class JobSpec(BaseModel):
     parser_type: Literal["textfsm", "ttp", "xslt"] | None = None
     parser_body: str | None = None
 
+    # CVE scan fields (only populated for kind="cve_scan"):
+    cve_vendor: str | None = None
+    cve_product: str | None = None
+
     credential: CredentialRef
 
 
@@ -59,7 +63,7 @@ class JobResult(BaseModel):
     run_id: int
     device_id: int
     device_name: str
-    kind: Literal["backup", "collect"]
+    kind: Literal["backup", "collect", "cve_scan"]
 
     success: bool
     error: str | None = None
@@ -76,3 +80,6 @@ class JobResult(BaseModel):
     # Optional structured rows (from textfsm/ttp/xslt). Stored alongside the run
     # for inspection in the UI.
     parsed: list[dict] | dict | None = None
+
+    # CVE scan results (only populated for kind="cve_scan").
+    cve_entries: list[dict] = Field(default_factory=list)

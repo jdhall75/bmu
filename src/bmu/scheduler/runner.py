@@ -91,6 +91,8 @@ def _spec_for(device: Device, profile: Profile, run: Run, kind: JobKind,
         parser_template_id=parser.id if parser else None,
         parser_type=parser.type.value if parser else None,
         parser_body=parser.body if parser else None,
+        cve_vendor=profile.cve_vendor,
+        cve_product=profile.cve_product,
         credential=CredentialRef(
             provider=cred.provider.value,
             credential_id=cred.id,

@@ -12,6 +12,7 @@ from bmu.db.base import Base, TimestampMixin
 class JobKind(str, enum.Enum):
     BACKUP = "backup"
     COLLECT = "collect"
+    CVE_SCAN = "cve_scan"
 
 
 class Schedule(Base, TimestampMixin):

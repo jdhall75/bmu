@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.6.0] - 2026-05-06
+
 ### Added
 - `cve_vendor` and `cve_product` fields on `Profile` for future CVE scanning
   support via the NVD API. Values act as CPE hints (e.g. `cisco` / `ios_xe`).
@@ -16,6 +20,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CVE vendor and product inputs on the profile create/edit form.
 - `ROADMAP.md` describing the planned CVE detection feature, including fuzzy
   version matching with operator-visible confidence scores.
+- `CVE_SCAN = "cve_scan"` added to the `JobKind` enum.
+- Alembic migration `0003_cve_scan_job_kind` adds `'cve_scan'` to the
+  `job_kind` Postgres enum via `ALTER TYPE ... ADD VALUE`.
+- `cve_vendor` and `cve_product` fields on `JobSpec`; `cve_entries` field on
+  `JobResult` for carrying CVE query results through the pipeline.
+- `_run_cve_scan()` in the worker: runs CLI commands, parses output (identical
+  to `collect`), builds a CPE string from the parsed version + profile vendor/
+  product, and delegates to `bmu.cve.query_cpe` (stubbed until Phase 3).
+- Scheduler `_spec_for` now populates `cve_vendor` and `cve_product` on the
+  emitted `JobSpec`.
+- `cve_scan` appears in the Schedule kind dropdown automatically (the form
+  iterates `[k.value for k in JobKind]`).
 
 ---
 

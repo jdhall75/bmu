@@ -167,8 +167,89 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     )
 
 
+def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
+    """Run commands, parse version output, then query the CVE API.
+
+    Command execution and parsing is identical to a collect run. The CVE
+    lookup is delegated to bmu.cve (implemented in Phase 3); until that
+    module exists, cve_entries is left empty.
+    """
+    started = _now_iso()
+    driver = _build_cli_driver(spec, cred)
+    cmd_results: list[CommandResult] = []
+    error: str | None = None
+    try:
+        driver.open()
+        try:
+            for pre in spec.pre_commands:
+                driver.send_command(pre)
+            if spec.disable_paging_command:
+                driver.send_command(spec.disable_paging_command)
+            for cmd in spec.commands:
+                t0 = time.perf_counter()
+                resp = driver.send_command(cmd)
+                elapsed_ms = int((time.perf_counter() - t0) * 1000)
+                cmd_results.append(
+                    CommandResult(
+                        command=cmd,
+                        output=resp.result,
+                        elapsed_ms=elapsed_ms,
+                        failed=resp.failed,
+                    )
+                )
+        finally:
+            driver.close()
+    except Exception as exc:
+        error = f"{type(exc).__name__}: {exc}"
+        log.error("CVE scan CLI run failed", device=spec.device_name, error=error)
+
+    parsed = None
+    if spec.parser_type and cmd_results:
+        joined = "\n".join(c.output for c in cmd_results)
+        try:
+            parsed = parse(spec.parser_type, spec.parser_body, joined)
+        except Exception as exc:
+            log.error("parser failed", device=spec.device_name, error=str(exc))
+
+    cve_entries: list[dict] = []
+    if error is None and parsed and spec.cve_vendor and spec.cve_product:
+        rows = parsed if isinstance(parsed, list) else [parsed]
+        for row in rows:
+            version = row.get("version") if isinstance(row, dict) else None
+            if not version:
+                continue
+            cpe = (
+                f"cpe:2.3:o:{spec.cve_vendor}:{spec.cve_product}"
+                f":{version}:*:*:*:*:*:*:*"
+            )
+            try:
+                from bmu.cve import query_cpe  # implemented in Phase 3
+                cve_entries.extend(query_cpe(cpe))
+            except ImportError:
+                log.debug("bmu.cve not yet available; skipping CVE query")
+                break
+            except Exception as exc:
+                log.error("CVE query failed", cpe=cpe, error=str(exc))
+
+    return JobResult(
+        run_id=spec.run_id,
+        device_id=spec.device_id,
+        device_name=spec.device_name,
+        kind=spec.kind,
+        success=error is None and not any(c.failed for c in cmd_results),
+        error=error,
+        started_at=started,
+        finished_at=_now_iso(),
+        command_results=cmd_results,
+        parsed=parsed,
+        cve_entries=cve_entries,
+    )
+
+
 def execute(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     if spec.profile_kind == "cli":
+        if spec.kind == "cve_scan":
+            return _run_cve_scan(spec, cred)
         return _run_cli(spec, cred)
     if spec.profile_kind == "netconf":
         return _run_netconf(spec, cred)
