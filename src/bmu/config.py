@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_json: bool = False
 
+    # CVE scanning (optional). Without a key, NVD allows 1 req/s; with a key, 5/s.
+    nvd_api_key: str | None = None
+
     @property
     def fernet_key(self) -> bytes:
         # Derive a 32-byte urlsafe key from the configured secret_key.

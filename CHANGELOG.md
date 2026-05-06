@@ -10,6 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.0] - 2026-05-06
+
+### Added
+- `bmu.cve` package: `CveClient` ABC, `CveEntry` dataclass, and
+  `NvdCveClient` implementation querying the NVD REST API v2.0.
+- `query_cpe(cpe)` facade in `bmu.cve.__init__` — single entry point called
+  by the worker; selects the NVD backend automatically.
+- `nvd_api_key` setting (optional, env `BMU_NVD_API_KEY`): raises the NVD
+  rate limit from 1 req/s to 5 req/s when provided.
+- CVSS v3.1 / v3.0 / v2 score and severity extracted per-CVE; first English
+  description used as summary; first reference URL included.
+
+---
+
 ## [0.6.0] - 2026-05-06
 
 ### Added
