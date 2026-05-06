@@ -33,3 +33,10 @@ form.table-form { display:block; max-width:100%; background:transparent; padding
 .bulk-edit-panel label { align-self:center; }
 .bulk-edit-panel input[type=number], .bulk-edit-panel select { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
 .bulk-edit-panel .actions { grid-column:1/-1; display:flex; gap:8px; }
+.severity-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; text-transform:uppercase; text-decoration:none; }
+.severity-critical { background:#fde2dd; color:#a11; }
+.severity-high { background:#fef0d4; color:#955a00; }
+.severity-medium { background:#fff8cc; color:#7a6000; }
+.severity-low { background:#dff5e3; color:#1a6b2a; }
+.severity-none { background:#e8e8e8; color:var(--muted); }
+.severity-unscanned { background:#f0f0f0; color:#aaa; }

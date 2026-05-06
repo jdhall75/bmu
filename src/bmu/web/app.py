@@ -8,6 +8,7 @@ from litestar.template.config import TemplateConfig
 from bmu.logging import configure_logging
 from bmu.web.routes import (
     credentials,
+    cve,
     dashboard,
     devices,
     groups,
@@ -31,6 +32,7 @@ def create_app() -> Litestar:
             credentials.router,
             schedules.router,
             runs.router,
+            cve.router,
             create_static_files_router(path="/static", directories=[STATIC_DIR]),
         ],
         template_config=TemplateConfig(

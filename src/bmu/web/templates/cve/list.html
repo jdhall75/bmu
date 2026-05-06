@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}CVE Scans - BMU{% endblock %}
+{% block content %}
+<h2>CVE Scans</h2>
+{% if not rows %}
+  <p>No CVE scans recorded yet. Create a schedule with kind <strong>cve_scan</strong> to get started.</p>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>Device</th>
+      <th>Version found</th>
+      <th>CPE</th>
+      <th>CVEs</th>
+      <th>Highest severity</th>
+      <th>Scanned at</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      <td>{{ row.device_name }}</td>
+      <td>{{ row.scan.version_found or '-' }}</td>
+      <td><code>{{ row.scan.cpe or '-' }}</code></td>
+      <td>{{ row.cve_count }}</td>
+      <td>
+        {% if row.highest_severity %}
+          <span class="severity-badge severity-{{ row.highest_severity | lower }}">{{ row.highest_severity }}</span>
+        {% elif row.cve_count == 0 %}
+          <span class="severity-badge severity-none">NONE</span>
+        {% else %}
+          -
+        {% endif %}
+      </td>
+      <td>{{ row.scan.scanned_at.strftime('%Y-%m-%d %H:%M') if row.scan.scanned_at else '-' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

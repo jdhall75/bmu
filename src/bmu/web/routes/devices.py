@@ -7,9 +7,28 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from bmu.models import Credential, Device, DeviceGroup, Profile
+from bmu.models import Credential, CveScan, Device, DeviceGroup, Profile
 from bmu.web.deps import provide_db
 from bmu.web.import_devices import import_csv
+
+_SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+
+
+def _cve_badges(db: Session) -> dict[int, dict]:
+    """Return {device_id: {count, severity}} from the latest scan per device."""
+    badges: dict[int, dict] = {}
+    for scan in db.scalars(select(CveScan).order_by(CveScan.scanned_at.desc())).all():
+        if scan.device_id in badges:
+            continue
+        best_sev = None
+        best_rank = -1
+        for r in scan.results:
+            rank = _SEVERITY_ORDER.get(r.severity or "", 0)
+            if rank > best_rank:
+                best_rank = rank
+                best_sev = r.severity
+        badges[scan.device_id] = {"count": len(scan.results), "severity": best_sev}
+    return badges
 
 CSV_TEMPLATE = (
     "name,hostname,port,description,group,profile,credentials,enabled\n"
@@ -41,7 +60,7 @@ async def list_devices(db: Session) -> Template:
     devices = db.scalars(select(Device).order_by(Device.name)).all()
     return Template(
         template_name="devices/list.html",
-        context={"devices": devices, **_device_form_options(db)},
+        context={"devices": devices, "cve_badges": _cve_badges(db), **_device_form_options(db)},
     )
 
 

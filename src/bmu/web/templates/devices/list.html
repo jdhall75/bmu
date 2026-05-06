@@ -46,7 +46,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th><th>Actions</th>
+        <th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -59,12 +59,21 @@
         <td>{{ d.profile.name if d.profile else '-' }}</td>
         <td>{{ 'yes' if d.enabled else 'no' }}</td>
         <td>
+          {% set badge = cve_badges.get(d.id) %}
+          {% if badge %}
+            {% set sev = badge.severity | lower if badge.severity else 'none' %}
+            <a href="/cve" class="severity-badge severity-{{ sev }}">{{ badge.count }} {{ badge.severity or 'NONE' }}</a>
+          {% else %}
+            <span class="severity-badge severity-unscanned">-</span>
+          {% endif %}
+        </td>
+        <td>
           <a class="btn btn-secondary" href="/devices/{{ d.id }}/edit">edit</a>
           <button formaction="/devices/{{ d.id }}/delete" onclick="return confirm('Delete {{ d.name }}?')">delete</button>
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="7">No devices.</td></tr>
+      <tr><td colspan="8">No devices.</td></tr>
     {% endfor %}
     </tbody>
   </table>

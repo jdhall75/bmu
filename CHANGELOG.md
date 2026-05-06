@@ -10,6 +10,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-05-06
+
+### Added
+- **`/cve` page**: table of all CVE scans — device name, version found, CPE,
+  CVE count, highest severity (colour-coded badge), and scan timestamp. Linked
+  from the nav bar.
+- **CVE badge on device list**: each device row shows a coloured badge with
+  the CVE count and highest severity from its most recent scan (CRITICAL →
+  red, HIGH → orange, MEDIUM → yellow, LOW → green, NONE → grey, unscanned →
+  light grey). Badge links to `/cve`.
+- Severity CSS classes: `.severity-badge`, `.severity-critical/high/medium/low/none/unscanned`.
+- `cve_scan` kind now visible in the Schedule form kind dropdown (inherited
+  from the `JobKind` enum addition in v0.6.0).
+
+---
+
 ## [0.8.0] - 2026-05-06
 
 ### Added
