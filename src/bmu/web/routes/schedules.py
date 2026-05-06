@@ -10,6 +10,13 @@ from bmu.models import DeviceGroup, JobKind, Schedule
 from bmu.web.deps import provide_db
 
 
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
 def _schedule_form_context(db: Session, schedule=None) -> dict:
     return {
         "schedule": schedule,
@@ -50,6 +57,19 @@ async def create_schedule(
     )
     db.add(s)
     db.commit()
+    return Redirect(path="/schedules")
+
+
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_schedules(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    if ids and data.get("action") == "delete":
+        for schedule in db.scalars(select(Schedule).where(Schedule.id.in_(ids))).all():
+            db.delete(schedule)
+        db.commit()
     return Redirect(path="/schedules")
 
 
@@ -95,6 +115,7 @@ router = Router(
         list_schedules,
         new_schedule,
         create_schedule,
+        bulk_schedules,
         edit_schedule,
         update_schedule,
         delete_schedule,

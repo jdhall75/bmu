@@ -11,6 +11,22 @@
 <p>{{ group.description or '' }}</p>
 <p>Default credential: {{ group.default_credential.name if group.default_credential else '-' }}</p>
 
+<h3>Schedules</h3>
+<table>
+  <thead><tr><th>Name</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Next run</th></tr></thead>
+  <tbody>
+  {% for s in group.schedules %}
+    <tr>
+      <td>{{ s.name }}</td><td>{{ s.kind.value }}</td><td>{{ s.cron }}</td>
+      <td>{{ s.timezone }}</td>
+      <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5">No schedules.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
 <h3>Devices</h3>
 <table>
   <thead><tr><th>Name</th><th>Hostname</th><th>Profile</th><th>Enabled</th></tr></thead>
@@ -27,19 +43,4 @@
   </tbody>
 </table>
 
-<h3>Schedules</h3>
-<table>
-  <thead><tr><th>Name</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Next run</th></tr></thead>
-  <tbody>
-  {% for s in group.schedules %}
-    <tr>
-      <td>{{ s.name }}</td><td>{{ s.kind.value }}</td><td>{{ s.cron }}</td>
-      <td>{{ s.timezone }}</td>
-      <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
-    </tr>
-  {% else %}
-    <tr><td colspan="5">No schedules.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
 {% endblock %}

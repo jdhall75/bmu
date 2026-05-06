@@ -64,6 +64,13 @@ async def list_profiles(db: Session) -> Template:
     return Template(template_name="profiles/list.html", context={"profiles": profiles})
 
 
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
 def _profile_form_context(db: Session, profile=None) -> dict:
     return {
         "profile": profile,
@@ -111,6 +118,19 @@ async def create_profile(
     return Redirect(path="/profiles")
 
 
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_profiles(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    if ids and data.get("action") == "delete":
+        for profile in db.scalars(select(Profile).where(Profile.id.in_(ids))).all():
+            db.delete(profile)
+        db.commit()
+    return Redirect(path="/profiles")
+
+
 @get("/{profile_id:int}/edit", dependencies={"db": provide_db})
 async def edit_profile(profile_id: int, db: Session) -> Template:
     profile = db.get(Profile, profile_id)
@@ -147,6 +167,7 @@ router = Router(
         list_profiles,
         new_profile,
         create_profile,
+        bulk_profiles,
         edit_profile,
         update_profile,
         delete_profile,

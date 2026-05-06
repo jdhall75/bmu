@@ -10,6 +10,13 @@ from bmu.models import Credential, DeviceGroup
 from bmu.web.deps import provide_db
 
 
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
 def _group_form_context(db: Session, group=None) -> dict:
     return {
         "group": group,
@@ -46,6 +53,19 @@ async def create_group(
     )
     db.add(g)
     db.commit()
+    return Redirect(path="/groups")
+
+
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_groups(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    if ids and data.get("action") == "delete":
+        for group in db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(ids))).all():
+            db.delete(group)
+        db.commit()
     return Redirect(path="/groups")
 
 
@@ -96,6 +116,7 @@ router = Router(
         list_groups,
         new_group,
         create_group,
+        bulk_groups,
         edit_group,
         update_group,
         delete_group,

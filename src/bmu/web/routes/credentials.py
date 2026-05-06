@@ -11,6 +11,13 @@ from bmu.models import Credential, CredentialProvider
 from bmu.web.deps import provide_db
 
 
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
 def _cred_form_context(cred=None) -> dict:
     return {
         "credential": cred,
@@ -63,6 +70,19 @@ async def create_cred(
     return Redirect(path="/credentials")
 
 
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_creds(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    if ids and data.get("action") == "delete":
+        for cred in db.scalars(select(Credential).where(Credential.id.in_(ids))).all():
+            db.delete(cred)
+        db.commit()
+    return Redirect(path="/credentials")
+
+
 @get("/{cred_id:int}/edit", dependencies={"db": provide_db})
 async def edit_cred(cred_id: int, db: Session) -> Template:
     cred = db.get(Credential, cred_id)
@@ -102,5 +122,5 @@ async def delete_cred(cred_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/credentials",
-    route_handlers=[list_creds, new_cred, create_cred, edit_cred, update_cred, delete_cred],
+    route_handlers=[list_creds, new_cred, create_cred, bulk_creds, edit_cred, update_cred, delete_cred],
 )

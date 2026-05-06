@@ -17,19 +17,32 @@ CSV_TEMPLATE = (
 )
 
 
-@get("/", dependencies={"db": provide_db})
-async def list_devices(db: Session) -> Template:
-    devices = db.scalars(select(Device).order_by(Device.name)).all()
-    return Template(template_name="devices/list.html", context={"devices": devices})
-
-
-def _device_form_context(db: Session, device=None) -> dict:
+def _device_form_options(db: Session) -> dict:
     return {
-        "device": device,
         "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
         "profiles": db.scalars(select(Profile).order_by(Profile.name)).all(),
         "credentials": db.scalars(select(Credential).order_by(Credential.name)).all(),
     }
+
+
+def _device_form_context(db: Session, device=None) -> dict:
+    return {"device": device, **_device_form_options(db)}
+
+
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
+@get("/", dependencies={"db": provide_db})
+async def list_devices(db: Session) -> Template:
+    devices = db.scalars(select(Device).order_by(Device.name)).all()
+    return Template(
+        template_name="devices/list.html",
+        context={"devices": devices, **_device_form_options(db)},
+    )
 
 
 @get("/new", dependencies={"db": provide_db})
@@ -57,6 +70,45 @@ async def create_device(
     )
     db.add(d)
     db.commit()
+    return Redirect(path="/devices")
+
+
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_devices(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    action = data.get("action")
+
+    if not ids:
+        return Redirect(path="/devices")
+
+    if action == "delete":
+        for device in db.scalars(select(Device).where(Device.id.in_(ids))).all():
+            db.delete(device)
+        db.commit()
+
+    elif action == "edit":
+        for device in db.scalars(select(Device).where(Device.id.in_(ids))).all():
+            if data.get("bulk_port"):
+                device.port = int(data["bulk_port"])
+            if data.get("bulk_group_id"):
+                device.group_id = int(data["bulk_group_id"])
+            if data.get("bulk_profile_id"):
+                device.profile_id = int(data["bulk_profile_id"])
+            bulk_cred = data.get("bulk_credential_id", "")
+            if bulk_cred == "NONE":
+                device.credential_id = None
+            elif bulk_cred:
+                device.credential_id = int(bulk_cred)
+            bulk_enabled = data.get("bulk_enabled", "")
+            if bulk_enabled == "1":
+                device.enabled = True
+            elif bulk_enabled == "0":
+                device.enabled = False
+        db.commit()
+
     return Redirect(path="/devices")
 
 
@@ -155,6 +207,7 @@ router = Router(
         list_devices,
         new_device,
         create_device,
+        bulk_devices,
         edit_device,
         update_device,
         delete_device,

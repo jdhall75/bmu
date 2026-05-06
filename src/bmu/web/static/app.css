@@ -26,4 +26,10 @@ button, .btn { padding:6px 12px; background:var(--acc); color:#fff; border:0; bo
 .status-running { background:#fff5cc; color:#9a7b00; }
 .status-pending { background:#e8e8e8; color:var(--muted); }
 pre { background:#0e1116; color:#d6dde7; padding:12px; border-radius:6px; overflow:auto; font-size:12px; }
-.toolbar { margin-bottom:12px; }
+.toolbar { margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.bulk-actions { display:contents; }
+form.table-form { display:block; max-width:100%; background:transparent; padding:0; border:none; }
+.bulk-edit-panel { background:#fff; border:1px solid #eee; padding:16px; margin-bottom:12px; display:grid; grid-template-columns:160px 1fr; gap:8px 16px; max-width:720px; }
+.bulk-edit-panel label { align-self:center; }
+.bulk-edit-panel input[type=number], .bulk-edit-panel select { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
+.bulk-edit-panel .actions { grid-column:1/-1; display:flex; gap:8px; }
