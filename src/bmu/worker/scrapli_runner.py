@@ -212,7 +212,10 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             log.error("parser failed", device=spec.device_name, error=str(exc))
 
     cve_entries: list[dict] = []
+    first_cpe: str | None = None
     if error is None and parsed and spec.cve_vendor and spec.cve_product:
+        from bmu.cve import query_cpe
+
         rows = parsed if isinstance(parsed, list) else [parsed]
         for row in rows:
             version = row.get("version") if isinstance(row, dict) else None
@@ -222,12 +225,10 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 f"cpe:2.3:o:{spec.cve_vendor}:{spec.cve_product}"
                 f":{version}:*:*:*:*:*:*:*"
             )
+            if first_cpe is None:
+                first_cpe = cpe
             try:
-                from bmu.cve import query_cpe  # implemented in Phase 3
                 cve_entries.extend(query_cpe(cpe))
-            except ImportError:
-                log.debug("bmu.cve not yet available; skipping CVE query")
-                break
             except Exception as exc:
                 log.error("CVE query failed", cpe=cpe, error=str(exc))
 
@@ -243,6 +244,7 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         command_results=cmd_results,
         parsed=parsed,
         cve_entries=cve_entries,
+        cpe=first_cpe,
     )
 
 

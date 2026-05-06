@@ -83,3 +83,5 @@ class JobResult(BaseModel):
 
     # CVE scan results (only populated for kind="cve_scan").
     cve_entries: list[dict] = Field(default_factory=list)
+    # CPE string used for the query (first version row; empty if no version found).
+    cpe: str | None = None

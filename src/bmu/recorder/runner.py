@@ -12,7 +12,7 @@ from datetime import datetime
 from bmu.db import session_scope
 from bmu.jobs import JobResult
 from bmu.logging import configure_logging, get_logger
-from bmu.models import Device, Run, RunStatus
+from bmu.models import CveResult, CveScan, Device, Run, RunStatus
 from bmu.queue import ack_result, read_results
 from bmu.recorder.git_store import GitStore
 
@@ -38,6 +38,45 @@ def _parse_iso(value: str | None) -> datetime | None:
         return datetime.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _record_cve_scan(db, result: JobResult, run: Run) -> None:
+    """Write CveScan + CveResult rows for a completed cve_scan job."""
+    rows = result.parsed if isinstance(result.parsed, list) else ([result.parsed] if result.parsed else [])
+    version_found = None
+    raw_version = None
+    for row in rows:
+        if isinstance(row, dict) and row.get("version"):
+            raw_version = str(row["version"])
+            version_found = raw_version
+            break
+
+    scan = CveScan(
+        run_id=result.run_id,
+        device_id=result.device_id,
+        cpe=result.cpe or "",
+        version_found=version_found,
+        raw_version=raw_version,
+        scanned_at=_parse_iso(result.finished_at) or datetime.now(),
+    )
+
+    db.add(scan)
+    db.flush()
+
+    for entry in result.cve_entries:
+        db.add(
+            CveResult(
+                scan_id=scan.id,
+                cve_id=entry.get("cve_id", ""),
+                cvss_v3_score=entry.get("cvss_v3_score"),
+                severity=entry.get("severity"),
+                summary=entry.get("summary"),
+                published_at=_parse_iso(entry.get("published_at")),
+                url=entry.get("url"),
+            )
+        )
+
+    run.bytes_captured = len(result.cve_entries)
 
 
 def _persist(result: JobResult, store: GitStore) -> None:
@@ -69,11 +108,11 @@ def _persist(result: JobResult, store: GitStore) -> None:
             run.payload_sha256 = payload_sha
             run.bytes_captured = len(result.config_text.encode("utf-8"))
         elif result.kind == "collect":
-            # For now we just mark success; structured output ends up in logs.
-            # Future: persist parsed rows into a dedicated table.
             run.bytes_captured = sum(
                 len(c.output.encode("utf-8")) for c in result.command_results
             )
+        elif result.kind == "cve_scan":
+            _record_cve_scan(db, result, run)
 
 
 def run_recorder() -> None:

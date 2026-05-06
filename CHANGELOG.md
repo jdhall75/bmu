@@ -10,6 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.0] - 2026-05-06
+
+### Added
+- `CveScan` and `CveResult` SQLAlchemy models (`bmu.models.cve_scan`).
+- Alembic migration `0004_cve_tables` creates `cve_scans` and `cve_results`
+  tables with appropriate foreign keys and cascade rules.
+- Recorder `_record_cve_scan()`: writes one `CveScan` row (with CPE string,
+  version found, and scan timestamp) plus one `CveResult` row per CVE entry
+  returned by the NVD API.
+- `cpe` field added to `JobResult` so the recorder can store the exact CPE
+  string used for the NVD query without reconstructing it.
+
+---
+
 ## [0.7.0] - 2026-05-06
 
 ### Added
