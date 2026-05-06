@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from bmu.models import ParserTemplate, Profile, ProfileKind, TransportProtocol
 from bmu.web.deps import provide_db
 
-# Common scrapli platforms; "generic" is the GenericDriver fallback.
+# Core scrapli platforms (built into the scrapli package).
+# "generic" triggers GenericDriver with manual prompt/paging overrides.
 SCRAPLI_PLATFORMS = [
     "generic",
     "cisco_iosxe",
@@ -18,7 +19,42 @@ SCRAPLI_PLATFORMS = [
     "cisco_asa",
     "arista_eos",
     "juniper_junos",
+]
+
+# Community platforms from scrapli-community; discovered automatically by scrapli.
+# These use structured NetworkDriver definitions (privilege levels, on_open hooks)
+# so pre_commands and disable_paging_command can usually be left empty.
+COMMUNITY_PLATFORMS = [
+    "aethra_atosnt",
+    "alcatel_aos",
+    "aruba_aoscx",
+    "cisco_aireos",
+    "cisco_cbs",
+    "cisco_ftd",
+    "cumulus_linux",
+    "cumulus_vtysh",
+    "datacom_dmos",
+    "datacom_dmswitch",
+    "dell_emc",
+    "dlink_os",
+    "edgecore_ecs",
+    "eltex_esr",
+    "fortinet_fortios",
+    "fortinet_wlc",
+    "hp_comware",
+    "huawei_smartax",
     "huawei_vrp",
+    "mikrotik_routeros",
+    "nokia_srlinux",
+    "nokia_sros",
+    "paloalto_panos",
+    "raisecom_ros",
+    "ruckus_fastiron",
+    "ruckus_unleashed",
+    "siemens_roxii",
+    "versa_flexvnf",
+    "vyos_vyos",
+    "zyxel_dslam",
 ]
 
 
@@ -32,6 +68,7 @@ def _profile_form_context(db: Session, profile=None) -> dict:
     return {
         "profile": profile,
         "platforms": SCRAPLI_PLATFORMS,
+        "community_platforms": COMMUNITY_PLATFORMS,
         "transports": [t.value for t in TransportProtocol],
         "kinds": [k.value for k in ProfileKind],
         "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
