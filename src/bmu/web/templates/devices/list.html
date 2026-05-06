@@ -6,7 +6,7 @@
   <a class="btn btn-secondary" href="/devices/import">Bulk import</a>
 </div>
 <table>
-  <thead><tr><th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th></tr></thead>
+  <thead><tr><th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th><th>Actions</th></tr></thead>
   <tbody>
   {% for d in devices %}
     <tr>
@@ -15,9 +15,15 @@
       <td>{{ d.group.name if d.group else '-' }}</td>
       <td>{{ d.profile.name if d.profile else '-' }}</td>
       <td>{{ 'yes' if d.enabled else 'no' }}</td>
+      <td>
+        <a class="btn btn-secondary" href="/devices/{{ d.id }}/edit">edit</a>
+        <form action="/devices/{{ d.id }}/delete" method="POST" style="display:inline">
+          <button type="submit" onclick="return confirm('Delete {{ d.name }}?')">delete</button>
+        </form>
+      </td>
     </tr>
   {% else %}
-    <tr><td colspan="5">No devices.</td></tr>
+    <tr><td colspan="6">No devices.</td></tr>
   {% endfor %}
   </tbody>
 </table>

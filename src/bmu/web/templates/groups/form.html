@@ -1,18 +1,20 @@
 {% extends "base.html" %}
-{% block title %}New group - BMU{% endblock %}
+{% block title %}{% if group %}Edit group - BMU{% else %}New group - BMU{% endif %}{% endblock %}
 {% block content %}
-<h2>New group</h2>
-<form method="post" action="/groups">
-  <label>Name</label><input type="text" name="name" required>
-  <label>Description</label><input type="text" name="description">
+<h2>{% if group %}Edit group{% else %}New group{% endif %}</h2>
+<form method="post" action="{% if group %}/groups/{{ group.id }}{% else %}/groups{% endif %}">
+  <label>Name</label><input type="text" name="name" value="{{ group.name if group else '' }}" required>
+  <label>Description</label><input type="text" name="description" value="{{ group.description if group else '' }}">
   <label>Default credential</label>
   <select name="default_credential_id">
-    <option value="">(none)</option>
-    {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+    <option value=""{% if not group or not group.default_credential_id %} selected{% endif %}>(none)</option>
+    {% for c in credentials %}
+      <option value="{{ c.id }}"{% if group and group.default_credential_id == c.id %} selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
   </select>
-  <label>Max parallel</label><input type="number" name="max_parallel" value="8" min="1">
+  <label>Max parallel</label><input type="number" name="max_parallel" value="{{ group.max_parallel if group else 8 }}" min="1">
   <div class="actions">
-    <button type="submit">Create</button>
+    <button type="submit">{% if group %}Save{% else %}Create{% endif %}</button>
     <a class="btn btn-secondary" href="/groups">Cancel</a>
   </div>
 </form>

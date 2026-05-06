@@ -2,6 +2,7 @@ from litestar import Router, get, post
 from litestar.params import Body
 from litestar.enums import RequestEncodingType
 from litestar.response import Redirect, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -27,17 +28,37 @@ async def list_profiles(db: Session) -> Template:
     return Template(template_name="profiles/list.html", context={"profiles": profiles})
 
 
+def _profile_form_context(db: Session, profile=None) -> dict:
+    return {
+        "profile": profile,
+        "platforms": SCRAPLI_PLATFORMS,
+        "transports": [t.value for t in TransportProtocol],
+        "kinds": [k.value for k in ProfileKind],
+        "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
+    }
+
+
+def _apply_profile_data(p: Profile, data: dict) -> None:
+    p.name = data["name"]
+    p.description = data.get("description") or None
+    p.kind = ProfileKind(data["kind"])
+    p.platform = data.get("platform") or None
+    p.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
+    p.port = int(data["port"]) if data.get("port") else None
+    p.prompt_pattern = data.get("prompt_pattern") or None
+    p.pre_commands = data.get("pre_commands") or None
+    p.disable_paging_command = data.get("disable_paging_command") or None
+    p.commands = data.get("commands") or None
+    p.manufacturer = data.get("manufacturer") or None
+    p.rpc = data.get("rpc") or None
+    p.parser_template_id = int(data["parser_template_id"]) if data.get("parser_template_id") else None
+
+
 @get("/new", dependencies={"db": provide_db})
 async def new_profile(db: Session) -> Template:
     return Template(
         template_name="profiles/form.html",
-        context={
-            "profile": None,
-            "platforms": SCRAPLI_PLATFORMS,
-            "transports": [t.value for t in TransportProtocol],
-            "kinds": [k.value for k in ProfileKind],
-            "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
-        },
+        context=_profile_form_context(db),
     )
 
 
@@ -46,26 +67,51 @@ async def create_profile(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    p = Profile(
-        name=data["name"],
-        description=data.get("description") or None,
-        kind=ProfileKind(data["kind"]),
-        platform=data.get("platform") or None,
-        transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
-        port=int(data["port"]) if data.get("port") else None,
-        prompt_pattern=data.get("prompt_pattern") or None,
-        pre_commands=data.get("pre_commands") or None,
-        disable_paging_command=data.get("disable_paging_command") or None,
-        commands=data.get("commands") or None,
-        manufacturer=data.get("manufacturer") or None,
-        rpc=data.get("rpc") or None,
-        parser_template_id=int(data["parser_template_id"])
-        if data.get("parser_template_id")
-        else None,
-    )
+    p = Profile()
+    _apply_profile_data(p, data)
     db.add(p)
     db.commit()
     return Redirect(path="/profiles")
 
 
-router = Router(path="/profiles", route_handlers=[list_profiles, new_profile, create_profile])
+@get("/{profile_id:int}/edit", dependencies={"db": provide_db})
+async def edit_profile(profile_id: int, db: Session) -> Template:
+    profile = db.get(Profile, profile_id)
+    return Template(
+        template_name="profiles/form.html",
+        context=_profile_form_context(db, profile),
+    )
+
+
+@post("/{profile_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def update_profile(
+    profile_id: int,
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    profile = db.get(Profile, profile_id)
+    _apply_profile_data(profile, data)
+    db.commit()
+    return Redirect(path="/profiles")
+
+
+@post("/{profile_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def delete_profile(profile_id: int, db: Session) -> Redirect:
+    profile = db.get(Profile, profile_id)
+    if profile:
+        db.delete(profile)
+        db.commit()
+    return Redirect(path="/profiles")
+
+
+router = Router(
+    path="/profiles",
+    route_handlers=[
+        list_profiles,
+        new_profile,
+        create_profile,
+        edit_profile,
+        update_profile,
+        delete_profile,
+    ],
+)

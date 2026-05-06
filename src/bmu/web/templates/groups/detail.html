@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ group.name }} - BMU{% endblock %}
 {% block content %}
+<div class="toolbar">
+  <a class="btn btn-secondary" href="/groups/{{ group.id }}/edit">Edit group</a>
+  <form action="/groups/{{ group.id }}/delete" method="POST" style="display:inline">
+    <button type="submit" onclick="return confirm('Delete {{ group.name }}?')">Delete group</button>
+  </form>
+</div>
 <h2>{{ group.name }}</h2>
 <p>{{ group.description or '' }}</p>
 <p>Default credential: {{ group.default_credential.name if group.default_credential else '-' }}</p>

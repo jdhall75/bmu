@@ -3,6 +3,7 @@ from litestar.datastructures import UploadFile
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Response, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -22,16 +23,20 @@ async def list_devices(db: Session) -> Template:
     return Template(template_name="devices/list.html", context={"devices": devices})
 
 
+def _device_form_context(db: Session, device=None) -> dict:
+    return {
+        "device": device,
+        "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
+        "profiles": db.scalars(select(Profile).order_by(Profile.name)).all(),
+        "credentials": db.scalars(select(Credential).order_by(Credential.name)).all(),
+    }
+
+
 @get("/new", dependencies={"db": provide_db})
 async def new_device(db: Session) -> Template:
     return Template(
         template_name="devices/form.html",
-        context={
-            "device": None,
-            "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
-            "profiles": db.scalars(select(Profile).order_by(Profile.name)).all(),
-            "credentials": db.scalars(select(Credential).order_by(Credential.name)).all(),
-        },
+        context=_device_form_context(db),
     )
 
 
@@ -52,6 +57,43 @@ async def create_device(
     )
     db.add(d)
     db.commit()
+    return Redirect(path="/devices")
+
+
+@get("/{device_id:int}/edit", dependencies={"db": provide_db})
+async def edit_device(device_id: int, db: Session) -> Template:
+    device = db.get(Device, device_id)
+    return Template(
+        template_name="devices/form.html",
+        context=_device_form_context(db, device),
+    )
+
+
+@post("/{device_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def update_device(
+    device_id: int,
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    device = db.get(Device, device_id)
+    device.name = data["name"]
+    device.hostname = data["hostname"]
+    device.port = int(data["port"]) if data.get("port") else None
+    device.description = data.get("description") or None
+    device.group_id = int(data["group_id"])
+    device.profile_id = int(data["profile_id"])
+    device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
+    device.enabled = bool(data.get("enabled"))
+    db.commit()
+    return Redirect(path="/devices")
+
+
+@post("/{device_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def delete_device(device_id: int, db: Session) -> Redirect:
+    device = db.get(Device, device_id)
+    if device:
+        db.delete(device)
+        db.commit()
     return Redirect(path="/devices")
 
 
@@ -113,6 +155,9 @@ router = Router(
         list_devices,
         new_device,
         create_device,
+        edit_device,
+        update_device,
+        delete_device,
         import_form,
         import_template,
         import_submit,

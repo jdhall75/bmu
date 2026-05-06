@@ -3,7 +3,7 @@
 {% block content %}
 <div class="toolbar"><a class="btn" href="/schedules/new">New schedule</a></div>
 <table>
-  <thead><tr><th>Name</th><th>Group</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th></tr></thead>
+  <thead><tr><th>Name</th><th>Group</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th><th>Actions</th></tr></thead>
   <tbody>
   {% for s in schedules %}
     <tr>
@@ -14,9 +14,15 @@
       <td>{{ s.timezone }}</td>
       <td>{{ 'yes' if s.enabled else 'no' }}</td>
       <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
+      <td>
+        <a class="btn btn-secondary" href="/schedules/{{ s.id }}/edit">edit</a>
+        <form action="/schedules/{{ s.id }}/delete" method="POST" style="display:inline">
+          <button type="submit" onclick="return confirm('Delete {{ s.name }}?')">delete</button>
+        </form>
+      </td>
     </tr>
   {% else %}
-    <tr><td colspan="7">No schedules.</td></tr>
+    <tr><td colspan="8">No schedules.</td></tr>
   {% endfor %}
   </tbody>
 </table>

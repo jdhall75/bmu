@@ -2,12 +2,32 @@ from litestar import Router, get, post
 from litestar.params import Body
 from litestar.enums import RequestEncodingType
 from litestar.response import Redirect, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from bmu.credentials.local import LocalCredentialResolver
 from bmu.models import Credential, CredentialProvider
 from bmu.web.deps import provide_db
+
+
+def _cred_form_context(cred=None) -> dict:
+    return {
+        "credential": cred,
+        "providers": [p.value for p in CredentialProvider],
+    }
+
+
+def _build_payload(provider: CredentialProvider, data: dict):
+    if provider is not CredentialProvider.LOCAL:
+        return None
+    local = LocalCredentialResolver()
+    secret = {
+        "username": data.get("username"),
+        "password": data.get("password") or None,
+        "enable_password": data.get("enable_password") or None,
+    }
+    return local.encrypt({k: v for k, v in secret.items() if v is not None})
 
 
 @get("/", dependencies={"db": provide_db})
@@ -20,7 +40,7 @@ async def list_creds(db: Session) -> Template:
 async def new_cred() -> Template:
     return Template(
         template_name="credentials/form.html",
-        context={"providers": [p.value for p in CredentialProvider]},
+        context=_cred_form_context(),
     )
 
 
@@ -30,21 +50,11 @@ async def create_cred(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     provider = CredentialProvider(data["provider"])
-    payload = None
-    if provider is CredentialProvider.LOCAL:
-        local = LocalCredentialResolver()
-        secret = {
-            "username": data.get("username"),
-            "password": data.get("password") or None,
-            "enable_password": data.get("enable_password") or None,
-        }
-        payload = local.encrypt({k: v for k, v in secret.items() if v is not None})
-
     cred = Credential(
         name=data["name"],
         description=data.get("description") or None,
         provider=provider,
-        encrypted_payload=payload,
+        encrypted_payload=_build_payload(provider, data),
         ref=data.get("ref") or None,
         username=data.get("username") or None,
     )
@@ -53,4 +63,44 @@ async def create_cred(
     return Redirect(path="/credentials")
 
 
-router = Router(path="/credentials", route_handlers=[list_creds, new_cred, create_cred])
+@get("/{cred_id:int}/edit", dependencies={"db": provide_db})
+async def edit_cred(cred_id: int, db: Session) -> Template:
+    cred = db.get(Credential, cred_id)
+    return Template(
+        template_name="credentials/form.html",
+        context=_cred_form_context(cred),
+    )
+
+
+@post("/{cred_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def update_cred(
+    cred_id: int,
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    cred = db.get(Credential, cred_id)
+    provider = CredentialProvider(data["provider"])
+    cred.name = data["name"]
+    cred.description = data.get("description") or None
+    cred.provider = provider
+    cred.ref = data.get("ref") or None
+    cred.username = data.get("username") or None
+    if data.get("password") or data.get("enable_password"):
+        cred.encrypted_payload = _build_payload(provider, data)
+    db.commit()
+    return Redirect(path="/credentials")
+
+
+@post("/{cred_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def delete_cred(cred_id: int, db: Session) -> Redirect:
+    cred = db.get(Credential, cred_id)
+    if cred:
+        db.delete(cred)
+        db.commit()
+    return Redirect(path="/credentials")
+
+
+router = Router(
+    path="/credentials",
+    route_handlers=[list_creds, new_cred, create_cred, edit_cred, update_cred, delete_cred],
+)
