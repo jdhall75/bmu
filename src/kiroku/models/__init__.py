@@ -1,6 +1,7 @@
 from kiroku.models.credential import Credential, CredentialProvider
 from kiroku.models.cve_scan import CveResult, CveScan
 from kiroku.models.device import Device
+from kiroku.models.device_config import DeviceConfig
 from kiroku.models.group import DeviceGroup
 from kiroku.models.parser_template import ParserTemplate, ParserType
 from kiroku.models.profile import Profile, ProfileKind, TransportProtocol
@@ -14,6 +15,7 @@ __all__ = [
     "CveResult",
     "CveScan",
     "Device",
+    "DeviceConfig",
     "DeviceGroup",
     "JobKind",
     "ParserTemplate",

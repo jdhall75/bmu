@@ -78,6 +78,14 @@
     </tbody>
   </table>
 </form>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="?page={{ page - 1 }}">&larr; Prev</a>{% endif %}
+  <span>Page {{ page }} of {{ total_pages }} ({{ total }} devices)</span>
+  {% if page < total_pages %}<a href="?page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+</div>
+{% endif %}
 <script>
 (function () {
   var sa = document.getElementById('select-all');

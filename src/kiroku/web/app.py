@@ -15,6 +15,7 @@ from kiroku.web.routes import (
     profiles,
     runs,
     schedules,
+    search,
 )
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -33,6 +34,7 @@ def create_app() -> Litestar:
             schedules.router,
             runs.router,
             cve.router,
+            search.router,
             create_static_files_router(path="/static", directories=[STATIC_DIR]),
         ],
         template_config=TemplateConfig(

@@ -53,10 +53,9 @@ class GitStore:
         return str(Path(_slugify(group)) / f"{_slugify(device)}.cfg")
 
     def stage(self, *, group: str, device: str, content: str) -> tuple[bool, str]:
-        """Write file and stage it (git add). Does NOT commit.
+        """Write file to disk only. Does NOT add to git index.
 
-        Returns (changed, sha256). changed=False means content was identical
-        to what was on disk; no index entry was added.
+        Returns (changed, sha256). changed=False means content was identical to what was on disk.
         """
         sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
         rel = Path(_slugify(group)) / f"{_slugify(device)}.cfg"
@@ -70,15 +69,17 @@ class GitStore:
                 return False, sha256
 
         target.write_text(content, encoding="utf-8")
-        self._repo.index.add([str(rel)])
         return True, sha256
 
-    def commit_batch(self, message: str) -> str | None:
-        """Commit all currently staged changes. Returns commit sha or None if nothing staged."""
+    def commit_batch(self, rel_paths: list[str], message: str) -> str | None:
+        """Stage all given paths and commit in one operation. Returns commit sha or None."""
+        if not rel_paths:
+            return None
+        self._repo.index.add(rel_paths)
         if not self._repo.index.diff("HEAD"):
             return None
         commit = self._repo.index.commit(message)
-        log.info("git batch commit", sha=commit.hexsha[:8])
+        log.info("git batch commit", sha=commit.hexsha[:8], files=len(rel_paths))
         return commit.hexsha
 
     def history(self, rel_path: str, max_count: int = 50) -> list[dict]:
@@ -99,6 +100,8 @@ class GitStore:
         changed, sha256 = self.stage(group=group, device=device, content=content)
         if not changed:
             return None, sha256
+        rel = Path(_slugify(group)) / f"{_slugify(device)}.cfg"
+        self._repo.index.add([str(rel)])
         msg = f"backup: {group}/{device}"
         if author_note:
             msg += f"\n\n{author_note}"

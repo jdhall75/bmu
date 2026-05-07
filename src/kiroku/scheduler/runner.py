@@ -135,6 +135,7 @@ def _fire_due(db: Session, now: datetime) -> int:
         db.add(batch)
         db.flush()  # populate batch.id
 
+        pairs: list[tuple[Device, Run]] = []
         for device in enabled_devices:
             run = Run(
                 schedule_id=sched.id,
@@ -144,7 +145,10 @@ def _fire_due(db: Session, now: datetime) -> int:
                 status=RunStatus.PENDING,
             )
             db.add(run)
-            db.flush()  # populate run.id
+            pairs.append((device, run))
+        db.flush()  # single round-trip populates all run.id values
+
+        for device, run in pairs:
             spec = _spec_for(device, device.profile, run, sched.kind, sched.id)
             if spec is None:
                 run.status = RunStatus.FAILED

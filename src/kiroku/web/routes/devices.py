@@ -4,7 +4,7 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Response, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from kiroku.config import get_settings
@@ -13,6 +13,7 @@ from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+_PAGE_SIZE = 100
 
 
 def _cve_badges(db: Session) -> dict[int, dict]:
@@ -57,11 +58,25 @@ def _parse_ids(data: dict) -> list[int]:
 
 
 @get("/", dependencies={"db": provide_db})
-async def list_devices(db: Session) -> Template:
-    devices = db.scalars(select(Device).order_by(Device.name)).all()
+async def list_devices(db: Session, page: int = 1) -> Template:
+    page = max(1, page)
+    total = db.scalar(select(func.count()).select_from(Device)) or 0
+    total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
+    page = min(page, total_pages)
+    offset = (page - 1) * _PAGE_SIZE
+    devices = db.scalars(
+        select(Device).order_by(Device.name).offset(offset).limit(_PAGE_SIZE)
+    ).all()
     return Template(
         template_name="devices/list.html",
-        context={"devices": devices, "cve_badges": _cve_badges(db), **_device_form_options(db)},
+        context={
+            "devices": devices,
+            "cve_badges": _cve_badges(db),
+            "page": page,
+            "total_pages": total_pages,
+            "total": total,
+            **_device_form_options(db),
+        },
     )
 
 

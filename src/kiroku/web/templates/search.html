@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Search configs - Kiroku{% endblock %}
+{% block content %}
+<h2>Config search</h2>
+
+<form method="GET" action="/search" class="search-form">
+  <div class="search-row">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search configs…" autofocus>
+    <button type="submit">Search</button>
+  </div>
+  <div class="search-options">
+    <label>
+      <input type="radio" name="mode" value="fts" {% if mode != 'exact' %}checked{% endif %}>
+      Full-text (keywords)
+    </label>
+    <label>
+      <input type="radio" name="mode" value="exact" {% if mode == 'exact' %}checked{% endif %}>
+      Exact match (IPs, interface names)
+    </label>
+    <label>Group:
+      <select name="group_id">
+        <option value="">All groups</option>
+        {% for g in groups %}
+          <option value="{{ g.id }}" {% if group_id == g.id|string %}selected{% endif %}>{{ g.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Context lines:
+      <input type="number" name="context_lines" value="{{ context_lines }}" min="0" max="20" style="width:60px">
+    </label>
+  </div>
+</form>
+
+{% if q %}
+  {% if results %}
+    <p class="muted">{{ results|length }} device(s) matched{% if results|length == 50 %} (showing first 50){% endif %}.</p>
+    {% for r in results %}
+    <div class="search-result">
+      <div class="search-result-header">
+        <a href="/devices/{{ r.device_id }}"><strong>{{ r.device_name }}</strong></a>
+        <span class="muted">{{ r.group_name }}</span>
+        {% if r.captured_at %}
+          <span class="muted">— {{ r.captured_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        {% endif %}
+        <a class="btn btn-secondary" href="/devices/{{ r.device_id }}/config" style="margin-left:auto">View config</a>
+      </div>
+      {% if r.blocks %}
+        {% for block in r.blocks %}
+        <pre class="search-snippet">{% for line in block.lines %}<span class="{% if line.hit %}hit{% endif %}">{{ "%4d" % line.num }} {{ line.text }}</span>
+{% endfor %}</pre>
+        {% endfor %}
+      {% elif r.headline %}
+        <div class="search-headline">…{{ r.headline }}…</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <p>No configs matched <strong>{{ q }}</strong>.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

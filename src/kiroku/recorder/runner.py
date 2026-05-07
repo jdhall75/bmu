@@ -14,7 +14,7 @@ import os
 import signal
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from kiroku.db import session_scope
 from kiroku.jobs import JobResult
@@ -132,9 +132,26 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
 
                 run.payload_sha256 = payload_sha
                 run.bytes_captured = len(result.config_text.encode("utf-8"))
+                captured_at = _parse_iso(result.finished_at)
                 if device:
                     device.latest_backup_path = rel_path
-                    device.latest_backup_at = _parse_iso(result.finished_at)
+                    device.latest_backup_at = captured_at
+
+                db.execute(text("""
+                    INSERT INTO device_configs (device_id, batch_id, captured_at, content, content_fts)
+                    VALUES (:device_id, :batch_id, :captured_at, :content,
+                            to_tsvector('simple', :content))
+                    ON CONFLICT (device_id) DO UPDATE SET
+                        batch_id = EXCLUDED.batch_id,
+                        captured_at = EXCLUDED.captured_at,
+                        content = EXCLUDED.content,
+                        content_fts = EXCLUDED.content_fts
+                """), {
+                    "device_id": result.device_id,
+                    "batch_id": run.batch_id,
+                    "captured_at": captured_at,
+                    "content": result.config_text,
+                })
 
             elif result.kind == "collect":
                 run.bytes_captured = sum(
@@ -155,7 +172,7 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                         f"batch_id={batch.id}, devices={batch.total}\n"
                         + "\n".join(changed_paths)
                     )
-                    commit_sha = store.commit_batch(msg)
+                    commit_sha = store.commit_batch(changed_paths, msg)
                     if commit_sha:
                         batch.commit_sha = commit_sha
                         # Stamp all runs in this batch with the shared commit sha.
