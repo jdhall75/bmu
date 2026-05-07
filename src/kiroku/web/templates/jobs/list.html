@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Jobs - Kiroku{% endblock %}
+{% block content %}
+<form class="table-form" method="POST" action="/jobs/bulk">
+  <div class="toolbar">
+    <a class="btn" href="/jobs/new">New job</a>
+    <span class="bulk-actions" id="bulk-actions" style="display:none">
+      <button name="action" value="delete" onclick="return confirm('Delete selected jobs?')">Delete selected</button>
+    </span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all" title="Select all"></th>
+        <th>Name</th><th>Kind</th><th>Groups</th><th>Devices</th><th>Commands / RPC</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for j in jobs %}
+      <tr>
+        <td><input type="checkbox" name="ids" value="{{ j.id }}"></td>
+        <td>{{ j.name }}</td>
+        <td>{{ j.kind.value }}</td>
+        <td>{{ j.device_groups | map(attribute='name') | join(', ') or '-' }}</td>
+        <td>{{ j.devices | map(attribute='name') | join(', ') or '-' }}</td>
+        <td>
+          {% if j.rpc %}RPC{% elif j.commands %}{{ j.commands[:40] }}{% if j.commands|length > 40 %}…{% endif %}{% else %}-{% endif %}
+        </td>
+        <td>
+          <a class="btn btn-secondary" href="/jobs/{{ j.id }}/edit">edit</a>
+          <button formaction="/jobs/{{ j.id }}/delete" onclick="return confirm('Delete {{ j.name }}?')">delete</button>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7">No jobs.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</form>
+<script>
+(function () {
+  var sa = document.getElementById('select-all');
+  var ba = document.getElementById('bulk-actions');
+  function update() { ba.style.display = document.querySelectorAll('input[name="ids"]:checked').length ? '' : 'none'; }
+  sa.addEventListener('change', function () {
+    document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.checked = sa.checked; });
+    update();
+  });
+  document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
+})();
+</script>
+{% endblock %}

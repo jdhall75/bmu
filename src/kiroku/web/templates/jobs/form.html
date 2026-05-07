@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{% if job %}Edit job - Kiroku{% else %}New job - Kiroku{% endif %}{% endblock %}
+{% block content %}
+<h2>{% if job %}Edit job{% else %}New job{% endif %}</h2>
+<form method="post" action="{% if job %}/jobs/{{ job.id }}{% else %}/jobs{% endif %}">
+  <label>Name</label><input type="text" name="name" value="{{ job.name if job else '' }}" required>
+  <label>Description</label><input type="text" name="description" value="{{ job.description if job else '' }}">
+  <label>Kind</label>
+  <select name="kind" required>
+    {% for k in kinds %}
+      <option value="{{ k }}"{% if job and job.kind.value == k %} selected{% endif %}>{{ k }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Commands (one per line)</label>
+  <textarea name="commands" placeholder="show running-config">{{ job.commands if job else '' }}</textarea>
+
+  <label>RPC (NETCONF)</label>
+  <textarea name="rpc">{{ job.rpc if job else '' }}</textarea>
+
+  <label>Parser template</label>
+  <select name="parser_template_id">
+    <option value=""{% if not job or not job.parser_template_id %} selected{% endif %}>(none)</option>
+    {% for t in parsers %}
+      <option value="{{ t.id }}"{% if job and job.parser_template_id == t.id %} selected{% endif %}>{{ t.name }} ({{ t.type.value }})</option>
+    {% endfor %}
+  </select>
+
+  <label>CVE vendor</label>
+  <input type="text" name="cve_vendor" value="{{ job.cve_vendor if job else '' }}" placeholder="e.g. cisco">
+  <label>CVE product</label>
+  <input type="text" name="cve_product" value="{{ job.cve_product if job else '' }}" placeholder="e.g. ios_xe">
+
+  <label>Device groups</label>
+  <select name="device_group_ids" multiple size="6">
+    {% for g in device_groups %}
+      <option value="{{ g.id }}"{% if job and g in job.device_groups %} selected{% endif %}>{{ g.name }}</option>
+    {% endfor %}
+  </select>
+  <label></label><span class="muted" style="font-size:12px">Hold Ctrl/Cmd to select multiple groups.</span>
+
+  <label>Individual devices</label>
+  <select name="device_ids" multiple size="8">
+    {% for d in devices %}
+      <option value="{{ d.id }}"{% if job and d in job.devices %} selected{% endif %}>{{ d.name }}</option>
+    {% endfor %}
+  </select>
+  <label></label><span class="muted" style="font-size:12px">Hold Ctrl/Cmd to select multiple devices.</span>
+
+  <div class="actions">
+    <button type="submit">{% if job %}Save{% else %}Create{% endif %}</button>
+    <a class="btn btn-secondary" href="/jobs">Cancel</a>
+  </div>
+</form>
+{% endblock %}

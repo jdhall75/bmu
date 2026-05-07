@@ -1,9 +1,22 @@
+import enum
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from kiroku.db.base import Base, TimestampMixin
+
+
+class DriverKind(str, enum.Enum):
+    CLI = "cli"
+    NETCONF = "netconf"
+
+
+class TransportProtocol(str, enum.Enum):
+    SSH = "ssh"
+    TELNET = "telnet"
+    NETCONF = "netconf"
 
 
 class Device(Base, TimestampMixin):
@@ -20,10 +33,30 @@ class Device(Base, TimestampMixin):
     )
     group = relationship("DeviceGroup", back_populates="devices")
 
-    profile_id: Mapped[int] = mapped_column(
-        ForeignKey("profiles.id", ondelete="RESTRICT"), nullable=False
+    # Driver / connection configuration
+    platform: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    custom_platform_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platforms.id", ondelete="SET NULL"), nullable=True
     )
-    profile = relationship("Profile")
+    custom_platform = relationship("Platform")
+    transport: Mapped[TransportProtocol | None] = mapped_column(
+        SAEnum(
+            TransportProtocol,
+            name="transport_protocol",
+            values_callable=lambda e: [m.value for m in e],
+            create_constraint=False,
+            create_type=False,
+        ),
+        nullable=True,
+    )
+    driver_kind: Mapped[DriverKind | None] = mapped_column(
+        SAEnum(
+            DriverKind,
+            values_callable=lambda e: [m.value for m in e],
+            native_enum=False,
+        ),
+        nullable=True,
+    )
 
     # Per-device credential override; falls back to the group's default.
     credential_id: Mapped[int | None] = mapped_column(

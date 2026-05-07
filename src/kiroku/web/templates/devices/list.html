@@ -19,11 +19,6 @@
       <option value="">(no change)</option>
       {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
     </select>
-    <label>Profile</label>
-    <select name="bulk_profile_id">
-      <option value="">(no change)</option>
-      {% for p in profiles %}<option value="{{ p.id }}">{{ p.name }} ({{ p.kind.value }})</option>{% endfor %}
-    </select>
     <label>Credential override</label>
     <select name="bulk_credential_id">
       <option value="">(no change)</option>
@@ -46,7 +41,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
+        <th>Name</th><th>Hostname</th><th>Group</th><th>Platform</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -56,7 +51,11 @@
         <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
         <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
         <td>{{ d.group.name if d.group else '-' }}</td>
-        <td>{{ d.profile.name if d.profile else '-' }}</td>
+        <td>
+          {% if d.platform %}{{ d.platform }}
+          {% elif d.custom_platform %}{{ d.custom_platform.name }}
+          {% else %}-{% endif %}
+        </td>
         <td>{{ 'yes' if d.enabled else 'no' }}</td>
         <td>
           {% set badge = cve_badges.get(d.id) %}

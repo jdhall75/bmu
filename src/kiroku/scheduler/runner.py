@@ -3,8 +3,9 @@
 Single-leader (Postgres advisory lock). Each tick:
   1. Recompute ``next_run_at`` for any schedule missing it.
   2. Find every enabled schedule whose ``next_run_at <= now``.
-  3. For each one, build job specs for each device in its group, persist
-     ``Run`` rows in ``pending``, push ``JobSpec`` onto the Redis stream,
+  3. For each one, get the schedule's job, expand job.device_groups to devices
+     and union with job.devices (enabled filter), deduplicate by device id,
+     persist ``Run`` rows in ``pending``, push ``JobSpec`` onto the Redis stream,
      and update the schedule's ``last_run_at`` / ``next_run_at``.
 
 The advisory lock keeps two scheduler instances from double-firing. If we
@@ -24,7 +25,7 @@ from kiroku.config import get_settings
 from kiroku.db import session_scope
 from kiroku.jobs import CredentialRef, JobSpec
 from kiroku.logging import configure_logging, get_logger
-from kiroku.models import Device, DeviceGroup, JobKind, Profile, Run, RunBatch, RunStatus, Schedule
+from kiroku.models import Device, Job, Run, RunBatch, RunStatus, Schedule
 from kiroku.queue import ensure_consumer_group, publish_job
 
 log = get_logger(__name__)
@@ -62,18 +63,16 @@ def _next_fire(cron: str, tz_name: str, base: datetime) -> datetime:
     return itr.get_next(datetime).astimezone(timezone.utc)
 
 
-def _spec_for(device: Device, profile: Profile, run: Run, kind: JobKind,
-              schedule_id: int | None) -> JobSpec | None:
+def _spec_for(device: Device, job: Job, run: Run, schedule_id: int | None) -> JobSpec | None:
     cred = device.credential or device.group.default_credential
     if cred is None:
-        log.error("no credential for device; skipping",
-                  device=device.name, group=device.group.name)
+        log.error("no credential for device; skipping", device=device.name)
         return None
 
-    parser = profile.parser_template
+    parser = job.parser_template
     custom_yaml = (
-        profile.custom_platform.yaml_body
-        if profile.custom_platform_id and profile.custom_platform
+        device.custom_platform.yaml_body
+        if device.custom_platform_id and device.custom_platform
         else None
     )
     return JobSpec(
@@ -82,20 +81,20 @@ def _spec_for(device: Device, profile: Profile, run: Run, kind: JobKind,
         device_id=device.id,
         device_name=device.name,
         hostname=device.hostname,
-        port=device.port or profile.port,
-        kind=kind.value,
-        profile_id=profile.id,
-        profile_kind=profile.kind.value,
-        platform=profile.platform if not custom_yaml else None,
+        port=device.port,
+        kind=job.kind.value,
+        job_id=job.id,
+        driver_kind=device.driver_kind.value if device.driver_kind else "cli",
+        platform=device.platform if not custom_yaml else None,
         custom_platform_yaml=custom_yaml,
-        transport=profile.transport.value if profile.transport else None,
-        commands=[c.strip() for c in (profile.commands or "").splitlines() if c.strip()],
-        rpc=profile.rpc,
+        transport=device.transport.value if device.transport else None,
+        commands=[c.strip() for c in (job.commands or "").splitlines() if c.strip()],
+        rpc=job.rpc,
         parser_template_id=parser.id if parser else None,
         parser_type=parser.type.value if parser else None,
         parser_body=parser.body if parser else None,
-        cve_vendor=profile.cve_vendor,
-        cve_product=profile.cve_product,
+        cve_vendor=job.cve_vendor,
+        cve_product=job.cve_product,
         credential=CredentialRef(
             provider=cred.provider.value,
             credential_id=cred.id,
@@ -118,10 +117,33 @@ def _fire_due(db: Session, now: datetime) -> int:
         if sched.next_run_at > now:
             continue
 
-        group: DeviceGroup = sched.group
-        enabled_devices = [d for d in group.devices if d.enabled]
-        log.info("schedule due", schedule=sched.name, group=group.name,
-                 kind=sched.kind.value, devices=len(enabled_devices))
+        job: Job | None = sched.job
+        if job is None:
+            log.warning("schedule has no job; skipping", schedule=sched.name)
+            sched.last_run_at = now
+            sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
+            continue
+
+        # Collect devices: expand device_groups + direct devices, deduplicate.
+        seen: set[int] = set()
+        enabled_devices: list[Device] = []
+        for group in job.device_groups:
+            for d in group.devices:
+                if d.enabled and d.id not in seen:
+                    seen.add(d.id)
+                    enabled_devices.append(d)
+        for d in job.devices:
+            if d.enabled and d.id not in seen:
+                seen.add(d.id)
+                enabled_devices.append(d)
+
+        log.info(
+            "schedule due",
+            schedule=sched.name,
+            job=job.name,
+            kind=job.kind.value,
+            devices=len(enabled_devices),
+        )
 
         if not enabled_devices:
             sched.last_run_at = now
@@ -131,7 +153,7 @@ def _fire_due(db: Session, now: datetime) -> int:
         batch = RunBatch(
             schedule_id=sched.id,
             schedule_name=sched.name,
-            kind=sched.kind.value,
+            kind=job.kind.value,
             total=len(enabled_devices),
             started_at=now,
         )
@@ -144,7 +166,7 @@ def _fire_due(db: Session, now: datetime) -> int:
                 schedule_id=sched.id,
                 batch_id=batch.id,
                 device_id=device.id,
-                kind=sched.kind.value,
+                kind=job.kind.value,
                 status=RunStatus.PENDING,
             )
             db.add(run)
@@ -152,7 +174,7 @@ def _fire_due(db: Session, now: datetime) -> int:
         db.flush()  # single round-trip populates all run.id values
 
         for device, run in pairs:
-            spec = _spec_for(device, device.profile, run, sched.kind, sched.id)
+            spec = _spec_for(device, job, run, sched.id)
             if spec is None:
                 run.status = RunStatus.FAILED
                 run.error = "no credential available"

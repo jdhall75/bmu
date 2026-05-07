@@ -5,16 +5,13 @@
 <form method="post" action="{% if schedule %}/schedules/{{ schedule.id }}{% else %}/schedules{% endif %}">
   <label>Name</label><input type="text" name="name" value="{{ schedule.name if schedule else '' }}" required>
   <label>Description</label><input type="text" name="description" value="{{ schedule.description if schedule else '' }}">
-  <label>Group</label>
-  <select name="group_id" required>
-    {% for g in groups %}
-      <option value="{{ g.id }}"{% if schedule and schedule.group_id == g.id %} selected{% endif %}>{{ g.name }}</option>
-    {% endfor %}
-  </select>
-  <label>Kind</label>
-  <select name="kind" required>
-    {% for k in kinds %}
-      <option value="{{ k }}"{% if schedule and schedule.kind.value == k %} selected{% endif %}>{{ k }}</option>
+  <label>Job</label>
+  <select name="job_id" required>
+    <option value=""{% if not schedule or not schedule.job_id %} selected{% endif %}>(none)</option>
+    {% for j in jobs %}
+      <option value="{{ j.id }}"{% if schedule and schedule.job_id == j.id %} selected{% endif %}>
+        {{ j.name }} ({{ j.kind.value }})
+      </option>
     {% endfor %}
   </select>
   <label>Cron expression</label><input type="text" name="cron" value="{{ schedule.cron if schedule else '' }}" placeholder="0 3 * * *" required>

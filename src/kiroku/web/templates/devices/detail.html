@@ -6,7 +6,13 @@
 <dl class="detail-grid">
   <dt>Hostname</dt><dd>{{ device.hostname }}{% if device.port %}:{{ device.port }}{% endif %}</dd>
   <dt>Group</dt><dd>{{ device.group.name if device.group else '-' }}</dd>
-  <dt>Profile</dt><dd>{{ device.profile.name if device.profile else '-' }}</dd>
+  <dt>Platform</dt><dd>
+    {% if device.platform %}{{ device.platform }}
+    {% elif device.custom_platform %}{{ device.custom_platform.name }}
+    {% else %}-{% endif %}
+  </dd>
+  <dt>Driver</dt><dd>{{ device.driver_kind.value if device.driver_kind else '-' }}</dd>
+  <dt>Transport</dt><dd>{{ device.transport.value if device.transport else '-' }}</dd>
   <dt>Enabled</dt><dd>{{ 'yes' if device.enabled else 'no' }}</dd>
   {% if device.description %}<dt>Description</dt><dd>{{ device.description }}</dd>{% endif %}
 </dl>

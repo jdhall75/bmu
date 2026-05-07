@@ -353,8 +353,8 @@ class TestRunNetconf:
             hostname="10.0.0.1",
             port=830,
             kind="backup",
-            profile_id=2,
-            profile_kind="netconf",
+            job_id=2,
+            driver_kind="netconf",
             rpc="<get-config/>",
             credential=CredentialRef(provider="local", credential_id=1),
         )
@@ -382,7 +382,7 @@ class TestRunNetconf:
     def test_open_exception_sets_error(self):
         driver = self._make_netconf_driver()
         driver.open.side_effect = ConnectionRefusedError("port closed")
-        result = self._run(make_spec(profile_kind="netconf", rpc="<get/>"), driver=driver)
+        result = self._run(make_spec(driver_kind="netconf", rpc="<get/>"), driver=driver)
         assert result.success is False
         assert "ConnectionRefusedError" in result.error
 
@@ -467,22 +467,22 @@ class TestRunNetconf:
 
 
 class TestExecute:
-    def test_cli_profile_kind_dispatches_to_run_cli(self):
-        spec = make_spec(profile_kind="cli")
+    def test_cli_driver_kind_dispatches_to_run_cli(self):
+        spec = make_spec(driver_kind="cli")
         with patch("kiroku.worker.scrapli_runner._run_cli") as mock_cli:
             execute(spec, make_cred())
             mock_cli.assert_called_once_with(spec, make_cred())
 
-    def test_netconf_profile_kind_dispatches_to_run_netconf(self):
-        spec = make_spec(profile_kind="netconf")
+    def test_netconf_driver_kind_dispatches_to_run_netconf(self):
+        spec = make_spec(driver_kind="netconf")
         with patch("kiroku.worker.scrapli_runner._run_netconf") as mock_nc:
             execute(spec, make_cred())
             mock_nc.assert_called_once_with(spec, make_cred())
 
-    def test_unknown_profile_kind_raises_value_error(self):
-        spec = make_spec(profile_kind="cli")
-        object.__setattr__(spec, "profile_kind", "grpc")  # bypass pydantic literal
-        with pytest.raises(ValueError, match="unknown profile kind"):
+    def test_unknown_driver_kind_raises_value_error(self):
+        spec = make_spec(driver_kind="cli")
+        object.__setattr__(spec, "driver_kind", "grpc")  # bypass pydantic literal
+        with pytest.raises(ValueError, match="unknown driver kind"):
             execute(spec, make_cred())
 
 

@@ -1,0 +1,139 @@
+from litestar import Router, get, post
+from litestar.params import Body
+from litestar.enums import RequestEncodingType
+from litestar.response import Redirect, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate
+from kiroku.web.deps import provide_db
+
+
+def _parse_ids(data: dict) -> list[int]:
+    raw = data.get("ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
+def _parse_multi(data: dict, key: str) -> list[int]:
+    raw = data.get(key, [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
+def _job_form_context(db: Session, job=None) -> dict:
+    return {
+        "job": job,
+        "kinds": [k.value for k in JobKind],
+        "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
+        "device_groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
+        "devices": db.scalars(select(Device).order_by(Device.name)).all(),
+    }
+
+
+def _apply_job_data(job: Job, data: dict, db: Session) -> None:
+    job.name = data["name"]
+    job.description = data.get("description") or None
+    job.kind = JobKind(data["kind"])
+    job.commands = data.get("commands") or None
+    job.rpc = data.get("rpc") or None
+    job.parser_template_id = int(data["parser_template_id"]) if data.get("parser_template_id") else None
+    job.cve_vendor = data.get("cve_vendor") or None
+    job.cve_product = data.get("cve_product") or None
+
+    group_ids = _parse_multi(data, "device_group_ids")
+    device_ids = _parse_multi(data, "device_ids")
+
+    job.device_groups = db.scalars(
+        select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))
+    ).all() if group_ids else []
+
+    job.devices = db.scalars(
+        select(Device).where(Device.id.in_(device_ids))
+    ).all() if device_ids else []
+
+
+@get("/", dependencies={"db": provide_db})
+async def list_jobs(db: Session) -> Template:
+    jobs = db.scalars(select(Job).order_by(Job.name)).all()
+    return Template(template_name="jobs/list.html", context={"jobs": jobs})
+
+
+@get("/new", dependencies={"db": provide_db})
+async def new_job(db: Session) -> Template:
+    return Template(
+        template_name="jobs/form.html",
+        context=_job_form_context(db),
+    )
+
+
+@post("/", dependencies={"db": provide_db})
+async def create_job(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    j = Job()
+    _apply_job_data(j, data, db)
+    db.add(j)
+    db.commit()
+    return Redirect(path="/jobs")
+
+
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def bulk_jobs(
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    ids = _parse_ids(data)
+    if ids and data.get("action") == "delete":
+        for job in db.scalars(select(Job).where(Job.id.in_(ids))).all():
+            db.delete(job)
+        db.commit()
+    return Redirect(path="/jobs")
+
+
+@get("/{job_id:int}/edit", dependencies={"db": provide_db})
+async def edit_job(job_id: int, db: Session) -> Template:
+    job = db.get(Job, job_id)
+    return Template(
+        template_name="jobs/form.html",
+        context=_job_form_context(db, job),
+    )
+
+
+@post("/{job_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def update_job(
+    job_id: int,
+    db: Session,
+    data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
+) -> Redirect:
+    job = db.get(Job, job_id)
+    _apply_job_data(job, data, db)
+    db.commit()
+    return Redirect(path="/jobs")
+
+
+@post("/{job_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def delete_job(job_id: int, db: Session) -> Redirect:
+    job = db.get(Job, job_id)
+    if job:
+        db.delete(job)
+        db.commit()
+    return Redirect(path="/jobs")
+
+
+router = Router(
+    path="/jobs",
+    route_handlers=[
+        list_jobs,
+        new_job,
+        create_job,
+        bulk_jobs,
+        edit_job,
+        update_job,
+        delete_job,
+    ],
+)

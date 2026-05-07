@@ -3,11 +3,16 @@
 Accepts either a file upload or a pasted blob. Headers (case-insensitive,
 order doesn't matter):
 
-    name, hostname, port, description, group, profile, credentials, enabled
+    name, hostname, port, description, group, platform, transport,
+    driver_kind, credentials, enabled
 
-Required: name, hostname, group, profile.
+Required: name, hostname, group.
+Optional: platform, transport, driver_kind, port, description, credentials, enabled.
 ``enabled`` accepts 1/0, true/false, yes/no (case-insensitive); blank => true.
 ``credentials`` is optional; blank means "use the group's default".
+``platform`` is a built-in scrapli platform name (e.g. cisco_iosxe); optional.
+``transport`` is ssh/telnet/netconf; optional.
+``driver_kind`` is cli/netconf; optional.
 
 The whole import is a single transaction: if any row fails, nothing is
 committed. The results page lists per-row outcomes.
@@ -21,9 +26,9 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import Credential, Device, DeviceGroup, Profile
+from kiroku.models import Credential, Device, DeviceGroup, DriverKind, TransportProtocol
 
-REQUIRED = ("name", "hostname", "group", "profile")
+REQUIRED = ("name", "hostname", "group")
 TRUTHY = {"1", "true", "yes", "y", "t"}
 FALSY = {"0", "false", "no", "n", "f"}
 
@@ -87,7 +92,6 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
 
     # Cache name -> id lookups; one round-trip per related table.
     groups = {g.name: g for g in db.scalars(select(DeviceGroup)).all()}
-    profiles = {p.name: p for p in db.scalars(select(Profile)).all()}
     creds = {c.name: c for c in db.scalars(select(Credential)).all()}
     existing_devices = {d.name for d in db.scalars(select(Device.name)).all()}
     seen_names: set[str] = set()
@@ -115,17 +119,20 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
             if group is None:
                 raise ValueError(f"unknown group: {group_name!r}")
 
-            profile_name = get("profile")
-            profile = profiles.get(profile_name)
-            if profile is None:
-                raise ValueError(f"unknown profile: {profile_name!r}")
-
             cred_name = get("credentials")
             credential = None
             if cred_name:
                 credential = creds.get(cred_name)
                 if credential is None:
                     raise ValueError(f"unknown credential: {cred_name!r}")
+
+            platform_raw = get("platform") or None
+
+            transport_raw = get("transport")
+            transport = TransportProtocol(transport_raw) if transport_raw else None
+
+            driver_kind_raw = get("driver_kind")
+            driver_kind = DriverKind(driver_kind_raw) if driver_kind_raw else None
 
             enabled = _parse_bool(get("enabled"))
 
@@ -135,7 +142,9 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
                 port=port,
                 description=get("description") or None,
                 group_id=group.id,
-                profile_id=profile.id,
+                platform=platform_raw,
+                transport=transport,
+                driver_kind=driver_kind,
                 credential_id=credential.id if credential else None,
                 enabled=enabled,
             )

@@ -8,12 +8,22 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from kiroku.config import get_settings
-from kiroku.models import Credential, CveScan, Device, DeviceGroup, Profile, Run
+from kiroku.models import Credential, CveScan, Device, DeviceGroup, DriverKind, Platform, Run, TransportProtocol
 from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
 _PAGE_SIZE = 100
+
+# Built-in scrapli platform names.
+SCRAPLI_PLATFORMS = [
+    "cisco_iosxe",
+    "cisco_iosxr",
+    "cisco_nxos",
+    "cisco_asa",
+    "arista_eos",
+    "juniper_junos",
+]
 
 
 def _cve_badges(db: Session) -> dict[int, dict]:
@@ -32,22 +42,39 @@ def _cve_badges(db: Session) -> dict[int, dict]:
         badges[scan.device_id] = {"count": len(scan.results), "severity": best_sev}
     return badges
 
+
 CSV_TEMPLATE = (
-    "name,hostname,port,description,group,profile,credentials,enabled\n"
-    "edge-rtr-01,10.0.0.1,22,Core edge router,core,cisco-iosxe-backup,core-admin,1\n"
+    "name,hostname,port,description,group,platform,transport,driver_kind,credentials,enabled\n"
+    "edge-rtr-01,10.0.0.1,22,Core edge router,core,cisco_iosxe,ssh,cli,core-admin,1\n"
 )
+
+
+def _platform_value(device) -> str:
+    """Return the combined platform select value for an existing device."""
+    if device and device.custom_platform_id:
+        return f"custom:{device.custom_platform_id}"
+    if device and device.platform:
+        return f"builtin:{device.platform}"
+    return ""
 
 
 def _device_form_options(db: Session) -> dict:
     return {
         "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
-        "profiles": db.scalars(select(Profile).order_by(Profile.name)).all(),
         "credentials": db.scalars(select(Credential).order_by(Credential.name)).all(),
+        "builtin_platforms": SCRAPLI_PLATFORMS,
+        "custom_platforms": db.scalars(select(Platform).order_by(Platform.name)).all(),
+        "transports": [t.value for t in TransportProtocol],
+        "driver_kinds": [k.value for k in DriverKind],
     }
 
 
 def _device_form_context(db: Session, device=None) -> dict:
-    return {"device": device, **_device_form_options(db)}
+    return {
+        "device": device,
+        "platform_value": _platform_value(device),
+        **_device_form_options(db),
+    }
 
 
 def _parse_ids(data: dict) -> list[int]:
@@ -55,6 +82,20 @@ def _parse_ids(data: dict) -> list[int]:
     if isinstance(raw, str):
         raw = [raw]
     return [int(i) for i in raw if i]
+
+
+def _apply_platform(device: Device, data: dict) -> None:
+    """Parse the combined platform_value and set device.platform / custom_platform_id."""
+    pv = data.get("platform_value", "")
+    if pv.startswith("builtin:"):
+        device.platform = pv[len("builtin:"):]
+        device.custom_platform_id = None
+    elif pv.startswith("custom:"):
+        device.custom_platform_id = int(pv[len("custom:"):])
+        device.platform = None
+    else:
+        device.platform = None
+        device.custom_platform_id = None
 
 
 @get("/", dependencies={"db": provide_db})
@@ -99,10 +140,12 @@ async def create_device(
         port=int(data["port"]) if data.get("port") else None,
         description=data.get("description") or None,
         group_id=int(data["group_id"]),
-        profile_id=int(data["profile_id"]),
         credential_id=int(data["credential_id"]) if data.get("credential_id") else None,
+        transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
+        driver_kind=DriverKind(data["driver_kind"]) if data.get("driver_kind") else None,
         enabled=bool(data.get("enabled")),
     )
+    _apply_platform(d, data)
     db.add(d)
     db.commit()
     return Redirect(path="/devices")
@@ -130,8 +173,6 @@ async def bulk_devices(
                 device.port = int(data["bulk_port"])
             if data.get("bulk_group_id"):
                 device.group_id = int(data["bulk_group_id"])
-            if data.get("bulk_profile_id"):
-                device.profile_id = int(data["bulk_profile_id"])
             bulk_cred = data.get("bulk_credential_id", "")
             if bulk_cred == "NONE":
                 device.credential_id = None
@@ -168,8 +209,10 @@ async def update_device(
     device.port = int(data["port"]) if data.get("port") else None
     device.description = data.get("description") or None
     device.group_id = int(data["group_id"])
-    device.profile_id = int(data["profile_id"])
     device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
+    device.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
+    device.driver_kind = DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
+    _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
     db.commit()
     return Redirect(path="/devices")

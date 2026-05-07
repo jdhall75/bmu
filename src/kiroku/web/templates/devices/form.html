@@ -13,12 +13,45 @@
       <option value="{{ g.id }}"{% if device and device.group_id == g.id %} selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
-  <label>Profile</label>
-  <select name="profile_id" required>
-    {% for p in profiles %}
-      <option value="{{ p.id }}"{% if device and device.profile_id == p.id %} selected{% endif %}>{{ p.name }} ({{ p.kind.value }})</option>
+
+  <label>Platform</label>
+  <select name="platform_value">
+    <option value=""{% if not platform_value %} selected{% endif %}>(none)</option>
+    <optgroup label="Built-in">
+      {% for p in builtin_platforms %}
+        <option value="builtin:{{ p }}"{% if platform_value == 'builtin:' ~ p %} selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </optgroup>
+    {% if custom_platforms %}
+    <optgroup label="Custom">
+      {% for cp in custom_platforms %}
+        <option value="custom:{{ cp.id }}"{% if platform_value == 'custom:' ~ cp.id|string %} selected{% endif %}>{{ cp.name }}</option>
+      {% endfor %}
+    </optgroup>
+    {% endif %}
+  </select>
+  <label></label>
+  <span class="muted" style="font-size:12px">
+    Built-in platforms use scrapli's bundled definition.
+    <a href="/platforms/new" target="_blank">Define a custom platform</a> for any other vendor.
+  </span>
+
+  <label>Transport</label>
+  <select name="transport">
+    <option value=""{% if not device or not device.transport %} selected{% endif %}>(default)</option>
+    {% for t in transports %}
+      <option value="{{ t }}"{% if device and device.transport and device.transport.value == t %} selected{% endif %}>{{ t }}</option>
     {% endfor %}
   </select>
+
+  <label>Driver kind</label>
+  <select name="driver_kind">
+    <option value=""{% if not device or not device.driver_kind %} selected{% endif %}>(default cli)</option>
+    {% for dk in driver_kinds %}
+      <option value="{{ dk }}"{% if device and device.driver_kind and device.driver_kind.value == dk %} selected{% endif %}>{{ dk }}</option>
+    {% endfor %}
+  </select>
+
   <label>Credential override</label>
   <select name="credential_id">
     <option value=""{% if not device or not device.credential_id %} selected{% endif %}>(use group default)</option>

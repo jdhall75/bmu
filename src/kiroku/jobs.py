@@ -29,8 +29,8 @@ class JobSpec(BaseModel):
 
     kind: Literal["backup", "collect", "cve_scan"]
 
-    profile_id: int
-    profile_kind: Literal["cli", "netconf"]
+    job_id: int
+    driver_kind: Literal["cli", "netconf"]
     # CLI fields (None for netconf):
     platform: str | None = None
     # Operator-defined platform YAML; when set, written to a tempfile and

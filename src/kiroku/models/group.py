@@ -26,6 +26,3 @@ class DeviceGroup(Base, TimestampMixin):
     devices = relationship(
         "Device", back_populates="group", cascade="all, delete-orphan"
     )
-    schedules = relationship(
-        "Schedule", back_populates="group", cascade="all, delete-orphan"
-    )

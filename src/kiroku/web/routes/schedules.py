@@ -6,7 +6,7 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import DeviceGroup, JobKind, Schedule
+from kiroku.models import Job, Schedule
 from kiroku.web.deps import provide_db
 
 
@@ -20,8 +20,7 @@ def _parse_ids(data: dict) -> list[int]:
 def _schedule_form_context(db: Session, schedule=None) -> dict:
     return {
         "schedule": schedule,
-        "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
-        "kinds": [k.value for k in JobKind],
+        "jobs": db.scalars(select(Job).order_by(Job.name)).all(),
     }
 
 
@@ -49,8 +48,7 @@ async def create_schedule(
     s = Schedule(
         name=data["name"],
         description=data.get("description") or None,
-        group_id=int(data["group_id"]),
-        kind=JobKind(data["kind"]),
+        job_id=int(data["job_id"]) if data.get("job_id") else None,
         cron=data["cron"],
         timezone=data.get("timezone") or "UTC",
         enabled=bool(data.get("enabled")),
@@ -91,8 +89,7 @@ async def update_schedule(
     schedule = db.get(Schedule, schedule_id)
     schedule.name = data["name"]
     schedule.description = data.get("description") or None
-    schedule.group_id = int(data["group_id"])
-    schedule.kind = JobKind(data["kind"])
+    schedule.job_id = int(data["job_id"]) if data.get("job_id") else None
     schedule.cron = data["cron"]
     schedule.timezone = data.get("timezone") or "UTC"
     schedule.enabled = bool(data.get("enabled"))

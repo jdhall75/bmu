@@ -12,7 +12,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Group</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th><th>Actions</th>
+        <th>Name</th><th>Job</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -20,8 +20,8 @@
       <tr>
         <td><input type="checkbox" name="ids" value="{{ s.id }}"></td>
         <td>{{ s.name }}</td>
-        <td>{{ s.group.name if s.group else '-' }}</td>
-        <td>{{ s.kind.value }}</td>
+        <td>{{ s.job.name if s.job else '-' }}</td>
+        <td>{{ s.job.kind.value if s.job else '-' }}</td>
         <td>{{ s.cron }}</td>
         <td>{{ s.timezone }}</td>
         <td>{{ 'yes' if s.enabled else 'no' }}</td>

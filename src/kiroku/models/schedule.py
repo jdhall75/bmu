@@ -1,18 +1,9 @@
-import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime
-from sqlalchemy import Enum as SAEnum
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from kiroku.db.base import Base, TimestampMixin
-
-
-class JobKind(str, enum.Enum):
-    BACKUP = "backup"
-    COLLECT = "collect"
-    CVE_SCAN = "cve_scan"
 
 
 class Schedule(Base, TimestampMixin):
@@ -22,19 +13,11 @@ class Schedule(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    group_id: Mapped[int] = mapped_column(
-        ForeignKey("device_groups.id", ondelete="CASCADE"), nullable=False
+    job_id: Mapped[int | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
     )
-    group = relationship("DeviceGroup", back_populates="schedules")
+    job = relationship("Job")
 
-    kind: Mapped[JobKind] = mapped_column(
-        SAEnum(
-            JobKind,
-            name="job_kind",
-            values_callable=lambda e: [m.value for m in e],
-        ),
-        nullable=False,
-    )
     cron: Mapped[str] = mapped_column(String(64), nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), default="UTC", nullable=False)
 

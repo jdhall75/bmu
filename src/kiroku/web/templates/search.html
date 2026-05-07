@@ -46,8 +46,14 @@
       </div>
       {% if r.blocks %}
         {% for block in r.blocks %}
-        <pre class="search-snippet">{% for line in block.lines %}<span class="{% if line.hit %}hit{% endif %}">{{ "%4d" % line.num }} {{ line.text }}</span>
-{% endfor %}</pre>
+        <table class="search-snippet">
+          {% for line in block.lines %}
+          <tr class="{% if line.hit %}hit{% endif %}">
+            <td class="ln">{{ line.num }}</td>
+            <td class="lc">{{ line.text }}</td>
+          </tr>
+          {% endfor %}
+        </table>
         {% endfor %}
       {% elif r.headline %}
         <div class="search-headline">…{{ r.headline }}…</div>

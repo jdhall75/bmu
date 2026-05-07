@@ -85,7 +85,7 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
     elif platform_name:
         definition = platform_name
     else:
-        raise ValueError("profile has no platform or custom_platform_yaml configured")
+        raise ValueError("device has no platform or custom_platform_yaml configured")
 
     driver = Cli(
         host=spec.hostname,
@@ -289,10 +289,10 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
 
 
 def execute(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
-    if spec.profile_kind == "cli":
+    if spec.driver_kind == "cli":
         if spec.kind == "cve_scan":
             return _run_cve_scan(spec, cred)
         return _run_cli(spec, cred)
-    if spec.profile_kind == "netconf":
+    if spec.driver_kind == "netconf":
         return _run_netconf(spec, cred)
-    raise ValueError(f"unknown profile kind: {spec.profile_kind!r}")
+    raise ValueError(f"unknown driver kind: {spec.driver_kind!r}")
