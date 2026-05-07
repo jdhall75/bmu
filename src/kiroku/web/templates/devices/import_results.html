@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Import results - Kiroku{% endblock %}
+{% block content %}
+<h2>Import results</h2>
+{% if error %}
+  <p style="color:var(--bad)"><strong>Import failed:</strong> {{ error }}</p>
+{% elif created %}
+  <p style="color:var(--ok)"><strong>Created {{ created }} device(s).</strong></p>
+{% else %}
+  <p style="color:var(--bad)">
+    <strong>No devices were created.</strong>
+    Fix the rows below and re-submit &mdash; the import is all-or-nothing.
+  </p>
+{% endif %}
+
+{% if results %}
+<table>
+  <thead><tr><th>Line</th><th>Name</th><th>Status</th><th>Message</th></tr></thead>
+  <tbody>
+    {% for r in results %}
+    <tr>
+      <td>{{ r.line }}</td>
+      <td>{{ r.name }}</td>
+      <td>
+        <span class="status status-{{ 'success' if r.ok else 'failed' }}">
+          {{ 'ok' if r.ok else 'error' }}
+        </span>
+      </td>
+      <td>{{ r.message }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<p style="margin-top:16px">
+  <a class="btn" href="/devices">Back to devices</a>
+  <a class="btn btn-secondary" href="/devices/import">Import more</a>
+</p>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run.id }} - Kiroku{% endblock %}
+{% block content %}
+<h2>Run #{{ run.id }} — {{ run.device.name if run.device else '-' }}</h2>
+<p>
+  <span class="status status-{{ run.status.value }}">{{ run.status.value }}</span>
+  · {{ run.kind }} · started {{ run.started_at or '-' }} · finished {{ run.finished_at or '-' }}
+</p>
+{% if run.commit_sha %}<p>Commit: <code>{{ run.commit_sha }}</code></p>{% endif %}
+{% if run.payload_sha256 %}<p>Payload SHA256: <code>{{ run.payload_sha256 }}</code></p>{% endif %}
+{% if run.bytes_captured %}<p>Captured: {{ run.bytes_captured }} bytes</p>{% endif %}
+
+{% if run.error %}
+<h3>Error</h3>
+<pre>{{ run.error }}</pre>
+{% endif %}
+{% endblock %}

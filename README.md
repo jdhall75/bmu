@@ -1,19 +1,19 @@
-# BackMeUp (BMU)
+# Kiroku (Kiroku)
 
 Distributed network device backup and data collection.
 
 ## Architecture
 
-Five processes, all packaged in one image (`bmu` CLI):
+Five processes, all packaged in one image (`kiroku` CLI):
 
 | Process     | Command           | Role                                                                             |
 |-------------|-------------------|----------------------------------------------------------------------------------|
-| `web`       | `bmu serve`       | Litestar + Jinja UI for managing groups, devices, profiles, schedules, runs.     |
-| `scheduler` | `bmu scheduler`   | Polls schedules with `croniter`, single-leader via Postgres advisory lock,       |
+| `web`       | `kiroku serve`       | Litestar + Jinja UI for managing groups, devices, profiles, schedules, runs.     |
+| `scheduler` | `kiroku scheduler`   | Polls schedules with `croniter`, single-leader via Postgres advisory lock,       |
 |             |                   | enqueues job specs onto a Redis Stream.                                          |
-| `worker`    | `bmu worker`      | Consumes the job stream, runs scrapli (CLI / NETCONF), publishes results.        |
-| `recorder`  | `bmu recorder`    | Consumes the result stream, commits backups to a git repo, updates run rows.    |
-| `migrate`   | `bmu migrate`     | One-shot Alembic upgrade (run by the `web` container's entrypoint).              |
+| `worker`    | `kiroku worker`      | Consumes the job stream, runs scrapli (CLI / NETCONF), publishes results.        |
+| `recorder`  | `kiroku recorder`    | Consumes the result stream, commits backups to a git repo, updates run rows.    |
+| `migrate`   | `kiroku migrate`     | One-shot Alembic upgrade (run by the `web` container's entrypoint).              |
 
 Backing services: Postgres + Redis. Backup configs live in a git repo on a
 volume mounted into the `recorder` (and `web`, read-only) containers.
@@ -43,7 +43,7 @@ output is normalized to a row set.
 Credentials are referenced by name; the actual secret is fetched at job
 execution time from a configurable provider:
 
-- `local`   - encrypted blob in Postgres (Fernet, key from `BMU_SECRET_KEY`)
+- `local`   - encrypted blob in Postgres (Fernet, key from `KIROKU_SECRET_KEY`)
 - `vault`   - HashiCorp Vault KV v2 (planned, ABC in place)
 - `bitwarden` - Bitwarden Secrets Manager (planned, ABC in place)
 

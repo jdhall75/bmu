@@ -1,7 +1,7 @@
-"""Tests for bmu.worker.parsers."""
+"""Tests for kiroku.worker.parsers."""
 import pytest
 
-from bmu.worker.parsers import parse
+from kiroku.worker.parsers import parse
 
 # ---------------------------------------------------------------------------
 # Helpers

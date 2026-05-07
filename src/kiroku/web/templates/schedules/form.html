@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{% if schedule %}Edit schedule - Kiroku{% else %}New schedule - Kiroku{% endif %}{% endblock %}
+{% block content %}
+<h2>{% if schedule %}Edit schedule{% else %}New schedule{% endif %}</h2>
+<form method="post" action="{% if schedule %}/schedules/{{ schedule.id }}{% else %}/schedules{% endif %}">
+  <label>Name</label><input type="text" name="name" value="{{ schedule.name if schedule else '' }}" required>
+  <label>Description</label><input type="text" name="description" value="{{ schedule.description if schedule else '' }}">
+  <label>Group</label>
+  <select name="group_id" required>
+    {% for g in groups %}
+      <option value="{{ g.id }}"{% if schedule and schedule.group_id == g.id %} selected{% endif %}>{{ g.name }}</option>
+    {% endfor %}
+  </select>
+  <label>Kind</label>
+  <select name="kind" required>
+    {% for k in kinds %}
+      <option value="{{ k }}"{% if schedule and schedule.kind.value == k %} selected{% endif %}>{{ k }}</option>
+    {% endfor %}
+  </select>
+  <label>Cron expression</label><input type="text" name="cron" value="{{ schedule.cron if schedule else '' }}" placeholder="0 3 * * *" required>
+  <label>Timezone (IANA)</label><input type="text" name="timezone" value="{{ schedule.timezone if schedule else 'UTC' }}">
+  <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not schedule or schedule.enabled %} checked{% endif %}>
+  <div class="actions">
+    <button type="submit">{% if schedule %}Save{% else %}Create{% endif %}</button>
+    <a class="btn btn-secondary" href="/schedules">Cancel</a>
+  </div>
+</form>
+{% endblock %}

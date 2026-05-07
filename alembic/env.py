@@ -3,9 +3,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from bmu.config import get_settings
-from bmu.db.base import Base
-from bmu.models import *  # noqa: F401,F403  (register models with metadata)
+from kiroku.config import get_settings
+from kiroku.db.base import Base
+from kiroku.models import *  # noqa: F401,F403  (register models with metadata)
 
 config = context.config
 if config.config_file_name is not None:

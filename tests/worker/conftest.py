@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from bmu.credentials.base import CredentialMaterial
-from bmu.jobs import CredentialRef, JobSpec
+from kiroku.credentials.base import CredentialMaterial
+from kiroku.jobs import CredentialRef, JobSpec
 
 
 def make_cred(**kwargs) -> CredentialMaterial:

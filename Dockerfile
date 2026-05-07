@@ -16,10 +16,10 @@ COPY src ./src
 
 RUN pip install --upgrade pip && pip install -e .
 
-RUN mkdir -p /var/lib/bmu/backups
-VOLUME ["/var/lib/bmu/backups"]
+RUN mkdir -p /var/lib/kiroku/backups
+VOLUME ["/var/lib/kiroku/backups"]
 
 EXPOSE 8000
 
-ENTRYPOINT ["bmu"]
+ENTRYPOINT ["kiroku"]
 CMD ["serve"]

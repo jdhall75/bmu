@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{% if device %}Edit device - Kiroku{% else %}New device - Kiroku{% endif %}{% endblock %}
+{% block content %}
+<h2>{% if device %}Edit device{% else %}New device{% endif %}</h2>
+<form method="post" action="{% if device %}/devices/{{ device.id }}{% else %}/devices{% endif %}">
+  <label>Name</label><input type="text" name="name" value="{{ device.name if device else '' }}" required>
+  <label>Hostname</label><input type="text" name="hostname" value="{{ device.hostname if device else '' }}" required>
+  <label>Port</label><input type="number" name="port" value="{{ device.port if device and device.port else '' }}">
+  <label>Description</label><input type="text" name="description" value="{{ device.description if device else '' }}">
+  <label>Group</label>
+  <select name="group_id" required>
+    {% for g in groups %}
+      <option value="{{ g.id }}"{% if device and device.group_id == g.id %} selected{% endif %}>{{ g.name }}</option>
+    {% endfor %}
+  </select>
+  <label>Profile</label>
+  <select name="profile_id" required>
+    {% for p in profiles %}
+      <option value="{{ p.id }}"{% if device and device.profile_id == p.id %} selected{% endif %}>{{ p.name }} ({{ p.kind.value }})</option>
+    {% endfor %}
+  </select>
+  <label>Credential override</label>
+  <select name="credential_id">
+    <option value=""{% if not device or not device.credential_id %} selected{% endif %}>(use group default)</option>
+    {% for c in credentials %}
+      <option value="{{ c.id }}"{% if device and device.credential_id == c.id %} selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+  <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not device or device.enabled %} checked{% endif %}>
+  <div class="actions">
+    <button type="submit">{% if device %}Save{% else %}Create{% endif %}</button>
+    <a class="btn btn-secondary" href="/devices">Cancel</a>
+  </div>
+</form>
+{% endblock %}

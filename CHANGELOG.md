@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] - 2026-05-06
 
 ### Added
-- `CveScan` and `CveResult` SQLAlchemy models (`bmu.models.cve_scan`).
+- `CveScan` and `CveResult` SQLAlchemy models (`kiroku.models.cve_scan`).
 - Alembic migration `0004_cve_tables` creates `cve_scans` and `cve_results`
   tables with appropriate foreign keys and cascade rules.
 - Recorder `_record_cve_scan()`: writes one `CveScan` row (with CPE string,
@@ -43,11 +43,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.7.0] - 2026-05-06
 
 ### Added
-- `bmu.cve` package: `CveClient` ABC, `CveEntry` dataclass, and
+- `kiroku.cve` package: `CveClient` ABC, `CveEntry` dataclass, and
   `NvdCveClient` implementation querying the NVD REST API v2.0.
-- `query_cpe(cpe)` facade in `bmu.cve.__init__` — single entry point called
+- `query_cpe(cpe)` facade in `kiroku.cve.__init__` — single entry point called
   by the worker; selects the NVD backend automatically.
-- `nvd_api_key` setting (optional, env `BMU_NVD_API_KEY`): raises the NVD
+- `nvd_api_key` setting (optional, env `KIROKU_NVD_API_KEY`): raises the NVD
   rate limit from 1 req/s to 5 req/s when provided.
 - CVSS v3.1 / v3.0 / v2 score and severity extracted per-CVE; first English
   description used as summary; first reference URL included.
@@ -71,7 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `JobResult` for carrying CVE query results through the pipeline.
 - `_run_cve_scan()` in the worker: runs CLI commands, parses output (identical
   to `collect`), builds a CPE string from the parsed version + profile vendor/
-  product, and delegates to `bmu.cve.query_cpe` (stubbed until Phase 3).
+  product, and delegates to `kiroku.cve.query_cpe` (stubbed until Phase 3).
 - Scheduler `_spec_for` now populates `cve_vendor` and `cve_product` on the
   emitted `JobSpec`.
 - `cve_scan` appears in the Schedule kind dropdown automatically (the form
@@ -157,7 +157,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] - 2026-04-29
 
 ### Added
-- Initial BMU MVP scaffold.
+- Initial Kiroku MVP scaffold.
 - Five microservices in one Docker image: `web`, `scheduler`, `worker`,
   `recorder`, `migrate`.
 - PostgreSQL for state, Redis Streams for job and result queues.

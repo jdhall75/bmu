@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bmu"
+name = "kiroku"
 version = "0.1.0"
-description = "BackMeUp - distributed network device backup and data collection"
+description = "Kiroku - distributed network device backup and data collection"
 requires-python = ">=3.11"
 dependencies = [
     "litestar[jinja,standard]>=2.12",
@@ -36,7 +36,7 @@ dependencies = [
 ]
 
 [project.scripts]
-bmu = "bmu.cli:main"
+kiroku = "kiroku.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -45,7 +45,7 @@ testpaths = ["tests"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-bmu = ["web/templates/**/*.html", "web/static/**/*"]
+kiroku = ["web/templates/**/*.html", "web/static/**/*"]
 
 [dependency-groups]
 dev = [

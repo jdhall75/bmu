@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: bmu
-      POSTGRES_PASSWORD: bmu
-      POSTGRES_DB: bmu
+      POSTGRES_USER: kiroku
+      POSTGRES_PASSWORD: kiroku
+      POSTGRES_DB: kiroku
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bmu"]
+      test: ["CMD-SHELL", "pg_isready -U kiroku"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -28,9 +28,9 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      BMU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
-      BMU_REDIS_URL: redis://redis:6379/0
-      BMU_SECRET_KEY: ${BMU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://kiroku:kiroku@postgres:5432/kiroku
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
     restart: "no"
 
   web:
@@ -44,12 +44,12 @@ services:
       redis:
         condition: service_healthy
     environment:
-      BMU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
-      BMU_REDIS_URL: redis://redis:6379/0
-      BMU_SECRET_KEY: ${BMU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
-      BMU_BACKUP_REPO_PATH: /var/lib/bmu/backups
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://kiroku:kiroku@postgres:5432/kiroku
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
     volumes:
-      - backups:/var/lib/bmu/backups:ro
+      - backups:/var/lib/kiroku/backups:ro
 
   scheduler:
     build: .
@@ -60,9 +60,9 @@ services:
       redis:
         condition: service_healthy
     environment:
-      BMU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
-      BMU_REDIS_URL: redis://redis:6379/0
-      BMU_SECRET_KEY: ${BMU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://kiroku:kiroku@postgres:5432/kiroku
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
 
   worker:
     build: .
@@ -73,10 +73,10 @@ services:
       redis:
         condition: service_healthy
     environment:
-      BMU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
-      BMU_REDIS_URL: redis://redis:6379/0
-      BMU_SECRET_KEY: ${BMU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
-      BMU_WORKER_CONCURRENCY: "8"
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://kiroku:kiroku@postgres:5432/kiroku
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_WORKER_CONCURRENCY: "8"
     deploy:
       replicas: 1
 
@@ -89,12 +89,12 @@ services:
       redis:
         condition: service_healthy
     environment:
-      BMU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
-      BMU_REDIS_URL: redis://redis:6379/0
-      BMU_SECRET_KEY: ${BMU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
-      BMU_BACKUP_REPO_PATH: /var/lib/bmu/backups
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://kiroku:kiroku@postgres:5432/kiroku
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
     volumes:
-      - backups:/var/lib/bmu/backups
+      - backups:/var/lib/kiroku/backups
 
 volumes:
   pg_data:

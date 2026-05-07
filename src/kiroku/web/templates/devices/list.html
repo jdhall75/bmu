@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Devices - Kiroku{% endblock %}
+{% block content %}
+<form class="table-form" method="POST" action="/devices/bulk">
+  <div class="toolbar">
+    <a class="btn" href="/devices/new">New device</a>
+    <a class="btn btn-secondary" href="/devices/import">Bulk import</a>
+    <span class="bulk-actions" id="bulk-actions" style="display:none">
+      <button name="action" value="delete" onclick="return confirm('Delete selected devices?')">Delete selected</button>
+      <button type="button" onclick="toggleBulkEdit()">Edit selected</button>
+    </span>
+  </div>
+
+  <div class="bulk-edit-panel" id="bulk-edit-panel" style="display:none">
+    <label>Port</label>
+    <input type="number" name="bulk_port" placeholder="(no change)">
+    <label>Group</label>
+    <select name="bulk_group_id">
+      <option value="">(no change)</option>
+      {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+    </select>
+    <label>Profile</label>
+    <select name="bulk_profile_id">
+      <option value="">(no change)</option>
+      {% for p in profiles %}<option value="{{ p.id }}">{{ p.name }} ({{ p.kind.value }})</option>{% endfor %}
+    </select>
+    <label>Credential override</label>
+    <select name="bulk_credential_id">
+      <option value="">(no change)</option>
+      <option value="NONE">(use group default)</option>
+      {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+    </select>
+    <label>Enabled</label>
+    <select name="bulk_enabled">
+      <option value="">(no change)</option>
+      <option value="1">Yes</option>
+      <option value="0">No</option>
+    </select>
+    <div class="actions">
+      <button name="action" value="edit">Apply to selected</button>
+      <button type="button" onclick="toggleBulkEdit()">Cancel</button>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all" title="Select all"></th>
+        <th>Name</th><th>Hostname</th><th>Group</th><th>Profile</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for d in devices %}
+      <tr>
+        <td><input type="checkbox" name="ids" value="{{ d.id }}"></td>
+        <td>{{ d.name }}</td>
+        <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
+        <td>{{ d.group.name if d.group else '-' }}</td>
+        <td>{{ d.profile.name if d.profile else '-' }}</td>
+        <td>{{ 'yes' if d.enabled else 'no' }}</td>
+        <td>
+          {% set badge = cve_badges.get(d.id) %}
+          {% if badge %}
+            {% set sev = badge.severity | lower if badge.severity else 'none' %}
+            <a href="/cve" class="severity-badge severity-{{ sev }}">{{ badge.count }} {{ badge.severity or 'NONE' }}</a>
+          {% else %}
+            <span class="severity-badge severity-unscanned">-</span>
+          {% endif %}
+        </td>
+        <td>
+          <a class="btn btn-secondary" href="/devices/{{ d.id }}/edit">edit</a>
+          <button formaction="/devices/{{ d.id }}/delete" onclick="return confirm('Delete {{ d.name }}?')">delete</button>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8">No devices.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</form>
+<script>
+(function () {
+  var sa = document.getElementById('select-all');
+  var ba = document.getElementById('bulk-actions');
+  function update() {
+    var n = document.querySelectorAll('input[name="ids"]:checked').length;
+    ba.style.display = n ? '' : 'none';
+    if (!n) document.getElementById('bulk-edit-panel').style.display = 'none';
+  }
+  sa.addEventListener('change', function () {
+    document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.checked = sa.checked; });
+    update();
+  });
+  document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
+})();
+function toggleBulkEdit() {
+  var p = document.getElementById('bulk-edit-panel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
+</script>
+{% endblock %}
