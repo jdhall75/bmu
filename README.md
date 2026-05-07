@@ -74,6 +74,12 @@ so the stack runs out of the box with `docker compose up`.
 | `KIROKU_WORKER_CONNECT_TIMEOUT` | `30` | Reserved for transport-level socket connect timeout (seconds) |
 | `KIROKU_WORKER_COMMAND_TIMEOUT` | `60` | scrapli per-operation timeout in seconds (covers auth + each command). When exceeded, scrapli raises `OperationException: TimeoutExceeded`; the worker records the failure and returns immediately without blocking on close. |
 
+### Recorder
+
+| Variable | Default | Description |
+|---|---|---|
+| `KIROKU_RECORDER_BATCH_TIMEOUT` | `1800` | Seconds after a batch is created before the reaper force-closes it. Covers the case where a worker process is killed before publishing a result, leaving the batch stuck open. Set higher than your largest expected batch duration (`devices × command_timeout / concurrency`). |
+
 ### Web
 
 | Variable | Default | Description |

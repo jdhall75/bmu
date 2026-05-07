@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import os
 import signal
-from datetime import datetime
+import time
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, text
 
+from kiroku.config import get_settings
 from kiroku.db import session_scope
 from kiroku.jobs import JobResult
 from kiroku.logging import configure_logging, get_logger
@@ -190,15 +192,97 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                 )
 
 
+def _reap_stale_batches(
+    store: GitStore,
+    batch_staged: dict[int, list[str]],
+    timeout_s: int,
+) -> None:
+    """Force-close batches open longer than timeout_s.
+
+    Handles the case where a worker process was killed before publishing a
+    result, leaving one or more runs missing and the batch stuck open forever.
+    Any files that were staged in memory are committed; lingering PENDING/RUNNING
+    runs are marked FAILED.
+    """
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(seconds=timeout_s)
+    with session_scope() as db:
+        stale = db.scalars(
+            select(RunBatch).where(
+                RunBatch.finished_at.is_(None),
+                RunBatch.created_at < cutoff,
+            )
+        ).all()
+
+        if not stale:
+            return
+
+        now = datetime.now(tz=timezone.utc)
+        for batch in stale:
+            age_s = int((now - batch.created_at).total_seconds())
+            log.warning(
+                "reaping stale batch",
+                batch_id=batch.id,
+                schedule=batch.schedule_name,
+                age_s=age_s,
+                succeeded=batch.succeeded,
+                failed=batch.failed,
+                total=batch.total,
+            )
+
+            # Commit whatever files were staged in memory for this batch.
+            changed_paths = batch_staged.pop(batch.id, [])
+            commit_sha: str | None = None
+            if changed_paths:
+                msg = (
+                    f"backup batch (reaped): {batch.schedule_name}\n\n"
+                    f"batch_id={batch.id}, age_s={age_s}\n"
+                    + "\n".join(changed_paths)
+                )
+                commit_sha = store.commit_batch(changed_paths, msg)
+                if commit_sha:
+                    log.info("reaped batch committed", batch_id=batch.id, sha=commit_sha[:8])
+
+            batch.finished_at = now
+            if commit_sha:
+                batch.commit_sha = commit_sha
+
+            # Mark any runs still open as failed.
+            open_runs = db.scalars(
+                select(Run).where(
+                    Run.batch_id == batch.id,
+                    Run.status.in_([RunStatus.PENDING, RunStatus.RUNNING]),
+                )
+            ).all()
+            for run in open_runs:
+                run.status = RunStatus.FAILED
+                run.error = "batch timed out: result never received from worker"
+                run.finished_at = now
+                batch.failed += 1
+
+            # Stamp the commit sha on all runs in this batch that don't have one yet.
+            if commit_sha:
+                for run in db.scalars(
+                    select(Run).where(Run.batch_id == batch.id)
+                ).all():
+                    if run.commit_sha is None:
+                        run.commit_sha = commit_sha
+
+
+_REAP_INTERVAL_S = 60
+
+
 def run_recorder() -> None:
     configure_logging()
     _install_signals()
+    settings = get_settings()
     consumer = f"recorder-{os.getpid()}"
     store = GitStore()
     # In-memory accumulator: batch_id → [relative file paths staged but not yet committed]
     batch_staged: dict[int, list[str]] = {}
-    log.info("recorder starting", consumer=consumer, repo=str(store.root))
+    log.info("recorder starting", consumer=consumer, repo=str(store.root),
+             batch_timeout_s=settings.recorder_batch_timeout)
 
+    last_reap = time.monotonic()
     while not _stop:
         try:
             results = read_results(consumer, count=8, block_ms=2000)
@@ -216,3 +300,10 @@ def run_recorder() -> None:
                     error=str(exc),
                     exc_info=True,
                 )
+
+        if time.monotonic() - last_reap >= _REAP_INTERVAL_S:
+            last_reap = time.monotonic()
+            try:
+                _reap_stale_batches(store, batch_staged, settings.recorder_batch_timeout)
+            except Exception as exc:
+                log.error("stale batch reaper failed", error=str(exc), exc_info=True)

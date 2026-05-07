@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     worker_connect_timeout: int = 30
     worker_command_timeout: int = 60
 
+    # Recorder will force-close any open batch older than this many seconds.
+    # Should exceed the longest expected batch duration (devices × command_timeout / concurrency).
+    recorder_batch_timeout: int = 1800
+
     web_host: str = "0.0.0.0"
     web_port: int = 8000
 
