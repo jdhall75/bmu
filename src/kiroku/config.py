@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     worker_concurrency: int = 8
     worker_connect_timeout: int = 30
     worker_command_timeout: int = 60
+    # Absolute wall-clock limit for an entire job (connect + auth + commands).
+    # Kills jobs that hang at the TCP layer before scrapli's session timer starts.
+    worker_job_timeout: int = 300
 
     web_host: str = "0.0.0.0"
     web_port: int = 8000
