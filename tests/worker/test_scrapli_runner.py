@@ -39,18 +39,10 @@ class TestBuildCliDriver:
         MockCli, _, _ = self._build(spec, mock_settings=mock_settings)
         assert MockCli.call_args.kwargs["definition_file_or_name"] == "cisco_iosxe"
 
-    def test_generic_platform_writes_temp_definition(self, mock_settings):
-        spec = make_spec(platform="generic")
-        MockCli, _, temp = self._build(spec, mock_settings=mock_settings)
-        # A temp file path is returned so the caller can delete it after open()
-        assert temp is not None
-        # The definition passed to Cli is the temp file path
-        assert MockCli.call_args.kwargs["definition_file_or_name"] == temp
-
-    def test_none_platform_also_writes_temp_definition(self, mock_settings):
-        spec = make_spec(platform=None)
-        MockCli, _, temp = self._build(spec, mock_settings=mock_settings)
-        assert temp is not None
+    def test_no_platform_and_no_custom_yaml_raises(self, mock_settings):
+        spec = make_spec(platform=None, custom_platform_yaml=None)
+        with pytest.raises(ValueError, match="no platform or custom_platform_yaml"):
+            self._build(spec, mock_settings=mock_settings)
 
     def test_custom_platform_yaml_writes_tempfile(self, mock_settings):
         yaml = 'prompt_pattern: "^.*[#>]"\ndefault_mode: "exec"\nmodes: []'
@@ -61,28 +53,6 @@ class TestBuildCliDriver:
         assert "prompt_pattern" in content
         definition = MockCli.call_args.kwargs["definition_file_or_name"]
         assert definition == temp
-        import os; os.unlink(temp)
-
-    def test_generic_with_prompt_pattern_writes_it_into_yaml(self, mock_settings, tmp_path):
-        spec = make_spec(platform="generic", prompt_pattern=r"^.*[#>]\s*$")
-        with patch("kiroku.worker.scrapli_runner.get_settings", return_value=mock_settings), \
-             patch("kiroku.worker.scrapli_runner.Cli") as MockCli:
-            MockCli.return_value = MagicMock()
-            _, temp = _build_cli_driver(spec, make_cred())
-        assert temp is not None
-        content = open(temp).read()
-        assert r"^.*[#>]\s*$" in content
-        import os; os.unlink(temp)
-
-    def test_generic_without_prompt_pattern_uses_default(self, mock_settings):
-        spec = make_spec(platform="generic", prompt_pattern=None)
-        with patch("kiroku.worker.scrapli_runner.get_settings", return_value=mock_settings), \
-             patch("kiroku.worker.scrapli_runner.Cli") as MockCli:
-            MockCli.return_value = MagicMock()
-            _, temp = _build_cli_driver(spec, make_cred())
-        assert temp is not None
-        content = open(temp).read()
-        assert "prompt_pattern" in content
         import os; os.unlink(temp)
 
     # ---- transport ---------------------------------------------------------
@@ -275,50 +245,6 @@ class TestRunCli:
             mock_parse.assert_not_called()
 
     # ---- command sequencing ------------------------------------------------
-
-    def test_pre_commands_sent_before_commands(self):
-        driver = make_driver(
-            mock_response(),           # enable
-            mock_response(),           # terminal length 0
-            mock_response("config"),   # show run
-        )
-        spec = make_spec(
-            pre_commands=["enable"],
-            disable_paging_command="terminal length 0",
-            commands=["show run"],
-        )
-        self._run(spec, driver=driver)
-        sent = [c.kwargs["input_"] for c in driver.send_input.call_args_list]
-        assert sent == ["enable", "terminal length 0", "show run"]
-
-    def test_multiple_pre_commands_all_sent(self):
-        driver = make_driver(*[mock_response() for _ in range(4)])
-        spec = make_spec(
-            pre_commands=["enable", "conf t"],
-            disable_paging_command=None,
-            commands=["show run"],
-        )
-        self._run(spec, driver=driver)
-        sent = [c.kwargs["input_"] for c in driver.send_input.call_args_list]
-        assert sent == ["enable", "conf t", "show run"]
-
-    def test_no_pre_commands_skips_pre_phase(self):
-        driver = make_driver(mock_response("output"))
-        spec = make_spec(pre_commands=[], disable_paging_command=None, commands=["show run"])
-        self._run(spec, driver=driver)
-        assert driver.send_input.call_count == 1
-        assert driver.send_input.call_args.kwargs["input_"] == "show run"
-
-    def test_no_disable_paging_skips_that_call(self):
-        driver = make_driver(mock_response("pre"), mock_response("cmd"))
-        spec = make_spec(
-            pre_commands=["enable"],
-            disable_paging_command=None,
-            commands=["show run"],
-        )
-        self._run(spec, driver=driver)
-        sent = [c.kwargs["input_"] for c in driver.send_input.call_args_list]
-        assert sent == ["enable", "show run"]
 
     def test_multiple_commands_all_run(self):
         driver = make_driver(mock_response("a"), mock_response("b"), mock_response("c"))

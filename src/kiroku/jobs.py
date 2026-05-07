@@ -37,9 +37,6 @@ class JobSpec(BaseModel):
     # passed to Cli(definition_file_or_name=...) instead of platform name.
     custom_platform_yaml: str | None = None
     transport: str | None = None
-    prompt_pattern: str | None = None
-    pre_commands: list[str] = Field(default_factory=list)
-    disable_paging_command: str | None = None
     commands: list[str] = Field(default_factory=list)
     # NETCONF fields:
     rpc: str | None = None

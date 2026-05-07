@@ -74,9 +74,6 @@ def _apply_profile_data(p: Profile, data: dict) -> None:
 
     p.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
     p.port = int(data["port"]) if data.get("port") else None
-    p.prompt_pattern = data.get("prompt_pattern") or None
-    p.pre_commands = data.get("pre_commands") or None
-    p.disable_paging_command = data.get("disable_paging_command") or None
     p.commands = data.get("commands") or None
     p.manufacturer = data.get("manufacturer") or None
     p.rpc = data.get("rpc") or None

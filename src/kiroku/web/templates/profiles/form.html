@@ -41,9 +41,6 @@
     {% endfor %}
   </select>
   <label>Port</label><input type="number" name="port" value="{{ profile.port if profile and profile.port else '' }}">
-  <label>Prompt pattern</label><input type="text" name="prompt_pattern" value="{{ profile.prompt_pattern if profile else '' }}" placeholder="e.g. ^.*[#>]\s*$">
-  <label>Pre-commands (one per line)</label><textarea name="pre_commands" placeholder="enable&#10;terminal length 0">{{ profile.pre_commands if profile else '' }}</textarea>
-  <label>Disable paging command</label><input type="text" name="disable_paging_command" value="{{ profile.disable_paging_command if profile else '' }}">
   <label>Commands (one per line)</label><textarea name="commands" placeholder="show running-config">{{ profile.commands if profile else '' }}</textarea>
 
   <label>Manufacturer (NETCONF)</label><input type="text" name="manufacturer" value="{{ profile.manufacturer if profile else '' }}">

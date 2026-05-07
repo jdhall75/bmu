@@ -23,9 +23,9 @@ class Profile(Base, TimestampMixin):
 
     A profile is one of two flavors:
 
-    * CLI - references a scrapli platform (e.g. ``cisco_iosxe``) or
-      ``generic`` for unsupported gear, in which case ``prompt_pattern``,
-      ``pre_commands`` and ``disable_paging_command`` carry the overrides.
+    * CLI - references a built-in scrapli platform (e.g. ``cisco_iosxe``)
+      or an operator-defined custom Platform whose YAML is passed to
+      ``Cli(definition_file_or_name=…)`` at run time.
     * NETCONF - carries an RPC payload to send and an optional XSLT parser
       template to transform the response.
     """
@@ -45,7 +45,8 @@ class Profile(Base, TimestampMixin):
     )
 
     # ---- CLI fields ------------------------------------------------------
-    # scrapli platform name; "generic" means use GenericDriver with overrides.
+    # Built-in scrapli platform name (e.g. "cisco_iosxe"). Mutually
+    # exclusive with custom_platform_id below.
     platform: Mapped[str | None] = mapped_column(String(64), nullable=True)
     transport: Mapped[TransportProtocol | None] = mapped_column(
         SAEnum(
@@ -56,14 +57,6 @@ class Profile(Base, TimestampMixin):
         nullable=True,
     )
     port: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    # Used when platform == "generic":
-    prompt_pattern: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    # Newline-separated list of commands run before the backup command,
-    # e.g. ``enable`` on a Cisco device.
-    pre_commands: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Command to disable paging (e.g. ``terminal length 0``); optional, used
-    # only when scrapli's platform support doesn't already handle it.
-    disable_paging_command: Mapped[str | None] = mapped_column(String(256), nullable=True)
     # The actual command(s) to collect; newline-separated. For backups this
     # is typically ``show running-config``; for data collection it can be
     # any list of show commands.

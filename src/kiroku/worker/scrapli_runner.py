@@ -6,9 +6,10 @@ chosen by the type of TransportOptions passed:
   - TransportTelnetOptions → telnet
 
 Platform definitions are YAML files. Built-in definitions cover the core
-platforms (cisco_iosxe, cisco_iosxr, etc.). For the "generic" platform,
-a minimal definition is written to a temp file using the profile's
-prompt_pattern, then deleted after the connection is opened.
+platforms (cisco_iosxe, cisco_iosxr, etc.). Operator-defined platforms are
+stored in the database and passed via JobSpec.custom_platform_yaml; the
+worker writes the YAML to a temp file, passes the path to
+Cli(definition_file_or_name=…), then deletes it after open().
 
 Enable passwords are passed via AuthOptions.lookups; they take effect when
 a platform definition references __lookup::enable in its instructions.
@@ -39,30 +40,9 @@ from kiroku.worker.parsers import parse
 
 log = get_logger(__name__)
 
-_DEFAULT_PROMPT = r"^.*[#>$]\s*$"
-
 
 def _now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
-
-
-def _write_generic_definition(prompt_pattern: str | None) -> str:
-    """Write a minimal platform YAML for generic/unknown devices.
-
-    Returns the path to the temp file; caller must delete it after open().
-    """
-    pattern = (prompt_pattern or _DEFAULT_PROMPT).replace("'", '"')
-    content = (
-        f'prompt_pattern: "{pattern}"\n'
-        'default_mode: "exec"\n'
-        "modes:\n"
-        '  - name: "exec"\n'
-        f'    prompt_pattern: "{pattern}"\n'
-    )
-    fd, path = tempfile.mkstemp(suffix=".yaml", prefix="kiroku_def_")
-    with os.fdopen(fd, "w") as fh:
-        fh.write(content)
-    return path
 
 
 def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str | None]:
@@ -102,11 +82,10 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
         with os.fdopen(fd, "w") as fh:
             fh.write(spec.custom_platform_yaml)
         definition: str | None = temp_path
-    elif platform_name in ("", "generic"):
-        temp_path = _write_generic_definition(spec.prompt_pattern)
-        definition = temp_path
-    else:
+    elif platform_name:
         definition = platform_name
+    else:
+        raise ValueError("profile has no platform or custom_platform_yaml configured")
 
     driver = Cli(
         host=spec.hostname,
@@ -132,10 +111,6 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 os.unlink(temp_path)
                 temp_path = None
         try:
-            for pre in spec.pre_commands:
-                driver.send_input(input_=pre)
-            if spec.disable_paging_command:
-                driver.send_input(input_=spec.disable_paging_command)
             for cmd in spec.commands:
                 t0 = time.perf_counter()
                 resp = driver.send_input(input_=cmd)
@@ -247,10 +222,6 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 os.unlink(temp_path)
                 temp_path = None
         try:
-            for pre in spec.pre_commands:
-                driver.send_input(input_=pre)
-            if spec.disable_paging_command:
-                driver.send_input(input_=spec.disable_paging_command)
             for cmd in spec.commands:
                 t0 = time.perf_counter()
                 resp = driver.send_input(input_=cmd)

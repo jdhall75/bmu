@@ -24,9 +24,6 @@ def make_spec(**kwargs) -> JobSpec:
         profile_kind="cli",
         platform="cisco_iosxe",
         transport="ssh",
-        prompt_pattern=None,
-        pre_commands=[],
-        disable_paging_command=None,
         commands=["show running-config"],
         credential=CredentialRef(provider="local", credential_id=1),
     )
