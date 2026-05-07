@@ -6,13 +6,12 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import ParserTemplate, Profile, ProfileKind, TransportProtocol
+from kiroku.models import ParserTemplate, Platform, Profile, ProfileKind, TransportProtocol
 from kiroku.web.deps import provide_db
 
-# Core scrapli platforms (built into the scrapli package).
-# "generic" triggers GenericDriver with manual prompt/paging overrides.
+# Built-in scrapli platform names. "generic" is intentionally excluded;
+# operators who need custom prompt/mode behaviour should define a Platform.
 SCRAPLI_PLATFORMS = [
-    "generic",
     "cisco_iosxe",
     "cisco_iosxr",
     "cisco_nxos",
@@ -35,10 +34,21 @@ def _parse_ids(data: dict) -> list[int]:
     return [int(i) for i in raw if i]
 
 
+def _platform_value(profile) -> str:
+    """Return the combined platform select value for an existing profile."""
+    if profile and profile.custom_platform_id:
+        return f"custom:{profile.custom_platform_id}"
+    if profile and profile.platform:
+        return f"builtin:{profile.platform}"
+    return ""
+
+
 def _profile_form_context(db: Session, profile=None) -> dict:
     return {
         "profile": profile,
-        "platforms": SCRAPLI_PLATFORMS,
+        "platform_value": _platform_value(profile),
+        "builtin_platforms": SCRAPLI_PLATFORMS,
+        "custom_platforms": db.scalars(select(Platform).order_by(Platform.name)).all(),
         "transports": [t.value for t in TransportProtocol],
         "kinds": [k.value for k in ProfileKind],
         "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
@@ -49,7 +59,19 @@ def _apply_profile_data(p: Profile, data: dict) -> None:
     p.name = data["name"]
     p.description = data.get("description") or None
     p.kind = ProfileKind(data["kind"])
-    p.platform = data.get("platform") or None
+
+    # Combined platform_value encodes either "builtin:<name>" or "custom:<id>"
+    pv = data.get("platform_value", "")
+    if pv.startswith("builtin:"):
+        p.platform = pv[len("builtin:"):]
+        p.custom_platform_id = None
+    elif pv.startswith("custom:"):
+        p.custom_platform_id = int(pv[len("custom:"):])
+        p.platform = None
+    else:
+        p.platform = None
+        p.custom_platform_id = None
+
     p.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
     p.port = int(data["port"]) if data.get("port") else None
     p.prompt_pattern = data.get("prompt_pattern") or None

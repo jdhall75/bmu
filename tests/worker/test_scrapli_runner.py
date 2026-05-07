@@ -52,6 +52,17 @@ class TestBuildCliDriver:
         MockCli, _, temp = self._build(spec, mock_settings=mock_settings)
         assert temp is not None
 
+    def test_custom_platform_yaml_writes_tempfile(self, mock_settings):
+        yaml = 'prompt_pattern: "^.*[#>]"\ndefault_mode: "exec"\nmodes: []'
+        spec = make_spec(platform=None, custom_platform_yaml=yaml)
+        MockCli, _, temp = self._build(spec, mock_settings=mock_settings)
+        assert temp is not None
+        content = open(temp).read()
+        assert "prompt_pattern" in content
+        definition = MockCli.call_args.kwargs["definition_file_or_name"]
+        assert definition == temp
+        import os; os.unlink(temp)
+
     def test_generic_with_prompt_pattern_writes_it_into_yaml(self, mock_settings, tmp_path):
         spec = make_spec(platform="generic", prompt_pattern=r"^.*[#>]\s*$")
         with patch("kiroku.worker.scrapli_runner.get_settings", return_value=mock_settings), \

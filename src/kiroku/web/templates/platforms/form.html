@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% if platform %}Edit platform - Kiroku{% else %}New platform - Kiroku{% endif %}{% endblock %}
+{% block content %}
+<h2>{% if platform %}Edit platform: {{ platform.name }}{% else %}New custom platform{% endif %}</h2>
+
+<p class="muted">
+  A platform definition is a YAML file that tells scrapli how to talk to a device:
+  what the prompt looks like in each mode, how to switch between modes, and what to
+  run on open and close. See the annotated example below the form.
+</p>
+
+<form method="post" action="{% if platform %}/platforms/{{ platform.id }}{% else %}/platforms{% endif %}">
+  <label>Name</label>
+  <input type="text" name="name" value="{{ platform.name if platform else '' }}"
+         required placeholder="e.g. nokia-srl, adtran-aos, mikrotik-routeros">
+
+  <label>Description</label>
+  <input type="text" name="description" value="{{ platform.description if platform else '' }}"
+         placeholder="One-line description of the platform">
+
+  <label>Platform YAML</label>
+  <textarea name="yaml_body" required style="min-height:340px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px">{{ platform.yaml_body if platform else '' }}</textarea>
+
+  <div class="actions">
+    <button type="submit">{% if platform %}Save{% else %}Create{% endif %}</button>
+    <a class="btn btn-secondary" href="/platforms">Cancel</a>
+  </div>
+</form>
+
+<hr style="margin:24px 0;border:none;border-top:1px solid #eee">
+<h3>Schema reference</h3>
+<p class="muted">Paste this into the YAML box as a starting point, then adapt it for your device.</p>
+<pre style="font-size:12px">{{ example_yaml }}</pre>
+
+<h3>Key fields</h3>
+<table>
+  <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>prompt_pattern</code></td><td>Yes</td><td>Top-level regex matching any prompt across all modes. Used as a fallback.</td></tr>
+    <tr><td><code>default_mode</code></td><td>Yes</td><td>The mode the device is in immediately after login (e.g. <code>exec</code>).</td></tr>
+    <tr><td><code>modes</code></td><td>Yes</td><td>List of named modes. Each mode needs <code>name</code>, <code>prompt_pattern</code>, and <code>accessible_modes</code>.</td></tr>
+    <tr><td><code>accessible_modes[].name</code></td><td>Yes</td><td>Target mode this mode can transition to.</td></tr>
+    <tr><td><code>accessible_modes[].instructions</code></td><td>Yes</td><td>Ordered list of instructions to reach the target mode.</td></tr>
+    <tr><td><code>failure_indicators</code></td><td>No</td><td>Strings that indicate a command failed (e.g. <code>Error:</code>, <code>Invalid input</code>).</td></tr>
+    <tr><td><code>on_open_instructions</code></td><td>No</td><td>Sent once immediately after the connection is established.</td></tr>
+    <tr><td><code>on_close_instructions</code></td><td>No</td><td>Sent once before disconnecting.</td></tr>
+  </tbody>
+</table>
+
+<h3>Instruction types</h3>
+<table>
+  <thead><tr><th>Type</th><th>Fields</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>send_input</code></td>
+      <td><code>input: "command"</code></td>
+      <td>Send a command and wait for the next prompt.</td>
+    </tr>
+    <tr>
+      <td><code>enter_mode</code></td>
+      <td><code>requested_mode: "mode-name"</code></td>
+      <td>Tell scrapli to transition to the named mode using its defined instructions.</td>
+    </tr>
+    <tr>
+      <td><code>write</code></td>
+      <td><code>input: "text"</code></td>
+      <td>Write raw bytes without waiting for a prompt (useful for <code>quit</code> on close).</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

@@ -4,6 +4,7 @@ from kiroku.models.device import Device
 from kiroku.models.device_config import DeviceConfig
 from kiroku.models.group import DeviceGroup
 from kiroku.models.parser_template import ParserTemplate, ParserType
+from kiroku.models.platform import Platform
 from kiroku.models.profile import Profile, ProfileKind, TransportProtocol
 from kiroku.models.run import Run, RunStatus
 from kiroku.models.run_batch import RunBatch
@@ -20,6 +21,7 @@ __all__ = [
     "JobKind",
     "ParserTemplate",
     "ParserType",
+    "Platform",
     "Profile",
     "ProfileKind",
     "Run",

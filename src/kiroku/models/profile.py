@@ -75,6 +75,14 @@ class Profile(Base, TimestampMixin):
     # Raw RPC XML to send.
     rpc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # ---- Custom platform (operator-defined scrapli YAML) -----------------
+    # Mutually exclusive with the built-in platform string above.
+    # When set, the yaml_body is written to a tempfile at run time.
+    custom_platform_id: Mapped[int | None] = mapped_column(
+        ForeignKey("platforms.id", ondelete="SET NULL"), nullable=True
+    )
+    custom_platform = relationship("Platform")
+
     # ---- Optional parser -------------------------------------------------
     parser_template_id: Mapped[int | None] = mapped_column(
         ForeignKey("parser_templates.id", ondelete="SET NULL"), nullable=True

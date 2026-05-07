@@ -71,6 +71,11 @@ def _spec_for(device: Device, profile: Profile, run: Run, kind: JobKind,
         return None
 
     parser = profile.parser_template
+    custom_yaml = (
+        profile.custom_platform.yaml_body
+        if profile.custom_platform_id and profile.custom_platform
+        else None
+    )
     return JobSpec(
         run_id=run.id,
         schedule_id=schedule_id,
@@ -81,7 +86,8 @@ def _spec_for(device: Device, profile: Profile, run: Run, kind: JobKind,
         kind=kind.value,
         profile_id=profile.id,
         profile_kind=profile.kind.value,
-        platform=profile.platform,
+        platform=profile.platform if not custom_yaml else None,
+        custom_platform_yaml=custom_yaml,
         transport=profile.transport.value if profile.transport else None,
         prompt_pattern=profile.prompt_pattern,
         pre_commands=[c.strip() for c in (profile.pre_commands or "").splitlines() if c.strip()],

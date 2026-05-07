@@ -13,12 +13,26 @@
   </select>
 
   <label>Platform (CLI)</label>
-  <select name="platform">
-    <option value=""{% if not profile or not profile.platform %} selected{% endif %}>(none)</option>
-    {% for p in platforms %}
-      <option value="{{ p }}"{% if profile and profile.platform == p %} selected{% endif %}>{{ p }}</option>
-    {% endfor %}
+  <select name="platform_value">
+    <option value=""{% if not platform_value %} selected{% endif %}>(none)</option>
+    <optgroup label="Built-in">
+      {% for p in builtin_platforms %}
+        <option value="builtin:{{ p }}"{% if platform_value == 'builtin:' ~ p %} selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </optgroup>
+    {% if custom_platforms %}
+    <optgroup label="Custom">
+      {% for cp in custom_platforms %}
+        <option value="custom:{{ cp.id }}"{% if platform_value == 'custom:' ~ cp.id|string %} selected{% endif %}>{{ cp.name }}</option>
+      {% endfor %}
+    </optgroup>
+    {% endif %}
   </select>
+  <label></label>
+  <span class="muted" style="font-size:12px">
+    Built-in platforms use scrapli's bundled definition.
+    <a href="/platforms/new" target="_blank">Define a custom platform</a> for any other vendor.
+  </span>
   <label>Transport</label>
   <select name="transport">
     <option value=""{% if not profile or not profile.transport %} selected{% endif %}>(default)</option>
@@ -27,7 +41,7 @@
     {% endfor %}
   </select>
   <label>Port</label><input type="number" name="port" value="{{ profile.port if profile and profile.port else '' }}">
-  <label>Prompt pattern (generic only)</label><input type="text" name="prompt_pattern" value="{{ profile.prompt_pattern if profile else '' }}" placeholder="e.g. ^.*[#>]\s*$">
+  <label>Prompt pattern</label><input type="text" name="prompt_pattern" value="{{ profile.prompt_pattern if profile else '' }}" placeholder="e.g. ^.*[#>]\s*$">
   <label>Pre-commands (one per line)</label><textarea name="pre_commands" placeholder="enable&#10;terminal length 0">{{ profile.pre_commands if profile else '' }}</textarea>
   <label>Disable paging command</label><input type="text" name="disable_paging_command" value="{{ profile.disable_paging_command if profile else '' }}">
   <label>Commands (one per line)</label><textarea name="commands" placeholder="show running-config">{{ profile.commands if profile else '' }}</textarea>

@@ -94,14 +94,19 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
         transport_opts = TransportBinOptions(enable_strict_key=False)
         default_port = 22
 
-    platform = (spec.platform or "").lower()
     temp_path: str | None = None
 
-    if platform in ("", "generic"):
-        temp_path = _write_generic_definition(spec.prompt_pattern)
+    platform_name = (spec.platform or "").lower()
+    if spec.custom_platform_yaml:
+        fd, temp_path = tempfile.mkstemp(suffix=".yaml", prefix="kiroku_def_")
+        with os.fdopen(fd, "w") as fh:
+            fh.write(spec.custom_platform_yaml)
         definition: str | None = temp_path
+    elif platform_name in ("", "generic"):
+        temp_path = _write_generic_definition(spec.prompt_pattern)
+        definition = temp_path
     else:
-        definition = platform
+        definition = platform_name
 
     driver = Cli(
         host=spec.hostname,

@@ -33,6 +33,9 @@ class JobSpec(BaseModel):
     profile_kind: Literal["cli", "netconf"]
     # CLI fields (None for netconf):
     platform: str | None = None
+    # Operator-defined platform YAML; when set, written to a tempfile and
+    # passed to Cli(definition_file_or_name=...) instead of platform name.
+    custom_platform_yaml: str | None = None
     transport: str | None = None
     prompt_pattern: str | None = None
     pre_commands: list[str] = Field(default_factory=list)
