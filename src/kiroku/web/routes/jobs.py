@@ -6,6 +6,7 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from kiroku.dispatch import fire_job
 from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate
 from kiroku.web.deps import provide_db
 
@@ -125,6 +126,15 @@ async def delete_job(job_id: int, db: Session) -> Redirect:
     return Redirect(path="/jobs")
 
 
+@post("/{job_id:int}/run", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+async def run_job_adhoc(job_id: int, db: Session) -> Redirect:
+    job = db.get(Job, job_id)
+    if job is None:
+        return Redirect(path="/jobs")
+    batch = fire_job(job, db)
+    return Redirect(path=f"/runs/batches/{batch.id}")
+
+
 router = Router(
     path="/jobs",
     route_handlers=[
@@ -135,5 +145,6 @@ router = Router(
         edit_job,
         update_job,
         delete_job,
+        run_job_adhoc,
     ],
 )

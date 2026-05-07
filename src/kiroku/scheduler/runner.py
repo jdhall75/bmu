@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from kiroku.config import get_settings
 from kiroku.db import session_scope
-from kiroku.jobs import CredentialRef, JobSpec
+from kiroku.dispatch import _spec_for
 from kiroku.logging import configure_logging, get_logger
 from kiroku.models import Device, Job, Run, RunBatch, RunStatus, Schedule
 from kiroku.queue import ensure_consumer_group, publish_job
@@ -62,45 +62,6 @@ def _next_fire(cron: str, tz_name: str, base: datetime) -> datetime:
     itr = croniter(cron, base_local)
     return itr.get_next(datetime).astimezone(timezone.utc)
 
-
-def _spec_for(device: Device, job: Job, run: Run, schedule_id: int | None) -> JobSpec | None:
-    cred = device.credential or device.group.default_credential
-    if cred is None:
-        log.error("no credential for device; skipping", device=device.name)
-        return None
-
-    parser = job.parser_template
-    custom_yaml = (
-        device.custom_platform.yaml_body
-        if device.custom_platform_id and device.custom_platform
-        else None
-    )
-    return JobSpec(
-        run_id=run.id,
-        schedule_id=schedule_id,
-        device_id=device.id,
-        device_name=device.name,
-        hostname=device.hostname,
-        port=device.port,
-        kind=job.kind.value,
-        job_id=job.id,
-        driver_kind=device.driver_kind.value if device.driver_kind else "cli",
-        platform=device.platform if not custom_yaml else None,
-        custom_platform_yaml=custom_yaml,
-        transport=device.transport.value if device.transport else None,
-        commands=[c.strip() for c in (job.commands or "").splitlines() if c.strip()],
-        rpc=job.rpc,
-        parser_template_id=parser.id if parser else None,
-        parser_type=parser.type.value if parser else None,
-        parser_body=parser.body if parser else None,
-        cve_vendor=job.cve_vendor,
-        cve_product=job.cve_product,
-        credential=CredentialRef(
-            provider=cred.provider.value,
-            credential_id=cred.id,
-            ref=cred.ref,
-        ),
-    )
 
 
 def _fire_due(db: Session, now: datetime) -> int:
