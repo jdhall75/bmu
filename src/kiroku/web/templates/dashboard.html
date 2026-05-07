@@ -5,24 +5,36 @@
   <div class="card"><div class="lbl">Groups</div><div class="num">{{ counts.groups }}</div></div>
   <div class="card"><div class="lbl">Devices</div><div class="num">{{ counts.devices }}</div></div>
   <div class="card"><div class="lbl">Schedules</div><div class="num">{{ counts.schedules }}</div></div>
-  <div class="card"><div class="lbl">Runs</div><div class="num">{{ counts.runs }}</div>{% if failing %}<div style="color:var(--bad)">{{ failing }} failed</div>{% endif %}</div>
+  <div class="card"><div class="lbl">Jobs Executed</div><div class="num">{{ counts.jobs_executed }}</div>{% if failing %}<div style="color:var(--bad)">{{ failing }} with failures</div>{% endif %}</div>
 </div>
 
-<h2>Recent runs</h2>
+<h2>Recent jobs</h2>
 <table>
-  <thead><tr><th>When</th><th>Device</th><th>Kind</th><th>Status</th><th>Bytes</th><th>Commit</th></tr></thead>
-  <tbody>
-  {% for r in recent_runs %}
+  <thead>
     <tr>
-      <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-      <td><a href="/runs/{{ r.id }}">{{ r.device.name if r.device else '-' }}</a></td>
-      <td>{{ r.kind }}</td>
-      <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
-      <td>{{ r.bytes_captured or '' }}</td>
-      <td>{{ r.commit_sha[:8] if r.commit_sha else '' }}</td>
+      <th>Job</th>
+      <th>Started</th>
+      <th>Finished</th>
+      <th style="text-align:right">Total</th>
+      <th style="text-align:right">OK</th>
+      <th style="text-align:right">Failed</th>
+      <th>Commit</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in recent_batches %}
+    {% set b = row.batch %}
+    <tr{% if b.failed %} class="row-failed"{% endif %}>
+      <td><a href="/runs/batches/{{ b.id }}">{{ row.job_name }}</a></td>
+      <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '—' }}</td>
+      <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '<span class="status status-running">running</span>' }}</td>
+      <td style="text-align:right">{{ b.total }}</td>
+      <td style="text-align:right; color:var(--ok)">{{ b.succeeded }}</td>
+      <td style="text-align:right{% if b.failed %}; color:var(--bad){% endif %}">{{ b.failed }}</td>
+      <td>{{ b.commit_sha[:8] if b.commit_sha else '' }}</td>
     </tr>
   {% else %}
-    <tr><td colspan="6">No runs yet.</td></tr>
+    <tr><td colspan="7">No jobs executed yet.</td></tr>
   {% endfor %}
   </tbody>
 </table>
