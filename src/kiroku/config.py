@@ -8,8 +8,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="KIROKU_", env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://kiroku:kiroku@postgres:5432/bmu"
-    database_url_sync: str = "postgresql+psycopg://kiroku:kiroku@postgres:5432/bmu"
+    database_url: str = "postgresql+psycopg://bmu:bmu@postgres:5432/bmu"
+    database_url_sync: str = "postgresql+psycopg://bmu:bmu@postgres:5432/bmu"
 
     redis_url: str = "redis://redis:6379/0"
     job_stream: str = "kiroku:jobs"
