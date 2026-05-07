@@ -3,20 +3,31 @@ from litestar.response import Template
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import Run
+from kiroku.models import Run, RunBatch
 from kiroku.web.deps import provide_db
 
 
 @get("/", dependencies={"db": provide_db})
-async def list_runs(db: Session) -> Template:
-    runs = db.scalars(select(Run).order_by(Run.created_at.desc()).limit(200)).all()
-    return Template(template_name="runs/list.html", context={"runs": runs})
+async def list_batches(db: Session) -> Template:
+    batches = db.scalars(
+        select(RunBatch).order_by(RunBatch.started_at.desc()).limit(100)
+    ).all()
+    return Template(template_name="runs/batches.html", context={"batches": batches})
+
+
+@get("/batches/{batch_id:int}", dependencies={"db": provide_db})
+async def view_batch(batch_id: int, db: Session) -> Template:
+    batch = db.get(RunBatch, batch_id)
+    runs = db.scalars(
+        select(Run).where(Run.batch_id == batch_id).order_by(Run.device_id)
+    ).all()
+    return Template(template_name="runs/batch_detail.html", context={"batch": batch, "runs": runs})
 
 
 @get("/{run_id:int}", dependencies={"db": provide_db})
-async def view_run(db: Session, run_id: int) -> Template:
+async def view_run(run_id: int, db: Session) -> Template:
     run = db.get(Run, run_id)
     return Template(template_name="runs/detail.html", context={"run": run})
 
 
-router = Router(path="/runs", route_handlers=[list_runs, view_run])
+router = Router(path="/runs", route_handlers=[list_batches, view_batch, view_run])

@@ -40,3 +40,12 @@ form.table-form { display:block; max-width:100%; background:transparent; padding
 .severity-low { background:#dff5e3; color:#1a6b2a; }
 .severity-none { background:#e8e8e8; color:var(--muted); }
 .severity-unscanned { background:#f0f0f0; color:#aaa; }
+.status-partial { background:#fef0d4; color:#955a00; }
+.status-complete { background:#dff5e3; color:var(--ok); }
+dl.detail-grid { display:grid; grid-template-columns:160px 1fr; gap:4px 16px; max-width:720px; background:#fff; padding:14px; border:1px solid #eee; border-radius:4px; margin-bottom:16px; }
+dl.detail-grid dt { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; align-self:start; padding-top:2px; }
+dl.detail-grid dd { margin:0; }
+.muted { color:var(--muted); }
+.config-viewer { max-height:80vh; white-space:pre; }
+.error-block { background:#fde2dd; color:#6b1a1a; border:1px solid #f5c6c6; white-space:pre-wrap; word-break:break-all; }
+tr.row-failed td { background:#fff8f8; }

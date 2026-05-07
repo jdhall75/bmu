@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Config history: {{ device.name }} - Kiroku{% endblock %}
+{% block content %}
+<h2>{{ device.name }} &mdash; config history</h2>
+<p class="muted">File: <code>{{ device.latest_backup_path }}</code></p>
+
+{% if history %}
+<table>
+  <thead>
+    <tr><th>Date</th><th>Commit</th><th>Message</th></tr>
+  </thead>
+  <tbody>
+  {% for entry in history %}
+    <tr>
+      <td>{{ entry.date[:19].replace('T', ' ') }}</td>
+      <td><code>{{ entry.sha }}</code></td>
+      <td>{{ entry.message }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No git history found for this device's config file.</p>
+{% endif %}
+
+<p>
+  <a href="/devices/{{ device.id }}/config">View current config</a>
+  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+</p>
+{% endblock %}

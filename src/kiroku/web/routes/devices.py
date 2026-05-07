@@ -7,7 +7,8 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import Credential, CveScan, Device, DeviceGroup, Profile
+from kiroku.config import get_settings
+from kiroku.models import Credential, CveScan, Device, DeviceGroup, Profile, Run
 from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 
@@ -220,6 +221,49 @@ async def import_submit(
     )
 
 
+@get("/{device_id:int}", dependencies={"db": provide_db})
+async def view_device(device_id: int, db: Session) -> Template:
+    device = db.get(Device, device_id)
+    recent_runs = db.scalars(
+        select(Run)
+        .where(Run.device_id == device_id)
+        .order_by(Run.created_at.desc())
+        .limit(10)
+    ).all()
+    return Template(
+        template_name="devices/detail.html",
+        context={"device": device, "recent_runs": recent_runs},
+    )
+
+
+@get("/{device_id:int}/config", dependencies={"db": provide_db})
+async def view_config(device_id: int, db: Session) -> Template:
+    device = db.get(Device, device_id)
+    content: str | None = None
+    if device and device.latest_backup_path:
+        path = get_settings().backup_repo_path / device.latest_backup_path
+        if path.exists():
+            content = path.read_text(encoding="utf-8", errors="replace")
+    return Template(
+        template_name="devices/config.html",
+        context={"device": device, "content": content},
+    )
+
+
+@get("/{device_id:int}/config/history", dependencies={"db": provide_db})
+async def view_config_history(device_id: int, db: Session) -> Template:
+    device = db.get(Device, device_id)
+    history: list[dict] = []
+    if device and device.latest_backup_path:
+        from kiroku.recorder.git_store import GitStore
+        store = GitStore()
+        history = store.history(device.latest_backup_path)
+    return Template(
+        template_name="devices/config_history.html",
+        context={"device": device, "history": history},
+    )
+
+
 router = Router(
     path="/devices",
     route_handlers=[
@@ -227,11 +271,14 @@ router = Router(
         new_device,
         create_device,
         bulk_devices,
+        view_device,
         edit_device,
         update_device,
         delete_device,
         import_form,
         import_template,
         import_submit,
+        view_config,
+        view_config_history,
     ],
 )

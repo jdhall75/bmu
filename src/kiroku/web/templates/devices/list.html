@@ -53,7 +53,7 @@
     {% for d in devices %}
       <tr>
         <td><input type="checkbox" name="ids" value="{{ d.id }}"></td>
-        <td>{{ d.name }}</td>
+        <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
         <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
         <td>{{ d.group.name if d.group else '-' }}</td>
         <td>{{ d.profile.name if d.profile else '-' }}</td>

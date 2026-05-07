@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Config: {{ device.name }} - Kiroku{% endblock %}
+{% block content %}
+<h2>{{ device.name }} &mdash; latest config</h2>
+
+{% if device.latest_backup_at %}
+<p class="muted">Captured {{ device.latest_backup_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+  &bull; <a href="/devices/{{ device.id }}/config/history">Git history</a>
+</p>
+{% endif %}
+
+{% if content %}
+<pre class="config-viewer">{{ content }}</pre>
+{% else %}
+<p>No config available. This device has not been backed up yet, or the file is missing from disk.</p>
+{% endif %}
+
+<p><a href="/devices/{{ device.id }}">&larr; Back to device</a></p>
+{% endblock %}
