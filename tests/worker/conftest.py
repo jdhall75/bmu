@@ -41,12 +41,12 @@ def mock_response(result="output", failed=False) -> MagicMock:
 
 
 def make_driver(*responses) -> MagicMock:
-    """Return a mock scrapli driver. Pass mock_response() objects for send_command."""
+    """Return a mock scrapli2 driver. Pass mock_response() objects for send_input."""
     driver = MagicMock()
     if responses:
-        driver.send_command.side_effect = list(responses)
+        driver.send_input.side_effect = list(responses)
     else:
-        driver.send_command.return_value = mock_response()
+        driver.send_input.return_value = mock_response()
     return driver
 
 

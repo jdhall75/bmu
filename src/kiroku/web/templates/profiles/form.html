@@ -15,16 +15,9 @@
   <label>Platform (CLI)</label>
   <select name="platform">
     <option value=""{% if not profile or not profile.platform %} selected{% endif %}>(none)</option>
-    <optgroup label="Core">
-      {% for p in platforms %}
-        <option value="{{ p }}"{% if profile and profile.platform == p %} selected{% endif %}>{{ p }}</option>
-      {% endfor %}
-    </optgroup>
-    <optgroup label="Community">
-      {% for p in community_platforms %}
-        <option value="{{ p }}"{% if profile and profile.platform == p %} selected{% endif %}>{{ p }}</option>
-      {% endfor %}
-    </optgroup>
+    {% for p in platforms %}
+      <option value="{{ p }}"{% if profile and profile.platform == p %} selected{% endif %}>{{ p }}</option>
+    {% endfor %}
   </select>
   <label>Transport</label>
   <select name="transport">

@@ -18,9 +18,7 @@ dependencies = [
     "pydantic-settings>=2.4",
     "redis>=5.0",
     "croniter>=2.0",
-    "scrapli>=2024.7.30",
-    "scrapli-netconf>=2024.7.30",
-    "scrapli[asyncssh]>=2024.7.30",
+    "scrapli2>=2.0.0rc7",
     "textfsm>=1.1",
     "ttp>=0.9",
     "lxml>=5.2",
@@ -32,7 +30,6 @@ dependencies = [
     "httpx>=0.27",
     "GitPython>=3.1",
     "python-multipart>=0.0.9",
-    "scrapli-community>=2025.1.30",
 ]
 
 [project.scripts]

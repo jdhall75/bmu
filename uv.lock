@@ -96,19 +96,6 @@ wheels = [
 ]
 
 [[package]]
-name = "asyncssh"
-version = "2.22.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cryptography" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/d5/957886c316466349d55c4de6a688a10a98295c0b4429deb8db1a17f3eb19/asyncssh-2.22.0.tar.gz", hash = "sha256:c3ce72b01be4f97b40e62844dd384227e5ff5a401a3793007c42f86a5c8eb537", size = 540523, upload-time = "2025-12-21T23:38:30.5Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ed/ae/0da2f2214fc183338af1afe5a103a2052fd03464e8eafbd827abff58a4d0/asyncssh-2.22.0-py3-none-any.whl", hash = "sha256:d16465ccdf1ed20eba1131b14415b155e047f6f5be0d19f39c2e0b61331ee0e7", size = 374938, upload-time = "2025-12-21T23:38:28.976Z" },
-]
-
-[[package]]
 name = "bitwarden-sdk"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -121,80 +108,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/77/93/8905bd312f40a0c1c7fabd939a3271380ccad959b9f99eda452f254fabfa/bitwarden_sdk-2.0.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a49739ebe37103df677e263637fdabc61682f10a5f4518fb22b130d530fffbcd", size = 3192519, upload-time = "2026-02-05T23:00:26.342Z" },
     { url = "https://files.pythonhosted.org/packages/55/03/55ea33d637e74bf7e50f39c361b82c8f03630d6f35ae8944d3a4a8399585/bitwarden_sdk-2.0.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1c0e2dd8d8a3db2f0cb29d6dcd55fd578bd66839f666b8e1712712b6e9791021", size = 3397007, upload-time = "2026-02-05T23:00:28.572Z" },
     { url = "https://files.pythonhosted.org/packages/bf/17/a96033bc9a55521a9d2a4022d69f72da302df4ac83eb182379fec9df102c/bitwarden_sdk-2.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:9b9a523dab81cca56151481bd0dce07bd58695fd14b4c5bcab520c7a24fc16c3", size = 3347145, upload-time = "2026-02-05T23:00:30.569Z" },
-]
-
-[[package]]
-name = "bmu"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "alembic" },
-    { name = "asyncpg" },
-    { name = "bitwarden-sdk", marker = "python_full_version < '4'" },
-    { name = "click" },
-    { name = "croniter" },
-    { name = "cryptography" },
-    { name = "gitpython" },
-    { name = "httpx" },
-    { name = "hvac" },
-    { name = "litestar", extra = ["jinja", "standard"] },
-    { name = "lxml" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "python-multipart" },
-    { name = "redis" },
-    { name = "scrapli", extra = ["asyncssh"] },
-    { name = "scrapli-community" },
-    { name = "scrapli-netconf" },
-    { name = "sqlalchemy" },
-    { name = "structlog" },
-    { name = "textfsm" },
-    { name = "ttp" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.13" },
-    { name = "asyncpg", specifier = ">=0.29" },
-    { name = "bitwarden-sdk", marker = "python_full_version < '4'", specifier = ">=1.0" },
-    { name = "click", specifier = ">=8.1" },
-    { name = "croniter", specifier = ">=2.0" },
-    { name = "cryptography", specifier = ">=43.0" },
-    { name = "gitpython", specifier = ">=3.1" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "hvac", specifier = ">=2.3" },
-    { name = "litestar", extras = ["jinja", "standard"], specifier = ">=2.12" },
-    { name = "lxml", specifier = ">=5.2" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pydantic", specifier = ">=2.7" },
-    { name = "pydantic-settings", specifier = ">=2.4" },
-    { name = "python-multipart", specifier = ">=0.0.9" },
-    { name = "redis", specifier = ">=5.0" },
-    { name = "scrapli", specifier = ">=2024.7.30" },
-    { name = "scrapli", extras = ["asyncssh"], specifier = ">=2024.7.30" },
-    { name = "scrapli-community", specifier = ">=2025.1.30" },
-    { name = "scrapli-netconf", specifier = ">=2024.7.30" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "structlog", specifier = ">=24.1" },
-    { name = "textfsm", specifier = ">=1.1" },
-    { name = "ttp", specifier = ">=0.9" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
 ]
 
 [[package]]
@@ -789,6 +702,75 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ea/98/d6cadf4d5a1c03b2136837a435682418c29fdeb66be137128544cecc5b7a/jsbeautifier-1.15.4.tar.gz", hash = "sha256:5bb18d9efb9331d825735fbc5360ee8f1aac5e52780042803943aa7f854f7592", size = 75257, upload-time = "2025-02-27T17:53:53.252Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2d/14/1c65fccf8413d5f5c6e8425f84675169654395098000d8bddc4e9d3390e1/jsbeautifier-1.15.4-py3-none-any.whl", hash = "sha256:72f65de312a3f10900d7685557f84cb61a9733c50dcc27271a39f5b0051bf528", size = 94707, upload-time = "2025-02-27T17:53:46.152Z" },
+]
+
+[[package]]
+name = "kiroku"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "bitwarden-sdk", marker = "python_full_version < '4'" },
+    { name = "click" },
+    { name = "croniter" },
+    { name = "cryptography" },
+    { name = "gitpython" },
+    { name = "httpx" },
+    { name = "hvac" },
+    { name = "litestar", extra = ["jinja", "standard"] },
+    { name = "lxml" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-multipart" },
+    { name = "redis" },
+    { name = "scrapli2" },
+    { name = "sqlalchemy" },
+    { name = "structlog" },
+    { name = "textfsm" },
+    { name = "ttp" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.13" },
+    { name = "asyncpg", specifier = ">=0.29" },
+    { name = "bitwarden-sdk", marker = "python_full_version < '4'", specifier = ">=1.0" },
+    { name = "click", specifier = ">=8.1" },
+    { name = "croniter", specifier = ">=2.0" },
+    { name = "cryptography", specifier = ">=43.0" },
+    { name = "gitpython", specifier = ">=3.1" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "hvac", specifier = ">=2.3" },
+    { name = "litestar", extras = ["jinja", "standard"], specifier = ">=2.12" },
+    { name = "lxml", specifier = ">=5.2" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pydantic-settings", specifier = ">=2.4" },
+    { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "redis", specifier = ">=5.0" },
+    { name = "scrapli2", specifier = ">=2.0.0rc7" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "structlog", specifier = ">=24.1" },
+    { name = "textfsm", specifier = ">=1.1" },
+    { name = "ttp", specifier = ">=0.9" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
 ]
 
 [[package]]
@@ -1648,42 +1630,16 @@ wheels = [
 ]
 
 [[package]]
-name = "scrapli"
-version = "2026.2.20"
+name = "scrapli2"
+version = "2.0.0rc7"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cc/20/5a16997013f9aca4100e41493a93af774b1e73ef2c0fafc312a250b7425a/scrapli-2026.2.20.tar.gz", hash = "sha256:b6f8492110601c11ca8394d8540814464bb97681b87e92b30bb6853b5213558a", size = 104525, upload-time = "2026-02-20T23:42:57.414Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/5c/ee1c1049f5a003d4bac8c0c2470df7ca16a19390d8176217e60f755daca3/scrapli2-2.0.0rc7.tar.gz", hash = "sha256:7539e393520b5be76e13f5f411f3a85f5140f5a829986e709eff83fe22b86c2b", size = 4303215, upload-time = "2026-04-29T19:19:16.894Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2f/bd/4297e274df5cb43d0e3a85d9a30e7298daa13185f26442ef3f142a047105/scrapli-2026.2.20-py3-none-any.whl", hash = "sha256:abbe6f0d70e9b59166e590a74335781e4b5987a488403e08110ce75321a255af", size = 145891, upload-time = "2026-02-20T23:42:56.113Z" },
-]
-
-[package.optional-dependencies]
-asyncssh = [
-    { name = "asyncssh" },
-]
-
-[[package]]
-name = "scrapli-community"
-version = "2025.1.30"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "scrapli" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/92/29/b5df286b9cb143f1e95b7824a8ba1ebb0fc7606b96a0a50a62fc50cf3858/scrapli_community-2025.1.30.tar.gz", hash = "sha256:5357d1e471879203f648948adf114d8155a69ca1242060504d9b92f54f79d119", size = 33083, upload-time = "2025-01-31T00:50:37.445Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/67/c0c0d088a786fcaa3e0584a765f1da00b0560dadc7f0ea8c8755b7d175f3/scrapli_community-2025.1.30-py3-none-any.whl", hash = "sha256:dc4d02193ec3bb14cec9e04ab0d48fc59d575e1ccedac92fb4b8bbd6f3b6726f", size = 93093, upload-time = "2025-01-31T00:50:36.099Z" },
-]
-
-[[package]]
-name = "scrapli-netconf"
-version = "2026.1.12"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "lxml" },
-    { name = "scrapli" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/64/30/5498e4cef2b1c8ba9826d6b05a6507b0906c8ccc168d486f8a3df58414cd/scrapli_netconf-2026.1.12.tar.gz", hash = "sha256:6e497d52c986ed8d05504767d84e56487f5887271f1ab59b569fb30e879f8f9b", size = 30372, upload-time = "2026-01-12T20:47:00.211Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/a4/52c43c4ebf8da5868091bcae4be859c16a8a8782adfc94643618c4e5a89b/scrapli_netconf-2026.1.12-py3-none-any.whl", hash = "sha256:ec833aa4f29407af2622391c3afb84721af736869edd7d4b1f4b4e9faf9decda", size = 37171, upload-time = "2026-01-12T20:46:58.834Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/19/42c5ce8e9199c13b9f3e3beece9090d265a0084172309a9437fb61016d29/scrapli2-2.0.0rc7-py3-none-macosx_11_0_arm64.whl", hash = "sha256:9a6135370b45c76c000fe99aa0d5c05eb9658a5fd0016542f2167924c8b4f90e", size = 2096173, upload-time = "2026-04-29T19:19:09.221Z" },
+    { url = "https://files.pythonhosted.org/packages/30/22/9e992e36a9a53cda5b89bed0419138d70afaecec9d9c3cae5a297e548934/scrapli2-2.0.0rc7-py3-none-manylinux2010_x86_64.whl", hash = "sha256:32d50ebbeea8890c6459ea12dc27bb78a7c9a08a7e7357c96ef575dd74cd3c53", size = 6366130, upload-time = "2026-04-29T19:19:11.008Z" },
+    { url = "https://files.pythonhosted.org/packages/76/2e/f6e3d3afe47f340fb66760414f6babf4f759b72245ad474d3fd37c700f3c/scrapli2-2.0.0rc7-py3-none-manylinux2014_aarch64.whl", hash = "sha256:a15b3376936dc903af56261764f859d1c532afc7f438fcd6217f8c8dcf25d55b", size = 6205440, upload-time = "2026-04-29T19:19:12.65Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/c0/c83332f31532b99877a555238e199a80b369df1530240f5cd1a54a55a83a/scrapli2-2.0.0rc7-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:8aa7a3dab7a93b9daacf83f82992ede18d5902805058c246bd865e21fc6de075", size = 6180007, upload-time = "2026-04-29T19:19:14.146Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/3e/9be5260f3a8ece714656f32760c345eff762fdde3cabd2537620e567168d/scrapli2-2.0.0rc7-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:25c09b1b289e11d02560cd6e198cf375f86691be60d4bb11581d39bbed37d69d", size = 6340476, upload-time = "2026-04-29T19:19:15.523Z" },
 ]
 
 [[package]]

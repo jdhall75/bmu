@@ -1,14 +1,35 @@
-"""Run a JobSpec against a real device using scrapli (sync).
+"""Run a JobSpec against a real device using scrapli2 (sync).
 
-We use scrapli's platform driver registry when ``platform`` is a known
-platform name; otherwise we fall back to ``GenericDriver`` and apply the
-profile's prompt pattern / pre-commands / paging directives.
+scrapli2 unifies CLI and NETCONF into a single package. The transport is
+chosen by the type of TransportOptions passed:
+  - TransportBinOptions  → bin/OpenSSH (default for SSH)
+  - TransportTelnetOptions → telnet
+
+Platform definitions are YAML files. Built-in definitions cover the core
+platforms (cisco_iosxe, cisco_iosxr, etc.). For the "generic" platform,
+a minimal definition is written to a temp file using the profile's
+prompt_pattern, then deleted after the connection is opened.
+
+Enable passwords are passed via AuthOptions.lookups; they take effect when
+a platform definition references __lookup::enable in its instructions.
 """
-
 from __future__ import annotations
 
+import contextlib
+import os
+import tempfile
 import time
 from datetime import datetime, timezone
+
+from scrapli import (
+    AuthOptions,
+    Cli,
+    LookupKeyValue,
+    Netconf,
+    SessionOptions,
+    TransportBinOptions,
+    TransportTelnetOptions,
+)
 
 from kiroku.config import get_settings
 from kiroku.credentials.base import CredentialMaterial
@@ -16,69 +37,103 @@ from kiroku.jobs import CommandResult, JobResult, JobSpec
 from kiroku.logging import get_logger
 from kiroku.worker.parsers import parse
 
-from scrapli.driver.generic import GenericDriver
-from scrapli import Scrapli
-
 log = get_logger(__name__)
+
+_DEFAULT_PROMPT = r"^.*[#>$]\s*$"
 
 
 def _now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-def _build_cli_driver(
-    spec: JobSpec, cred: CredentialMaterial
-) -> GenericDriver | Scrapli:
-    """Return an opened scrapli connection ready for ``send_command*``."""
+def _write_generic_definition(prompt_pattern: str | None) -> str:
+    """Write a minimal platform YAML for generic/unknown devices.
+
+    Returns the path to the temp file; caller must delete it after open().
+    """
+    pattern = (prompt_pattern or _DEFAULT_PROMPT).replace("'", '"')
+    content = (
+        f'prompt_pattern: "{pattern}"\n'
+        'default_mode: "exec"\n'
+        "modes:\n"
+        '  - name: "exec"\n'
+        f'    prompt_pattern: "{pattern}"\n'
+    )
+    fd, path = tempfile.mkstemp(suffix=".yaml", prefix="kiroku_def_")
+    with os.fdopen(fd, "w") as fh:
+        fh.write(content)
+    return path
+
+
+def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str | None]:
+    """Build a Cli driver for the given spec.
+
+    Returns (driver, temp_definition_path). temp_definition_path is non-None
+    only for the generic platform; callers must delete it after driver.open().
+    """
     settings = get_settings()
-    common = {
-        "host": spec.hostname,
-        "port": spec.port or 22,
-        "auth_username": cred.username,
-        "auth_password": cred.password or "",
-        "auth_secondary": cred.enable_password or "",
-        "auth_strict_key": False,
-        "transport": "system" if spec.transport != "telnet" else "telnet",
-        "timeout_socket": settings.worker_connect_timeout,
-        "timeout_transport": settings.worker_connect_timeout,
-        "timeout_ops": settings.worker_command_timeout,
-    }
-    if cred.private_key:
-        # scrapli wants a path; for MVP we expect inline keys to be written
-        # into a tmpfile. Keep simple - require password auth for now if no
-        # path is supplied.
-        common["auth_private_key"] = cred.private_key
 
-    platform = (spec.platform or "generic").lower()
-    if platform == "generic":
-        from scrapli.driver import GenericDriver
+    lookups = (
+        [LookupKeyValue(key="enable", value=cred.enable_password)]
+        if cred.enable_password
+        else None
+    )
+    auth = AuthOptions(
+        username=cred.username,
+        password=cred.password or "",
+        private_key_path=cred.private_key or None,
+        private_key_passphrase=cred.private_key_passphrase or None,
+        lookups=lookups,
+    )
+    session = SessionOptions(operation_timeout_s=settings.worker_command_timeout)
 
-        kwargs = dict(common)
-        if spec.prompt_pattern:
-            kwargs["comms_prompt_pattern"] = spec.prompt_pattern
-        return GenericDriver(**kwargs)
+    if spec.transport == "telnet":
+        transport_opts: TransportBinOptions | TransportTelnetOptions = TransportTelnetOptions()
+        default_port = 23
+    else:
+        transport_opts = TransportBinOptions(enable_strict_key=False)
+        default_port = 22
 
-    from scrapli import Scrapli
+    platform = (spec.platform or "").lower()
+    temp_path: str | None = None
 
-    return Scrapli(platform=platform, **common)
+    if platform in ("", "generic"):
+        temp_path = _write_generic_definition(spec.prompt_pattern)
+        definition: str | None = temp_path
+    else:
+        definition = platform
+
+    driver = Cli(
+        host=spec.hostname,
+        port=spec.port or default_port,
+        definition_file_or_name=definition,
+        auth_options=auth,
+        session_options=session,
+        transport_options=transport_opts,
+    )
+    return driver, temp_path
 
 
 def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     started = _now_iso()
-    driver = _build_cli_driver(spec, cred)
+    driver, temp_path = _build_cli_driver(spec, cred)
     config_chunks: list[str] = []
     cmd_results: list[CommandResult] = []
     error: str | None = None
     try:
         driver.open()
+        with contextlib.suppress(OSError):
+            if temp_path:
+                os.unlink(temp_path)
+                temp_path = None
         try:
             for pre in spec.pre_commands:
-                driver.send_command(pre)
+                driver.send_input(input_=pre)
             if spec.disable_paging_command:
-                driver.send_command(spec.disable_paging_command)
+                driver.send_input(input_=spec.disable_paging_command)
             for cmd in spec.commands:
                 t0 = time.perf_counter()
-                resp = driver.send_command(cmd)
+                resp = driver.send_input(input_=cmd)
                 elapsed_ms = int((time.perf_counter() - t0) * 1000)
                 cmd_results.append(
                     CommandResult(
@@ -95,6 +150,10 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         log.error("CLI run failed", device=spec.device_name, error=error)
+    finally:
+        with contextlib.suppress(OSError):
+            if temp_path:
+                os.unlink(temp_path)
 
     parsed = None
     if spec.kind == "collect" and spec.parser_type and cmd_results:
@@ -126,25 +185,22 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     parsed = None
 
     try:
-        from scrapli_netconf.driver import NetconfDriver
-
         settings = get_settings()
-        driver = NetconfDriver(
+        driver = Netconf(
             host=spec.hostname,
             port=spec.port or 830,
-            auth_username=cred.username,
-            auth_password=cred.password or "",
-            auth_strict_key=False,
-            transport="system",
-            timeout_socket=settings.worker_connect_timeout,
-            timeout_transport=settings.worker_connect_timeout,
-            timeout_ops=settings.worker_command_timeout,
+            auth_options=AuthOptions(
+                username=cred.username,
+                password=cred.password or "",
+            ),
+            session_options=SessionOptions(operation_timeout_s=settings.worker_command_timeout),
+            transport_options=TransportBinOptions(enable_strict_key=False),
         )
         driver.open()
         try:
             if not spec.rpc:
                 raise ValueError("netconf profile is missing rpc")
-            resp = driver.rpc(filter_=spec.rpc)
+            resp = driver.raw_rpc(rpc=spec.rpc)
             raw_xml = resp.result
         finally:
             driver.close()
@@ -174,26 +230,25 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
 
 
 def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
-    """Run commands, parse version output, then query the CVE API.
-
-    Command execution and parsing is identical to a collect run. The CVE
-    lookup is delegated to kiroku.cve (implemented in Phase 3); until that
-    module exists, cve_entries is left empty.
-    """
+    """Run commands, parse version output, then query the CVE API."""
     started = _now_iso()
-    driver = _build_cli_driver(spec, cred)
+    driver, temp_path = _build_cli_driver(spec, cred)
     cmd_results: list[CommandResult] = []
     error: str | None = None
     try:
         driver.open()
+        with contextlib.suppress(OSError):
+            if temp_path:
+                os.unlink(temp_path)
+                temp_path = None
         try:
             for pre in spec.pre_commands:
-                driver.send_command(pre)
+                driver.send_input(input_=pre)
             if spec.disable_paging_command:
-                driver.send_command(spec.disable_paging_command)
+                driver.send_input(input_=spec.disable_paging_command)
             for cmd in spec.commands:
                 t0 = time.perf_counter()
-                resp = driver.send_command(cmd)
+                resp = driver.send_input(input_=cmd)
                 elapsed_ms = int((time.perf_counter() - t0) * 1000)
                 cmd_results.append(
                     CommandResult(
@@ -208,6 +263,10 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         log.error("CVE scan CLI run failed", device=spec.device_name, error=error)
+    finally:
+        with contextlib.suppress(OSError):
+            if temp_path:
+                os.unlink(temp_path)
 
     parsed = None
     if spec.parser_type and cmd_results:
