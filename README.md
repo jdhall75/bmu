@@ -72,8 +72,7 @@ so the stack runs out of the box with `docker compose up`.
 |---|---|---|
 | `KIROKU_WORKER_CONCURRENCY` | `8` | Number of concurrent device jobs per worker process |
 | `KIROKU_WORKER_CONNECT_TIMEOUT` | `30` | Reserved for transport-level socket connect timeout (seconds) |
-| `KIROKU_WORKER_COMMAND_TIMEOUT` | `60` | scrapli per-operation timeout in seconds (covers auth + each command) |
-| `KIROKU_WORKER_JOB_TIMEOUT` | `300` | Absolute wall-clock limit per job in seconds. Guards against `driver.close()` hanging on a broken session after a command timeout — guarantees the recorder always receives a terminal result. Should be greater than `KIROKU_WORKER_COMMAND_TIMEOUT`. |
+| `KIROKU_WORKER_COMMAND_TIMEOUT` | `60` | scrapli per-operation timeout in seconds (covers auth + each command). When exceeded, scrapli raises `OperationException: TimeoutExceeded`; the worker records the failure and returns immediately without blocking on close. |
 
 ### Web
 

@@ -294,11 +294,11 @@ class TestRunCli:
         self._run(make_spec(), driver=driver)
         driver.close.assert_called_once()
 
-    def test_driver_close_called_even_when_command_raises(self):
+    def test_driver_close_not_called_when_command_raises(self):
         driver = make_driver()
         driver.send_input.side_effect = RuntimeError("timeout")
         self._run(make_spec(), driver=driver)
-        driver.close.assert_called_once()
+        driver.close.assert_not_called()
 
     # ---- result fields -----------------------------------------------------
 
@@ -392,12 +392,12 @@ class TestRunNetconf:
         self._run(spec, driver=driver)
         driver.close.assert_called_once()
 
-    def test_driver_close_called_on_exception(self):
+    def test_driver_close_not_called_on_exception(self):
         spec = self._netconf_spec()
         driver = self._make_netconf_driver()
         driver.raw_rpc.side_effect = TimeoutError("ops timeout")
         self._run(spec, driver=driver)
-        driver.close.assert_called_once()
+        driver.close.assert_not_called()
 
     def test_netconf_driver_constructed_with_correct_args(self):
         from scrapli import AuthOptions, SessionOptions, TransportBinOptions

@@ -110,26 +110,27 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             if temp_path:
                 os.unlink(temp_path)
                 temp_path = None
-        try:
-            for cmd in spec.commands:
-                t0 = time.perf_counter()
-                resp = driver.send_input(input_=cmd)
-                elapsed_ms = int((time.perf_counter() - t0) * 1000)
-                cmd_results.append(
-                    CommandResult(
-                        command=cmd,
-                        output=resp.result,
-                        elapsed_ms=elapsed_ms,
-                        failed=resp.failed,
-                    )
+        for cmd in spec.commands:
+            t0 = time.perf_counter()
+            resp = driver.send_input(input_=cmd)
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            cmd_results.append(
+                CommandResult(
+                    command=cmd,
+                    output=resp.result,
+                    elapsed_ms=elapsed_ms,
+                    failed=resp.failed,
                 )
-                if spec.kind == "backup":
-                    config_chunks.append(resp.result)
-        finally:
-            driver.close()
+            )
+            if spec.kind == "backup":
+                config_chunks.append(resp.result)
+        driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         log.error("CLI run failed", device=spec.device_name, error=error)
+        # driver.close() is intentionally skipped: calling close() on a session
+        # that raised (e.g. OperationException: TimeoutExceeded) blocks on the
+        # underlying socket. The OS reclaims the connection on its own.
     finally:
         with contextlib.suppress(OSError):
             if temp_path:
@@ -177,16 +178,15 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             transport_options=TransportBinOptions(enable_strict_key=False),
         )
         driver.open()
-        try:
-            if not spec.rpc:
-                raise ValueError("netconf profile is missing rpc")
-            resp = driver.raw_rpc(rpc=spec.rpc)
-            raw_xml = resp.result
-        finally:
-            driver.close()
+        if not spec.rpc:
+            raise ValueError("netconf profile is missing rpc")
+        resp = driver.raw_rpc(rpc=spec.rpc)
+        raw_xml = resp.result
+        driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         log.error("NETCONF run failed", device=spec.device_name, error=error)
+        # driver.close() intentionally skipped on exception — same reason as _run_cli.
 
     if raw_xml and spec.parser_type:
         try:
@@ -221,24 +221,23 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             if temp_path:
                 os.unlink(temp_path)
                 temp_path = None
-        try:
-            for cmd in spec.commands:
-                t0 = time.perf_counter()
-                resp = driver.send_input(input_=cmd)
-                elapsed_ms = int((time.perf_counter() - t0) * 1000)
-                cmd_results.append(
-                    CommandResult(
-                        command=cmd,
-                        output=resp.result,
-                        elapsed_ms=elapsed_ms,
-                        failed=resp.failed,
-                    )
+        for cmd in spec.commands:
+            t0 = time.perf_counter()
+            resp = driver.send_input(input_=cmd)
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            cmd_results.append(
+                CommandResult(
+                    command=cmd,
+                    output=resp.result,
+                    elapsed_ms=elapsed_ms,
+                    failed=resp.failed,
                 )
-        finally:
-            driver.close()
+            )
+        driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
         log.error("CVE scan CLI run failed", device=spec.device_name, error=error)
+        # driver.close() intentionally skipped on exception — same reason as _run_cli.
     finally:
         with contextlib.suppress(OSError):
             if temp_path:

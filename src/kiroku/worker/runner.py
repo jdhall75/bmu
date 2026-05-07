@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import os
 import signal
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -43,71 +42,7 @@ def _mark_running(run_id: int) -> None:
             run.started_at = datetime.now(tz=timezone.utc)
 
 
-def _now_iso() -> str:
-    return datetime.now(tz=timezone.utc).isoformat()
-
-
-def _execute_with_timeout(
-    spec: JobSpec, material, timeout_s: int
-) -> JobResult:
-    """Run execute() in a daemon thread; return a failed result if it exceeds timeout_s.
-
-    The underlying thread is abandoned on timeout — it will eventually exit
-    when the OS-level TCP connect times out or scrapli's session timer fires.
-    """
-    result_box: list[JobResult] = []
-    exc_box: list[Exception] = []
-
-    def _run() -> None:
-        try:
-            result_box.append(execute(spec, material))
-        except Exception as exc:  # noqa: BLE001
-            exc_box.append(exc)
-
-    t = threading.Thread(target=_run, daemon=True, name=f"job-{spec.run_id}")
-    t.start()
-    t.join(timeout=timeout_s)
-
-    if t.is_alive():
-        now = _now_iso()
-        log.error(
-            "job timed out",
-            run_id=spec.run_id,
-            device=spec.device_name,
-            timeout_s=timeout_s,
-        )
-        return JobResult(
-            run_id=spec.run_id,
-            device_id=spec.device_id,
-            device_name=spec.device_name,
-            kind=spec.kind,
-            success=False,
-            error=f"job timed out after {timeout_s}s",
-            started_at=now,
-            finished_at=now,
-        )
-
-    if exc_box:
-        exc = exc_box[0]
-        log.error("worker execute crashed",
-                  device=spec.device_name, error=str(exc), exc_info=False)
-        now = _now_iso()
-        return JobResult(
-            run_id=spec.run_id,
-            device_id=spec.device_id,
-            device_name=spec.device_name,
-            kind=spec.kind,
-            success=False,
-            error=f"{type(exc).__name__}: {exc}",
-            started_at=now,
-            finished_at=now,
-        )
-
-    return result_box[0]
-
-
 def _handle(msg_id: str, spec: JobSpec) -> None:
-    settings = get_settings()
     log.info("job received", run_id=spec.run_id, device=spec.device_name, kind=spec.kind)
     _mark_running(spec.run_id)
 
@@ -129,7 +64,23 @@ def _handle(msg_id: str, spec: JobSpec) -> None:
             return
         material = resolve_credential(cred_row)
 
-    result = _execute_with_timeout(spec, material, settings.worker_job_timeout)
+    try:
+        result = execute(spec, material)
+    except Exception as exc:
+        log.error("worker execute crashed",
+                  device=spec.device_name, error=str(exc), exc_info=True)
+        now = datetime.now(tz=timezone.utc).isoformat()
+        result = JobResult(
+            run_id=spec.run_id,
+            device_id=spec.device_id,
+            device_name=spec.device_name,
+            kind=spec.kind,
+            success=False,
+            error=f"{type(exc).__name__}: {exc}",
+            started_at=now,
+            finished_at=now,
+        )
+
     publish_result(result)
     ack_job(msg_id)
     log.info("job completed", run_id=spec.run_id, device=spec.device_name,
