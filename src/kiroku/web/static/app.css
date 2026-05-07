@@ -65,3 +65,15 @@ tr.row-failed td { background:#fff8f8; }
 .search-headline { padding:8px 14px; font-size:13px; color:#444; }
 .search-headline mark { background:#fff5b1; }
 .pagination { display:flex; gap:16px; align-items:center; margin-top:12px; font-size:13px; }
+.testbed-header { display:flex; align-items:baseline; gap:24px; flex-wrap:wrap; margin-bottom:12px; }
+.testbed-header h2 { margin:0; }
+.testbed-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.testbed-controls label { font-size:13px; color:var(--muted); }
+.testbed-controls select { padding:5px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
+.testbed-panes { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.testbed-pane { display:flex; flex-direction:column; gap:4px; }
+.testbed-pane-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.testbed-textarea { width:100%; height:42vh; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; padding:10px; border:1px solid #ccc; border-radius:4px; resize:vertical; background:#fff; }
+.testbed-result { display:flex; flex-direction:column; gap:4px; }
+.testbed-result-textarea { height:28vh; background:#0e1116; color:#d6dde7; border-color:#1e2a33; }
+.testbed-result-error { color:#f28b82; }

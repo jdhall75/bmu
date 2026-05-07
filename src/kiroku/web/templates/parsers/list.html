@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Parser Templates - Kiroku{% endblock %}
+{% block content %}
+<form class="table-form" method="POST" action="/parsers/bulk">
+  <div class="toolbar">
+    <a class="btn" href="/parsers/new">New parser template</a>
+    <a class="btn btn-secondary" href="/parsers/test">Test bed</a>
+    <span class="bulk-actions" id="bulk-actions" style="display:none">
+      <button name="action" value="delete" onclick="return confirm('Delete selected templates?')">Delete selected</button>
+    </span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all" title="Select all"></th>
+        <th>Name</th><th>Type</th><th>Description</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in parsers %}
+      <tr>
+        <td><input type="checkbox" name="ids" value="{{ p.id }}"></td>
+        <td><a href="/parsers/{{ p.id }}/edit">{{ p.name }}</a></td>
+        <td><code>{{ p.type.value }}</code></td>
+        <td>{{ p.description or '' }}</td>
+        <td>
+          <a class="btn btn-secondary" href="/parsers/{{ p.id }}/edit">edit</a>
+          <a class="btn btn-secondary" href="/parsers/test?load={{ p.id }}">test</a>
+          <button formaction="/parsers/{{ p.id }}/delete" onclick="return confirm('Delete {{ p.name }}?')">delete</button>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">No parser templates yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</form>
+<script>
+(function () {
+  var sa = document.getElementById('select-all');
+  var ba = document.getElementById('bulk-actions');
+  function update() { ba.style.display = document.querySelectorAll('input[name="ids"]:checked').length ? '' : 'none'; }
+  sa.addEventListener('change', function () {
+    document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.checked = sa.checked; });
+    update();
+  });
+  document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
+})();
+</script>
+{% endblock %}

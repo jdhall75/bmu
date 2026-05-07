@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Parser Test Bed - Kiroku{% endblock %}
+{% block content %}
+<div class="testbed-header">
+  <h2>Parser test bed</h2>
+  <div class="testbed-controls">
+    <label>Type</label>
+    <select id="parser-type">
+      <option value="textfsm">TextFSM</option>
+      <option value="ttp">TTP</option>
+      <option value="xslt">XSLT</option>
+    </select>
+    <label>Load saved template</label>
+    <select id="load-template">
+      <option value="">(choose…)</option>
+      {% for p in parsers %}
+        <option value="{{ p.id }}"
+                data-type="{{ p.type.value }}"
+                data-body="{{ p.body | e }}">{{ p.name }} ({{ p.type.value }})</option>
+      {% endfor %}
+    </select>
+    <button class="btn" onclick="runTest()">&#9654; Run</button>
+    <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<div class="testbed-panes">
+  <div class="testbed-pane">
+    <div class="testbed-pane-label">Device output <span class="muted">(paste raw CLI or XML here)</span></div>
+    <textarea id="test-input" class="testbed-textarea" placeholder="Paste device output here…" spellcheck="false"></textarea>
+  </div>
+  <div class="testbed-pane">
+    <div class="testbed-pane-label">Parser template <span class="muted">(TextFSM / TTP / XSLT)</span></div>
+    <textarea id="test-template" class="testbed-textarea" placeholder="Paste or type your template here…" spellcheck="false"></textarea>
+  </div>
+</div>
+
+<div class="testbed-result">
+  <div class="testbed-pane-label" id="result-label">Result</div>
+  <textarea id="test-result" class="testbed-textarea testbed-result-textarea" readonly placeholder="Results will appear here after clicking Run…" spellcheck="false"></textarea>
+</div>
+
+<script>
+(function () {
+  // Pre-load if ?load=<id> is in the URL
+  var params = new URLSearchParams(location.search);
+  var loadId = params.get('load');
+  if (loadId) {
+    var opt = document.querySelector('#load-template option[value="' + loadId + '"]');
+    if (opt) applyTemplate(opt);
+  }
+
+  document.getElementById('load-template').addEventListener('change', function () {
+    var opt = this.options[this.selectedIndex];
+    if (!opt.value) return;
+    applyTemplate(opt);
+    this.value = '';
+  });
+
+  function applyTemplate(opt) {
+    document.getElementById('parser-type').value = opt.dataset.type;
+    document.getElementById('test-template').value = opt.dataset.body;
+  }
+
+  window.runTest = async function () {
+    var type     = document.getElementById('parser-type').value;
+    var input    = document.getElementById('test-input').value;
+    var template = document.getElementById('test-template').value;
+    var resultEl = document.getElementById('test-result');
+    var label    = document.getElementById('result-label');
+
+    resultEl.value = 'Running…';
+    resultEl.classList.remove('testbed-result-error');
+
+    try {
+      var resp = await fetch('/parsers/test/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, input: input, template: template }),
+      });
+      var data = await resp.json();
+      if (data.ok) {
+        resultEl.value = JSON.stringify(data.result, null, 2);
+        label.textContent = 'Result (' + (Array.isArray(data.result) ? data.result.length + ' row(s)' : 'object') + ')';
+      } else {
+        resultEl.value = data.error;
+        resultEl.classList.add('testbed-result-error');
+        label.textContent = 'Result — error';
+      }
+    } catch (err) {
+      resultEl.value = 'Request failed: ' + err.message;
+      resultEl.classList.add('testbed-result-error');
+    }
+  };
+
+  window.clearAll = function () {
+    document.getElementById('test-input').value = '';
+    document.getElementById('test-template').value = '';
+    document.getElementById('test-result').value = '';
+    document.getElementById('result-label').textContent = 'Result';
+    document.getElementById('test-result').classList.remove('testbed-result-error');
+  };
+
+  // Ctrl+Enter or Cmd+Enter in either top textarea triggers Run
+  ['test-input', 'test-template'].forEach(function (id) {
+    document.getElementById(id).addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        window.runTest();
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}
