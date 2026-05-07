@@ -1,4 +1,6 @@
-from sqlalchemy import ForeignKey, Integer, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from kiroku.db.base import Base, TimestampMixin
@@ -30,3 +32,6 @@ class Device(Base, TimestampMixin):
     credential = relationship("Credential")
 
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    latest_backup_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    latest_backup_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -24,7 +24,7 @@ from kiroku.config import get_settings
 from kiroku.db import session_scope
 from kiroku.jobs import CredentialRef, JobSpec
 from kiroku.logging import configure_logging, get_logger
-from kiroku.models import Device, DeviceGroup, JobKind, Profile, Run, RunStatus, Schedule
+from kiroku.models import Device, DeviceGroup, JobKind, Profile, Run, RunBatch, RunStatus, Schedule
 from kiroku.queue import ensure_consumer_group, publish_job
 
 log = get_logger(__name__)
@@ -116,14 +116,29 @@ def _fire_due(db: Session, now: datetime) -> int:
             continue
 
         group: DeviceGroup = sched.group
+        enabled_devices = [d for d in group.devices if d.enabled]
         log.info("schedule due", schedule=sched.name, group=group.name,
-                 kind=sched.kind.value)
+                 kind=sched.kind.value, devices=len(enabled_devices))
 
-        for device in group.devices:
-            if not device.enabled:
-                continue
+        if not enabled_devices:
+            sched.last_run_at = now
+            sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
+            continue
+
+        batch = RunBatch(
+            schedule_id=sched.id,
+            schedule_name=sched.name,
+            kind=sched.kind.value,
+            total=len(enabled_devices),
+            started_at=now,
+        )
+        db.add(batch)
+        db.flush()  # populate batch.id
+
+        for device in enabled_devices:
             run = Run(
                 schedule_id=sched.id,
+                batch_id=batch.id,
                 device_id=device.id,
                 kind=sched.kind.value,
                 status=RunStatus.PENDING,
@@ -135,6 +150,7 @@ def _fire_due(db: Session, now: datetime) -> int:
                 run.status = RunStatus.FAILED
                 run.error = "no credential available"
                 run.finished_at = now
+                batch.failed += 1
                 continue
             publish_job(spec)
             queued += 1

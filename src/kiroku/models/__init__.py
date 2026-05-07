@@ -5,6 +5,7 @@ from kiroku.models.group import DeviceGroup
 from kiroku.models.parser_template import ParserTemplate, ParserType
 from kiroku.models.profile import Profile, ProfileKind, TransportProtocol
 from kiroku.models.run import Run, RunStatus
+from kiroku.models.run_batch import RunBatch
 from kiroku.models.schedule import JobKind, Schedule
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "Profile",
     "ProfileKind",
     "Run",
+    "RunBatch",
     "RunStatus",
     "Schedule",
     "TransportProtocol",

@@ -48,9 +48,16 @@ class GitStore:
         repo.index.commit("init")
         return repo
 
-    def write(self, *, group: str, device: str, content: str,
-              author_note: str = "") -> tuple[str | None, str]:
-        """Write content, commit if changed. Returns (commit_sha_or_None, sha256)."""
+    def file_path(self, *, group: str, device: str) -> str:
+        """Return the repo-relative path for a device's config file."""
+        return str(Path(_slugify(group)) / f"{_slugify(device)}.cfg")
+
+    def stage(self, *, group: str, device: str, content: str) -> tuple[bool, str]:
+        """Write file and stage it (git add). Does NOT commit.
+
+        Returns (changed, sha256). changed=False means content was identical
+        to what was on disk; no index entry was added.
+        """
         sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
         rel = Path(_slugify(group)) / f"{_slugify(device)}.cfg"
         target = self.root / rel
@@ -60,10 +67,38 @@ class GitStore:
             existing = target.read_text(encoding="utf-8", errors="replace")
             if hashlib.sha256(existing.encode("utf-8")).hexdigest() == sha256:
                 log.debug("no change", device=device, group=group)
-                return None, sha256
+                return False, sha256
 
         target.write_text(content, encoding="utf-8")
         self._repo.index.add([str(rel)])
+        return True, sha256
+
+    def commit_batch(self, message: str) -> str | None:
+        """Commit all currently staged changes. Returns commit sha or None if nothing staged."""
+        if not self._repo.index.diff("HEAD"):
+            return None
+        commit = self._repo.index.commit(message)
+        log.info("git batch commit", sha=commit.hexsha[:8])
+        return commit.hexsha
+
+    def history(self, rel_path: str, max_count: int = 50) -> list[dict]:
+        """Return git log entries for a specific file."""
+        return [
+            {
+                "sha": c.hexsha[:8],
+                "sha_full": c.hexsha,
+                "message": c.message.strip().split("\n")[0],
+                "date": c.committed_datetime.isoformat(),
+            }
+            for c in self._repo.iter_commits(paths=rel_path, max_count=max_count)
+        ]
+
+    def write(self, *, group: str, device: str, content: str,
+              author_note: str = "") -> tuple[str | None, str]:
+        """Write content, commit if changed. Returns (commit_sha_or_None, sha256)."""
+        changed, sha256 = self.stage(group=group, device=device, content=content)
+        if not changed:
+            return None, sha256
         msg = f"backup: {group}/{device}"
         if author_note:
             msg += f"\n\n{author_note}"

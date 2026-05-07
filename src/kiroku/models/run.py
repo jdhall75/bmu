@@ -28,6 +28,11 @@ class Run(Base, TimestampMixin):
     schedule_id: Mapped[int | None] = mapped_column(
         ForeignKey("schedules.id", ondelete="SET NULL"), nullable=True
     )
+    batch_id: Mapped[int | None] = mapped_column(
+        ForeignKey("run_batches.id", ondelete="SET NULL"), nullable=True
+    )
+    batch = relationship("RunBatch", back_populates="runs")
+
     device_id: Mapped[int] = mapped_column(
         ForeignKey("devices.id", ondelete="CASCADE"), nullable=False
     )
