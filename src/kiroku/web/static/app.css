@@ -78,3 +78,15 @@ tr.row-failed td { background:#fff8f8; }
 .testbed-result { flex:2; display:flex; flex-direction:column; gap:4px; min-height:0; }
 .testbed-result-textarea { background:#0e1116; color:#d6dde7; border-color:#1e2a33; }
 .testbed-result-error { color:#f28b82; }
+.diff-table { width:100%; border-collapse:collapse; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; }
+.diff-table th, .diff-table td { padding:1px 8px; border:none; vertical-align:top; }
+.diff-table th { background:#f3f3f3; font-weight:600; text-align:center; }
+.diff-ln { color:#888; text-align:right; user-select:none; white-space:nowrap; width:3em; min-width:3em; }
+.diff-code { white-space:pre; width:100%; }
+.diff-added { background:#e6ffec; }
+.diff-added .diff-ln { background:#ccffd8; }
+.diff-removed { background:#ffebe9; }
+.diff-removed .diff-ln { background:#ffd7d5; }
+.diff-hunk { background:#ddf4ff; color:#0969da; }
+.diff-hunk .diff-code { padding-left:8px; }
+.diff-context { background:#fff; }

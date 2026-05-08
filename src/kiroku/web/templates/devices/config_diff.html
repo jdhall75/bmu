@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Config diff: {{ device.name }} - Kiroku{% endblock %}
+{% block content %}
+<h2>{{ device.name }} &mdash; config diff</h2>
+<p class="muted">
+  <code>{{ from_sha[:8] }}</code> &rarr; <code>{{ to_sha[:8] }}</code>
+  &bull; <a href="/devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+</p>
+
+{% if diff_rows %}
+<table class="diff-table">
+  <thead>
+    <tr>
+      <th class="diff-ln">Old</th>
+      <th class="diff-ln">New</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in diff_rows %}
+    {% if row.type == 'header' %}
+    <tr class="diff-hunk">
+      <td class="diff-ln" colspan="2"></td>
+      <td class="diff-code">{{ row.text }}</td>
+    </tr>
+    {% elif row.type == 'added' %}
+    <tr class="diff-added">
+      <td class="diff-ln"></td>
+      <td class="diff-ln">{{ row.new_no }}</td>
+      <td class="diff-code">{{ row.text }}</td>
+    </tr>
+    {% elif row.type == 'removed' %}
+    <tr class="diff-removed">
+      <td class="diff-ln">{{ row.old_no }}</td>
+      <td class="diff-ln"></td>
+      <td class="diff-code">{{ row.text }}</td>
+    </tr>
+    {% else %}
+    <tr class="diff-context">
+      <td class="diff-ln">{{ row.old_no }}</td>
+      <td class="diff-ln">{{ row.new_no }}</td>
+      <td class="diff-code">{{ row.text }}</td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No differences found between these two commits for this file.</p>
+{% endif %}
+{% endblock %}

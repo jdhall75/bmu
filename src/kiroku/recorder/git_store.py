@@ -94,6 +94,53 @@ class GitStore:
             for c in self._repo.iter_commits(paths=rel_path, max_count=max_count)
         ]
 
+    def read_at(self, rel_path: str, sha: str) -> str | None:
+        """Return file content at a specific commit SHA (full or short)."""
+        try:
+            commit = self._repo.commit(sha)
+            blob = commit.tree[rel_path]
+            return blob.data_stream.read().decode("utf-8", errors="replace")
+        except Exception:
+            return None
+
+    def diff_commits(self, rel_path: str, sha_a: str, sha_b: str) -> list[dict]:
+        """Return structured diff lines between two commits for one file.
+
+        Each entry has: type ('context'|'added'|'removed'|'header'),
+        old_no (int|None), new_no (int|None), text (str).
+        """
+        import difflib
+
+        a = (self.read_at(rel_path, sha_a) or "").splitlines(keepends=True)
+        b = (self.read_at(rel_path, sha_b) or "").splitlines(keepends=True)
+
+        rows: list[dict] = []
+        old_no = new_no = 0
+        for line in difflib.unified_diff(a, b, fromfile=sha_a[:8], tofile=sha_b[:8], lineterm=""):
+            text = line.rstrip("\n")
+            if text.startswith("@@"):
+                # parse @@ -old_start,... +new_start,... @@
+                try:
+                    parts = text.split(" ")
+                    old_no = abs(int(parts[1].split(",")[0]))
+                    new_no = abs(int(parts[2].split(",")[0]))
+                except Exception:
+                    pass
+                rows.append({"type": "header", "old_no": None, "new_no": None, "text": text})
+            elif text.startswith("---") or text.startswith("+++"):
+                rows.append({"type": "header", "old_no": None, "new_no": None, "text": text})
+            elif text.startswith("-"):
+                rows.append({"type": "removed", "old_no": old_no, "new_no": None, "text": text[1:]})
+                old_no += 1
+            elif text.startswith("+"):
+                rows.append({"type": "added", "old_no": None, "new_no": new_no, "text": text[1:]})
+                new_no += 1
+            else:
+                rows.append({"type": "context", "old_no": old_no, "new_no": new_no, "text": text[1:] if text.startswith(" ") else text})
+                old_no += 1
+                new_no += 1
+        return rows
+
     def write(self, *, group: str, device: str, content: str,
               author_note: str = "") -> tuple[str | None, str]:
         """Write content, commit if changed. Returns (commit_sha_or_None, sha256)."""

@@ -302,16 +302,38 @@ async def view_device(device_id: int, db: Session) -> Template:
 
 
 @get("/{device_id:int}/config", dependencies={"db": provide_db})
-async def view_config(device_id: int, db: Session) -> Template:
+async def view_config(device_id: int, db: Session, sha: str | None = None) -> Template:
     device = db.get(Device, device_id)
     content: str | None = None
     if device and device.latest_backup_path:
-        path = get_settings().backup_repo_path / device.latest_backup_path
-        if path.exists():
-            content = path.read_text(encoding="utf-8", errors="replace")
+        if sha:
+            from kiroku.recorder.git_store import GitStore
+            content = GitStore().read_at(device.latest_backup_path, sha)
+        else:
+            path = get_settings().backup_repo_path / device.latest_backup_path
+            if path.exists():
+                content = path.read_text(encoding="utf-8", errors="replace")
     return Template(
         template_name="devices/config.html",
-        context={"device": device, "content": content},
+        context={"device": device, "content": content, "sha": sha},
+    )
+
+
+@get("/{device_id:int}/config/diff", dependencies={"db": provide_db})
+async def view_config_diff(
+    device_id: int,
+    db: Session,
+    from_sha: str,
+    to_sha: str,
+) -> Template:
+    from kiroku.recorder.git_store import GitStore
+    device = db.get(Device, device_id)
+    diff_rows: list[dict] = []
+    if device and device.latest_backup_path:
+        diff_rows = GitStore().diff_commits(device.latest_backup_path, from_sha, to_sha)
+    return Template(
+        template_name="devices/config_diff.html",
+        context={"device": device, "diff_rows": diff_rows, "from_sha": from_sha, "to_sha": to_sha},
     )
 
 
@@ -344,6 +366,7 @@ router = Router(
         import_template,
         import_submit,
         view_config,
+        view_config_diff,
         view_config_history,
     ],
 )
