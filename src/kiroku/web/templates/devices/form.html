@@ -52,6 +52,12 @@
     {% endfor %}
   </select>
 
+  <label>Connect timeout <span class="muted">(s)</span></label>
+  <input type="number" name="connect_timeout" value="{{ device.connect_timeout if device and device.connect_timeout else '' }}" placeholder="default ({{ default_connect_timeout }})">
+
+  <label>Command timeout <span class="muted">(s)</span></label>
+  <input type="number" name="command_timeout" value="{{ device.command_timeout if device and device.command_timeout else '' }}" placeholder="default ({{ default_command_timeout }})">
+
   <label>Credential override</label>
   <select name="credential_id">
     <option value=""{% if not device or not device.credential_id %} selected{% endif %}>(use group default)</option>

@@ -41,6 +41,8 @@ def _spec_for(device: Device, job: Job, run: Run, schedule_id: int | None) -> Jo
         parser_body=parser.body if parser else None,
         cve_vendor=job.cve_vendor,
         cve_product=job.cve_product,
+        connect_timeout=device.connect_timeout,
+        command_timeout=device.command_timeout,
         credential=CredentialRef(
             provider=cred.provider.value,
             credential_id=cred.id,

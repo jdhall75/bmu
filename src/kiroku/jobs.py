@@ -49,6 +49,10 @@ class JobSpec(BaseModel):
     cve_vendor: str | None = None
     cve_product: str | None = None
 
+    # Per-device timeout overrides (None → use worker global defaults).
+    connect_timeout: int | None = None
+    command_timeout: int | None = None
+
     credential: CredentialRef
 
 

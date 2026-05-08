@@ -70,9 +70,12 @@ def _device_form_options(db: Session) -> dict:
 
 
 def _device_form_context(db: Session, device=None) -> dict:
+    settings = get_settings()
     return {
         "device": device,
         "platform_value": _platform_value(device),
+        "default_connect_timeout": settings.worker_connect_timeout,
+        "default_command_timeout": settings.worker_command_timeout,
         **_device_form_options(db),
     }
 
@@ -143,6 +146,8 @@ async def create_device(
         credential_id=int(data["credential_id"]) if data.get("credential_id") else None,
         transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
         driver_kind=DriverKind(data["driver_kind"]) if data.get("driver_kind") else None,
+        connect_timeout=int(data["connect_timeout"]) if data.get("connect_timeout") else None,
+        command_timeout=int(data["command_timeout"]) if data.get("command_timeout") else None,
         enabled=bool(data.get("enabled")),
     )
     _apply_platform(d, data)
@@ -212,6 +217,8 @@ async def update_device(
     device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
     device.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
     device.driver_kind = DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
+    device.connect_timeout = int(data["connect_timeout"]) if data.get("connect_timeout") else None
+    device.command_timeout = int(data["command_timeout"]) if data.get("command_timeout") else None
     _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
     db.commit()

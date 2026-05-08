@@ -58,6 +58,10 @@ class Device(Base, TimestampMixin):
         nullable=True,
     )
 
+    # Per-device timeout overrides; None means use the global config defaults.
+    connect_timeout: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    command_timeout: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     # Per-device credential override; falls back to the group's default.
     credential_id: Mapped[int | None] = mapped_column(
         ForeignKey("credentials.id", ondelete="SET NULL"), nullable=True

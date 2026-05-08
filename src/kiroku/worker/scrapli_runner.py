@@ -52,6 +52,8 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
     only for the generic platform; callers must delete it after driver.open().
     """
     settings = get_settings()
+    connect_timeout = spec.connect_timeout or settings.worker_connect_timeout
+    command_timeout = spec.command_timeout or settings.worker_command_timeout
 
     lookups = (
         [LookupKeyValue(key="enable", value=cred.enable_password)]
@@ -65,13 +67,17 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
         private_key_passphrase=cred.private_key_passphrase or None,
         lookups=lookups,
     )
-    session = SessionOptions(operation_timeout_s=settings.worker_command_timeout)
+    session = SessionOptions(operation_timeout_s=command_timeout)
 
     if spec.transport == "telnet":
         transport_opts: TransportBinOptions | TransportTelnetOptions = TransportTelnetOptions()
         default_port = 23
     else:
-        transport_opts = TransportBinOptions(enable_strict_key=False)
+        # Pass ConnectTimeout to the SSH binary via extra_open_args.
+        transport_opts = TransportBinOptions(
+            enable_strict_key=False,
+            extra_open_args=["-o", f"ConnectTimeout={connect_timeout}"],
+        )
         default_port = 22
 
     temp_path: str | None = None
@@ -167,6 +173,8 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
 
     try:
         settings = get_settings()
+        connect_timeout = spec.connect_timeout or settings.worker_connect_timeout
+        command_timeout = spec.command_timeout or settings.worker_command_timeout
         driver = Netconf(
             host=spec.hostname,
             port=spec.port or 830,
@@ -174,8 +182,11 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 username=cred.username,
                 password=cred.password or "",
             ),
-            session_options=SessionOptions(operation_timeout_s=settings.worker_command_timeout),
-            transport_options=TransportBinOptions(enable_strict_key=False),
+            session_options=SessionOptions(operation_timeout_s=command_timeout),
+            transport_options=TransportBinOptions(
+                enable_strict_key=False,
+                extra_open_args=["-o", f"ConnectTimeout={connect_timeout}"],
+            ),
         )
         driver.open()
         if not spec.rpc:
