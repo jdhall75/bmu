@@ -4,10 +4,11 @@
 <h2>Bulk import devices</h2>
 <p>
   Upload a CSV or paste rows below. Required columns:
-  <code>name, hostname, group, profile</code>.
-  Optional: <code>port, description, credentials, enabled</code>
-  (defaults to enabled). Lookups for <code>group</code>, <code>profile</code>,
+  <code>name, hostname, group</code>.
+  Optional: <code>port, description, platform, transport, driver_kind, credentials, enabled</code>
+  (defaults to enabled). Lookups for <code>group</code>
   and <code>credentials</code> are by name &mdash; create those first.
+  <code>platform</code> is a built-in scrapli platform name (e.g. <code>cisco_iosxe</code>).
 </p>
 <p><a href="/devices/import/template">Download CSV template</a></p>
 
@@ -16,8 +17,8 @@
   <input type="file" name="file" accept=".csv,text/csv">
 
   <label>...or paste CSV</label>
-  <textarea name="pasted" placeholder="name,hostname,port,description,group,profile,credentials,enabled
-edge-rtr-01,10.0.0.1,22,,core,cisco-iosxe-backup,core-admin,1"></textarea>
+  <textarea name="pasted" placeholder="name,hostname,port,description,group,platform,transport,driver_kind,credentials,enabled
+edge-rtr-01,10.0.0.1,22,,core,cisco_iosxe,ssh,cli,core-admin,1"></textarea>
 
   <div class="actions">
     <button type="submit">Import</button>
