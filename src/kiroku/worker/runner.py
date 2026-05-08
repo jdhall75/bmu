@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 import signal
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 
 from kiroku.config import get_settings
@@ -96,7 +96,7 @@ def run_worker() -> None:
     log.info("worker starting", consumer=consumer,
              concurrency=settings.worker_concurrency)
 
-    with ThreadPoolExecutor(max_workers=settings.worker_concurrency) as pool:
+    with ProcessPoolExecutor(max_workers=settings.worker_concurrency) as pool:
         while not _stop:
             try:
                 jobs = read_jobs(consumer, count=settings.worker_concurrency,
@@ -105,4 +105,7 @@ def run_worker() -> None:
                 log.error("read_jobs failed", error=str(exc))
                 continue
             for msg_id, spec in jobs:
-                pool.submit(_handle, msg_id, spec)
+                future = pool.submit(_handle, msg_id, spec)
+                future.add_done_callback(
+                    lambda f: f.exception() and log.error("job subprocess failed", error=str(f.exception()))
+                )
