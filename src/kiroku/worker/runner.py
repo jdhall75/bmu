@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import signal
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 
@@ -67,6 +68,7 @@ def _handle(msg_id: str, spec: JobSpec) -> None:
     try:
         result = execute(spec, material)
     except Exception as exc:
+        tb = traceback.format_exc()
         log.error("worker execute crashed",
                   device=spec.device_name, error=str(exc), exc_info=True)
         now = datetime.now(tz=timezone.utc).isoformat()
@@ -76,7 +78,7 @@ def _handle(msg_id: str, spec: JobSpec) -> None:
             device_name=spec.device_name,
             kind=spec.kind,
             success=False,
-            error=f"{type(exc).__name__}: {exc}",
+            error=f"{type(exc).__name__}: {exc}\n\n{tb}",
             started_at=now,
             finished_at=now,
         )

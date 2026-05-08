@@ -20,6 +20,7 @@ import contextlib
 import os
 import tempfile
 import time
+import traceback
 from datetime import datetime, timezone
 
 from scrapli import (
@@ -132,7 +133,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 config_chunks.append(resp.result)
         driver.close()
     except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
+        error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
         log.error("CLI run failed", device=spec.device_name, error=error)
         # driver.close() is intentionally skipped: calling close() on a session
         # that raised (e.g. OperationException: TimeoutExceeded) blocks on the
@@ -195,7 +196,7 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         raw_xml = resp.result
         driver.close()
     except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
+        error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
         log.error("NETCONF run failed", device=spec.device_name, error=error)
         # driver.close() intentionally skipped on exception — same reason as _run_cli.
 
@@ -246,7 +247,7 @@ def _run_cve_scan(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             )
         driver.close()
     except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
+        error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
         log.error("CVE scan CLI run failed", device=spec.device_name, error=error)
         # driver.close() intentionally skipped on exception — same reason as _run_cli.
     finally:
