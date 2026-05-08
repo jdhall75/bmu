@@ -7,8 +7,8 @@ Create Date: 2026-05-07
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0010"
-down_revision = "0009"
+revision = "0010_device_timeouts"
+down_revision = "0009_profiles_to_jobs"
 branch_labels = None
 depends_on = None
 
