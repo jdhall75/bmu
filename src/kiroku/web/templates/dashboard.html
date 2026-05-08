@@ -27,7 +27,7 @@
     <tr{% if b.failed %} class="row-failed"{% endif %}>
       <td><a href="/runs/batches/{{ b.id }}">{{ row.job_name }}</a></td>
       <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '—' }}</td>
-      <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '<span class="status status-running">running</span>' }}</td>
+      <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '<span class="status status-running">running</span>' | safe }}</td>
       <td style="text-align:right">{{ b.total }}</td>
       <td style="text-align:right; color:var(--ok)">{{ b.succeeded }}</td>
       <td style="text-align:right{% if b.failed %}; color:var(--bad){% endif %}">{{ b.failed }}</td>
