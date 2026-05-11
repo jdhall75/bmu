@@ -3,9 +3,12 @@
 {% block content %}
 <div class="toolbar">
   <a class="btn btn-secondary" href="/groups/{{ group.id }}/edit">Edit group</a>
-  <form action="/groups/{{ group.id }}/delete" method="POST" style="display:inline">
-    <button type="submit" onclick="return confirm('Delete {{ group.name }}?')">Delete group</button>
-  </form>
+  <button type="submit" formaction="/groups/{{ group.id }}/delete" onclick="return confirm('Delete {{ group.name }}?')">
+      Delete
+  </button>
+  <!-- <form action="/groups/{{ group.id }}/delete" method="POST" style="display:inline"> -->
+  <!--   <button type="submit" onclick="return confirm('Delete {{ group.name }}?')">Delete group</button> -->
+  <!-- </form> -->
 </div>
 <h2>{{ group.name }}</h2>
 <p>{{ group.description or '' }}</p>
