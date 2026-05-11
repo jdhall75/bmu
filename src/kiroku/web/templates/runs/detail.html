@@ -17,6 +17,26 @@
 <pre class="error-block">{{ run.error }}</pre>
 {% endif %}
 
+{% if parsed_display %}
+<h3>Parsed output</h3>
+{% if parsed_display.type == 'table' %}
+<div style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>{% for h in parsed_display.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+  {% for row in parsed_display.rows %}
+    <tr>{% for h in parsed_display.headers %}<td>{{ row.get(h, '') }}</td>{% endfor %}</tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<pre>{{ parsed_display.value }}</pre>
+{% endif %}
+{% endif %}
+
 <p>
   {% if run.batch_id %}
     <a href="/runs/batches/{{ run.batch_id }}">&larr; Back to batch #{{ run.batch_id }}</a>

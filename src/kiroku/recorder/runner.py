@@ -111,7 +111,7 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
 
             if result.kind == "backup" and result.config_text is not None:
                 device = db.get(Device, result.device_id)
-                group_name = device.group.name if device and device.group else "ungrouped"
+                group_name = device.groups[0].name if device and device.groups else "ungrouped"
                 rel_path = store.file_path(group=group_name, device=result.device_name)
 
                 if batch:
@@ -159,6 +159,11 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                 run.bytes_captured = sum(
                     len(c.output.encode("utf-8")) for c in result.command_results
                 )
+                if result.parsed is not None:
+                    run.parsed_data = result.parsed
+            elif result.kind == "netconf":
+                if result.parsed is not None:
+                    run.parsed_data = result.parsed
             elif result.kind == "cve_scan":
                 _record_cve_scan(db, result, run)
 

@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, JSON
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -59,3 +59,6 @@ class Run(Base, TimestampMixin):
     bytes_captured: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Structured output from TTP/TextFSM/XSLT parsers for collect/NETCONF runs.
+    parsed_data: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)

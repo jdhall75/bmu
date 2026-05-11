@@ -1,3 +1,5 @@
+import json
+
 from litestar import Router, get
 from litestar.response import Template
 from sqlalchemy import select
@@ -42,7 +44,19 @@ async def batch_row_fragment(batch_id: int, db: Session) -> Template:
 @get("/{run_id:int}", dependencies={"db": provide_db})
 async def view_run(run_id: int, db: Session) -> Template:
     run = db.get(Run, run_id)
-    return Template(template_name="runs/detail.html", context={"run": run})
+    parsed_display = _parsed_display(run.parsed_data if run else None)
+    return Template(
+        template_name="runs/detail.html",
+        context={"run": run, "parsed_display": parsed_display},
+    )
+
+
+def _parsed_display(data: list | dict | None) -> dict | None:
+    if data is None:
+        return None
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return {"type": "table", "headers": list(data[0].keys()), "rows": data}
+    return {"type": "json", "value": json.dumps(data, indent=2)}
 
 
 router = Router(
