@@ -18,20 +18,7 @@
   </thead>
   <tbody>
   {% for b in batches %}
-    {% set done = b.succeeded + b.failed %}
-    {% set complete = done >= b.total %}
-    {% set status = "complete" if complete else "running" %}
-    <tr>
-      <td><a href="/runs/batches/{{ b.id }}">{{ b.schedule_name }}</a></td>
-      <td>{{ b.kind }}</td>
-      <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '-' }}</td>
-      <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '-' }}</td>
-      <td>{{ b.total }}</td>
-      <td>{{ b.succeeded }}</td>
-      <td>{{ b.failed }}</td>
-      <td><span class="status status-{{ 'success' if complete and b.failed == 0 else ('failed' if complete and b.succeeded == 0 else ('partial' if complete else 'running')) }}">{{ status }}</span></td>
-      <td>{{ b.commit_sha[:8] if b.commit_sha else '' }}</td>
-    </tr>
+    {% include "runs/_batch_row.html" %}
   {% else %}
     <tr><td colspan="9">No runs yet.</td></tr>
   {% endfor %}

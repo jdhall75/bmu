@@ -1,0 +1,20 @@
+{% set done = b.finished_at is not none or (b.succeeded + b.failed) >= b.total %}
+{% set complete = (b.succeeded + b.failed) >= b.total %}
+{% set status_cls = "success" if complete and b.failed == 0 else ("failed" if complete and b.succeeded == 0 else ("partial" if complete else "running")) %}
+{% set status_lbl = "complete" if complete else "running" %}
+<tr
+  {% if not done %}
+  hx-get="/runs/batches/{{ b.id }}/row"
+  hx-trigger="every 5s"
+  hx-swap="outerHTML"
+  {% endif %}>
+  <td><a href="/runs/batches/{{ b.id }}">{{ b.schedule_name }}</a></td>
+  <td>{{ b.kind }}</td>
+  <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '-' }}</td>
+  <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '-' }}</td>
+  <td>{{ b.total }}</td>
+  <td>{{ b.succeeded }}</td>
+  <td>{{ b.failed }}</td>
+  <td><span class="status status-{{ status_cls }}">{{ status_lbl }}</span></td>
+  <td>{{ b.commit_sha[:8] if b.commit_sha else '' }}</td>
+</tr>
