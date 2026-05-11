@@ -148,8 +148,18 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         joined = "\n".join(c.output for c in cmd_results)
         try:
             parsed = parse(spec.parser_type, spec.parser_body, joined)
+            log.info(
+                "collect parse complete",
+                device=spec.device_name,
+                parser=spec.parser_type,
+                result_type=type(parsed).__name__,
+                rows=len(parsed) if isinstance(parsed, list) else None,
+            )
         except Exception as exc:
-            log.error("parser failed", device=spec.device_name, error=str(exc))
+            log.error("parser failed", device=spec.device_name,
+                      parser=spec.parser_type, error=str(exc), exc_info=True)
+    elif spec.kind == "collect" and not spec.parser_type:
+        log.debug("collect: no parser template attached", device=spec.device_name)
 
     return JobResult(
         run_id=spec.run_id,

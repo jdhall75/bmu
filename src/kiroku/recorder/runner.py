@@ -160,10 +160,19 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                     len(c.output.encode("utf-8")) for c in result.command_results
                 )
                 if result.parsed is not None:
+                    log.info(
+                        "recorder: saving parsed data",
+                        run_id=result.run_id,
+                        device=result.device_name,
+                        rows=len(result.parsed) if isinstance(result.parsed, list) else 1,
+                    )
                     run.parsed_data = result.parsed
-            elif result.kind == "netconf":
-                if result.parsed is not None:
-                    run.parsed_data = result.parsed
+                else:
+                    log.debug(
+                        "recorder: no parsed data (no parser template or parse failed)",
+                        run_id=result.run_id,
+                        device=result.device_name,
+                    )
             elif result.kind == "cve_scan":
                 _record_cve_scan(db, result, run)
 

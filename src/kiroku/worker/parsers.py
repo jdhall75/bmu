@@ -29,7 +29,11 @@ def _ttp(template: str, payload: str) -> list[dict] | dict:
 
     parser = ttp_mod(data=payload, template=template)
     parser.parse()
-    return parser.result()
+    # result() returns [[group1, group2, ...]] — flatten the outer wrapper list.
+    raw = parser.result()
+    if isinstance(raw, list) and len(raw) == 1 and isinstance(raw[0], list):
+        return raw[0]
+    return raw
 
 
 def _xslt(stylesheet: str, payload: str) -> dict:
