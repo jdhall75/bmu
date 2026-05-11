@@ -3,8 +3,8 @@
 {% block content %}
 <h2>{% if job %}Edit job{% else %}New job{% endif %}</h2>
 <form method="post" action="{% if job %}/jobs/{{ job.id }}{% else %}/jobs{% endif %}">
-  <label>Name</label><input type="text" name="name" value="{{ job.name if job else '' }}" required>
-  <label>Description</label><input type="text" name="description" value="{{ job.description if job else '' }}">
+  <label>Name</label><input type="text" name="name" value="{{ job.name or '' }}" required>
+  <label>Description</label><input type="text" name="description" value="{{ job.description or '' }}">
   <label>Kind</label>
   <select name="kind" required>
     {% for k in kinds %}
@@ -13,10 +13,10 @@
   </select>
 
   <label>Commands (one per line)</label>
-  <textarea name="commands" placeholder="show running-config">{{ job.commands if job else '' }}</textarea>
+  <textarea name="commands" placeholder="show running-config">{{ job.commands or '' }}</textarea>
 
   <label>RPC (NETCONF)</label>
-  <textarea name="rpc">{{ job.rpc if job else '' }}</textarea>
+  <textarea name="rpc">{{ job.rpc or '' }}</textarea>
 
   <label>Parser template</label>
   <select name="parser_template_id">
@@ -27,9 +27,9 @@
   </select>
 
   <label>CVE vendor</label>
-  <input type="text" name="cve_vendor" value="{{ job.cve_vendor if job else '' }}" placeholder="e.g. cisco">
+  <input type="text" name="cve_vendor" value="{{ job.cve_vendor or '' }}" placeholder="e.g. cisco">
   <label>CVE product</label>
-  <input type="text" name="cve_product" value="{{ job.cve_product if job else '' }}" placeholder="e.g. ios_xe">
+  <input type="text" name="cve_product" value="{{ job.cve_product or '' }}" placeholder="e.g. ios_xe">
 
   <label>Device groups</label>
   <select name="device_group_ids" multiple size="6">

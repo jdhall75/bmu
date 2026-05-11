@@ -14,7 +14,7 @@
   <div class="bulk-edit-panel" id="bulk-edit-panel" style="display:none">
     <label>Port</label>
     <input type="number" name="bulk_port" placeholder="(no change)">
-    <label>Group</label>
+    <label>Add to group</label>
     <select name="bulk_group_id">
       <option value="">(no change)</option>
       {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
@@ -50,7 +50,7 @@
         <td><input type="checkbox" name="ids" value="{{ d.id }}"></td>
         <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
         <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
-        <td>{{ d.group.name if d.group else '-' }}</td>
+        <td>{{ d.groups | map(attribute='name') | join(', ') or '-' }}</td>
         <td>
           {% if d.platform %}{{ d.platform }}
           {% elif d.custom_platform %}{{ d.custom_platform.name }}

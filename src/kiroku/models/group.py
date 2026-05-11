@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from kiroku.db.base import Base, TimestampMixin
+from kiroku.models.membership import device_group_memberships
 
 
 class DeviceGroup(Base, TimestampMixin):
@@ -23,6 +24,6 @@ class DeviceGroup(Base, TimestampMixin):
     # concurrency setting.
     max_parallel: Mapped[int] = mapped_column(Integer, default=8, nullable=False)
 
-    devices = relationship(
-        "Device", back_populates="group", cascade="all, delete-orphan"
+    devices: Mapped[list["Device"]] = relationship(
+        "Device", secondary=device_group_memberships, back_populates="groups"
     )

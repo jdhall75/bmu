@@ -10,6 +10,20 @@ from kiroku.web.deps import provide_db
 
 PAGE_SIZE = 50
 
+# Subquery fragments reused in both search modes.
+_GROUP_NAMES_SUBQ = """
+    (SELECT string_agg(dg.name, ', ' ORDER BY dg.name)
+     FROM device_group_memberships dgm
+     JOIN device_groups dg ON dg.id = dgm.device_group_id
+     WHERE dgm.device_id = d.id)
+"""
+_GROUP_FILTER = """
+    AND EXISTS (
+        SELECT 1 FROM device_group_memberships dgm
+        WHERE dgm.device_id = d.id AND dgm.device_group_id = :gid
+    )
+"""
+
 
 def _extract_context(content: str, terms: list[str], context: int = 3) -> list[dict]:
     """Return line-context blocks for all matching lines in content."""
@@ -67,15 +81,13 @@ async def search_configs(
 
         if mode == "exact":
             params["pattern"] = f"%{q}%"
-            where_group = "AND d.group_id = :gid" if gid else ""
+            where_group = _GROUP_FILTER if gid else ""
             rows = db.execute(text(f"""
                 SELECT dc.device_id, dc.captured_at, dc.content,
-                       d.name  AS device_name,
-                       dg.name AS group_name,
-                       dg.id   AS group_id
+                       d.name AS device_name,
+                       {_GROUP_NAMES_SUBQ} AS group_name
                 FROM device_configs dc
-                JOIN devices      d  ON d.id  = dc.device_id
-                JOIN device_groups dg ON dg.id = d.group_id
+                JOIN devices d ON d.id = dc.device_id
                 WHERE dc.content ILIKE :pattern
                   {where_group}
                 ORDER BY dc.captured_at DESC
@@ -83,18 +95,16 @@ async def search_configs(
             """), {**params, **({"gid": gid} if gid else {})}).mappings().all()
             terms = [q]
         else:
-            where_group = "AND d.group_id = :gid" if gid else ""
+            where_group = _GROUP_FILTER if gid else ""
             rows = db.execute(text(f"""
                 SELECT dc.device_id, dc.captured_at, dc.content,
-                       d.name  AS device_name,
-                       dg.name AS group_name,
-                       dg.id   AS group_id,
+                       d.name AS device_name,
+                       {_GROUP_NAMES_SUBQ} AS group_name,
                        ts_headline('simple', dc.content,
                                    websearch_to_tsquery('simple', :q),
                                    'MaxWords=30, MinWords=10') AS headline
                 FROM device_configs dc
-                JOIN devices      d  ON d.id  = dc.device_id
-                JOIN device_groups dg ON dg.id = d.group_id
+                JOIN devices d ON d.id = dc.device_id
                 WHERE dc.content_fts @@ websearch_to_tsquery('simple', :q)
                   {where_group}
                 ORDER BY dc.captured_at DESC
@@ -107,7 +117,6 @@ async def search_configs(
                 "device_id": row["device_id"],
                 "device_name": row["device_name"],
                 "group_name": row["group_name"],
-                "group_id": row["group_id"],
                 "captured_at": row["captured_at"],
                 "headline": row.get("headline"),
                 "blocks": _extract_context(row["content"] or "", terms, context_lines),

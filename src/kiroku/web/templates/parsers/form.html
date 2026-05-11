@@ -4,10 +4,10 @@
 <h2>{% if parser %}Edit parser template{% else %}New parser template{% endif %}</h2>
 <form method="post" action="{% if parser %}/parsers/{{ parser.id }}{% else %}/parsers{% endif %}">
   <label>Name</label>
-  <input type="text" name="name" value="{{ parser.name if parser else '' }}" required>
+  <input type="text" name="name" value="{{ parser.name or '' }}" required>
 
   <label>Description</label>
-  <input type="text" name="description" value="{{ parser.description if parser else '' }}">
+  <input type="text" name="description" value="{{ parser.description or '' }}">
 
   <label>Type</label>
   <select name="type" required>
@@ -17,7 +17,7 @@
   </select>
 
   <label>Template body</label>
-  <textarea name="body" rows="20" required style="min-height:360px">{{ parser.body if parser else '' }}</textarea>
+  <textarea name="body" rows="20" required style="min-height:360px">{{ parser.body or '' }}</textarea>
 
   <div class="actions">
     <button type="submit">{% if parser %}Save{% else %}Create{% endif %}</button>

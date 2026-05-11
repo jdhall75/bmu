@@ -114,10 +114,15 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
             port_raw = get("port")
             port = int(port_raw) if port_raw else None
 
-            group_name = get("group")
-            group = groups.get(group_name)
-            if group is None:
-                raise ValueError(f"unknown group: {group_name!r}")
+            group_names = [n.strip() for n in get("group").split(",") if n.strip()]
+            if not group_names:
+                raise ValueError("at least one group is required")
+            matched_groups = []
+            for gname in group_names:
+                g = groups.get(gname)
+                if g is None:
+                    raise ValueError(f"unknown group: {gname!r}")
+                matched_groups.append(g)
 
             cred_name = get("credentials")
             credential = None
@@ -141,13 +146,13 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
                 hostname=hostname,
                 port=port,
                 description=get("description") or None,
-                group_id=group.id,
                 platform=platform_raw,
                 transport=transport,
                 driver_kind=driver_kind,
                 credential_id=credential.id if credential else None,
                 enabled=enabled,
             )
+            device.groups = matched_groups
             pending.append(device)
             seen_names.add(name)
             results.append(RowResult(line=idx, name=name, ok=True, message="will be created"))

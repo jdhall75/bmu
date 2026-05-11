@@ -5,7 +5,7 @@
 
 <dl class="detail-grid">
   <dt>Hostname</dt><dd>{{ device.hostname }}{% if device.port %}:{{ device.port }}{% endif %}</dd>
-  <dt>Group</dt><dd>{{ device.group.name if device.group else '-' }}</dd>
+  <dt>Groups</dt><dd>{{ device.groups | map(attribute='name') | join(', ') or '-' }}</dd>
   <dt>Platform</dt><dd>
     {% if device.platform %}{{ device.platform }}
     {% elif device.custom_platform %}{{ device.custom_platform.name }}

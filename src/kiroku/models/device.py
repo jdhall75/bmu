@@ -6,6 +6,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from kiroku.db.base import Base, TimestampMixin
+from kiroku.models.membership import device_group_memberships
 
 
 class DriverKind(str, enum.Enum):
@@ -28,10 +29,9 @@ class Device(Base, TimestampMixin):
     port: Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    group_id: Mapped[int] = mapped_column(
-        ForeignKey("device_groups.id", ondelete="CASCADE"), nullable=False
+    groups: Mapped[list["DeviceGroup"]] = relationship(
+        "DeviceGroup", secondary=device_group_memberships, back_populates="devices"
     )
-    group = relationship("DeviceGroup", back_populates="devices")
 
     # Driver / connection configuration
     platform: Mapped[str | None] = mapped_column(String(64), nullable=True)

@@ -11,15 +11,15 @@
 
 <form method="post" action="{% if platform %}/platforms/{{ platform.id }}{% else %}/platforms{% endif %}">
   <label>Name</label>
-  <input type="text" name="name" value="{{ platform.name if platform else '' }}"
+  <input type="text" name="name" value="{{ platform.name or '' }}"
          required placeholder="e.g. nokia-srl, adtran-aos, mikrotik-routeros">
 
   <label>Description</label>
-  <input type="text" name="description" value="{{ platform.description if platform else '' }}"
+  <input type="text" name="description" value="{{ platform.description or '' }}"
          placeholder="One-line description of the platform">
 
   <label>Platform YAML</label>
-  <textarea name="yaml_body" required style="min-height:340px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px">{{ platform.yaml_body if platform else '' }}</textarea>
+  <textarea name="yaml_body" required style="min-height:340px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px">{{ platform.yaml_body or '' }}</textarea>
 
   <div class="actions">
     <button type="submit">{% if platform %}Save{% else %}Create{% endif %}</button>

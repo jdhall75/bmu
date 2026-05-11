@@ -6,12 +6,19 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from kiroku.jobs import CredentialRef, JobSpec
-from kiroku.models import Device, Job, Run, RunBatch, RunStatus
+from kiroku.models import Device, DeviceGroup, Job, Run, RunBatch, RunStatus
 from kiroku.queue import publish_job
 
 
-def _spec_for(device: Device, job: Job, run: Run, schedule_id: int | None) -> JobSpec | None:
-    cred = device.credential or device.group.default_credential
+def _spec_for(
+    device: Device,
+    job: Job,
+    run: Run,
+    schedule_id: int | None,
+    *,
+    group: DeviceGroup | None = None,
+) -> JobSpec | None:
+    cred = device.credential or (group.default_credential if group else None)
     if cred is None:
         return None
 
@@ -62,29 +69,32 @@ def fire_job(
     now = datetime.now(tz=timezone.utc)
 
     seen: set[int] = set()
-    devices: list[Device] = []
+    # Track (device, targeting_group) so credential fallback uses the right group.
+    device_group_pairs: list[tuple[Device, DeviceGroup | None]] = []
+
     for group in job.device_groups:
         for d in group.devices:
             if d.enabled and d.id not in seen:
                 seen.add(d.id)
-                devices.append(d)
+                device_group_pairs.append((d, group))
+
     for d in job.devices:
         if d.enabled and d.id not in seen:
             seen.add(d.id)
-            devices.append(d)
+            device_group_pairs.append((d, None))
 
     batch = RunBatch(
         schedule_id=schedule_id,
         schedule_name=schedule_name or job.name,
         kind=job.kind.value,
-        total=len(devices),
+        total=len(device_group_pairs),
         started_at=now,
     )
     db.add(batch)
     db.flush()
 
-    pairs: list[tuple[Device, Run]] = []
-    for device in devices:
+    pairs: list[tuple[Device, DeviceGroup | None, Run]] = []
+    for device, group in device_group_pairs:
         run = Run(
             schedule_id=schedule_id,
             batch_id=batch.id,
@@ -93,11 +103,11 @@ def fire_job(
             status=RunStatus.PENDING,
         )
         db.add(run)
-        pairs.append((device, run))
+        pairs.append((device, group, run))
     db.flush()
 
-    for device, run in pairs:
-        spec = _spec_for(device, job, run, schedule_id)
+    for device, group, run in pairs:
+        spec = _spec_for(device, job, run, schedule_id, group=group)
         if spec is None:
             run.status = RunStatus.FAILED
             run.error = "no credential available"

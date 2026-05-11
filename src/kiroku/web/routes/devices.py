@@ -5,7 +5,7 @@ from litestar.params import Body
 from litestar.response import Redirect, Response, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from kiroku.config import get_settings
 from kiroku.models import Credential, CveScan, Device, DeviceGroup, DriverKind, Platform, Run, TransportProtocol
@@ -87,6 +87,13 @@ def _parse_ids(data: dict) -> list[int]:
     return [int(i) for i in raw if i]
 
 
+def _parse_group_ids(data: dict) -> list[int]:
+    raw = data.get("group_ids", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    return [int(i) for i in raw if i]
+
+
 def _apply_platform(device: Device, data: dict) -> None:
     """Parse the combined platform_value and set device.platform / custom_platform_id."""
     pv = data.get("platform_value", "")
@@ -109,7 +116,11 @@ async def list_devices(db: Session, page: int = 1) -> Template:
     page = min(page, total_pages)
     offset = (page - 1) * _PAGE_SIZE
     devices = db.scalars(
-        select(Device).order_by(Device.name).offset(offset).limit(_PAGE_SIZE)
+        select(Device)
+        .options(selectinload(Device.groups))
+        .order_by(Device.name)
+        .offset(offset)
+        .limit(_PAGE_SIZE)
     ).all()
     return Template(
         template_name="devices/list.html",
@@ -137,12 +148,12 @@ async def create_device(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
+    group_ids = _parse_group_ids(data)
     d = Device(
         name=data["name"],
         hostname=data["hostname"],
         port=int(data["port"]) if data.get("port") else None,
         description=data.get("description") or None,
-        group_id=int(data["group_id"]),
         credential_id=int(data["credential_id"]) if data.get("credential_id") else None,
         transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
         driver_kind=DriverKind(data["driver_kind"]) if data.get("driver_kind") else None,
@@ -151,6 +162,8 @@ async def create_device(
         enabled=bool(data.get("enabled")),
     )
     _apply_platform(d, data)
+    if group_ids:
+        d.groups = list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all())
     db.add(d)
     db.commit()
     return Redirect(path="/devices")
@@ -173,11 +186,17 @@ async def bulk_devices(
         db.commit()
 
     elif action == "edit":
-        for device in db.scalars(select(Device).where(Device.id.in_(ids))).all():
+        bulk_group_id = data.get("bulk_group_id")
+        bulk_group = db.get(DeviceGroup, int(bulk_group_id)) if bulk_group_id else None
+        for device in db.scalars(
+            select(Device)
+            .options(selectinload(Device.groups))
+            .where(Device.id.in_(ids))
+        ).all():
             if data.get("bulk_port"):
                 device.port = int(data["bulk_port"])
-            if data.get("bulk_group_id"):
-                device.group_id = int(data["bulk_group_id"])
+            if bulk_group and bulk_group not in device.groups:
+                device.groups.append(bulk_group)
             bulk_cred = data.get("bulk_credential_id", "")
             if bulk_cred == "NONE":
                 device.credential_id = None
@@ -213,7 +232,6 @@ async def update_device(
     device.hostname = data["hostname"]
     device.port = int(data["port"]) if data.get("port") else None
     device.description = data.get("description") or None
-    device.group_id = int(data["group_id"])
     device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
     device.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
     device.driver_kind = DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
@@ -221,6 +239,8 @@ async def update_device(
     device.command_timeout = int(data["command_timeout"]) if data.get("command_timeout") else None
     _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
+    group_ids = _parse_group_ids(data)
+    device.groups = list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()) if group_ids else []
     db.commit()
     return Redirect(path="/devices")
 

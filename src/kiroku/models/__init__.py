@@ -4,6 +4,7 @@ from kiroku.models.device import Device, DriverKind, TransportProtocol
 from kiroku.models.device_config import DeviceConfig
 from kiroku.models.group import DeviceGroup
 from kiroku.models.job import Job, JobKind, job_device_groups, job_devices
+from kiroku.models.membership import device_group_memberships
 from kiroku.models.parser_template import ParserTemplate, ParserType
 from kiroku.models.platform import Platform
 from kiroku.models.run import Run, RunStatus
@@ -18,6 +19,7 @@ __all__ = [
     "Device",
     "DeviceConfig",
     "DeviceGroup",
+    "device_group_memberships",
     "DriverKind",
     "Job",
     "JobKind",

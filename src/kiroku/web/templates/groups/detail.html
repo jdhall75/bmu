@@ -32,12 +32,13 @@
 
 <h3>Devices</h3>
 <table>
-  <thead><tr><th>Name</th><th>Hostname</th><th>Profile</th><th>Enabled</th></tr></thead>
+  <thead><tr><th>Name</th><th>Hostname</th><th>Platform</th><th>Enabled</th></tr></thead>
   <tbody>
   {% for d in group.devices %}
     <tr>
-      <td>{{ d.name }}</td><td>{{ d.hostname }}</td>
-      <td>{{ d.profile.name if d.profile else '-' }}</td>
+      <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
+      <td>{{ d.hostname }}</td>
+      <td>{{ d.platform or (d.custom_platform.name if d.custom_platform else '-') }}</td>
       <td>{{ 'yes' if d.enabled else 'no' }}</td>
     </tr>
   {% else %}

@@ -3,8 +3,8 @@
 {% block content %}
 <h2>{% if group %}Edit group{% else %}New group{% endif %}</h2>
 <form method="post" action="{% if group %}/groups/{{ group.id }}{% else %}/groups{% endif %}">
-  <label>Name</label><input type="text" name="name" value="{{ group.name if group else '' }}" required>
-  <label>Description</label><input type="text" name="description" value="{{ group.description if group else '' }}">
+  <label>Name</label><input type="text" name="name" value="{{ group.name or '' }}" required>
+  <label>Description</label><input type="text" name="description" value="{{ group.description or '' }}">
   <label>Default credential</label>
   <select name="default_credential_id">
     <option value=""{% if not group or not group.default_credential_id %} selected{% endif %}>(none)</option>

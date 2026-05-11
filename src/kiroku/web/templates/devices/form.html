@@ -3,16 +3,17 @@
 {% block content %}
 <h2>{% if device %}Edit device{% else %}New device{% endif %}</h2>
 <form method="post" action="{% if device %}/devices/{{ device.id }}{% else %}/devices{% endif %}">
-  <label>Name</label><input type="text" name="name" value="{{ device.name if device else '' }}" required>
-  <label>Hostname</label><input type="text" name="hostname" value="{{ device.hostname if device else '' }}" required>
-  <label>Port</label><input type="number" name="port" value="{{ device.port if device and device.port else '' }}">
-  <label>Description</label><input type="text" name="description" value="{{ device.description if device else '' }}">
-  <label>Group</label>
-  <select name="group_id" required>
+  <label>Name</label><input type="text" name="name" value="{{ device.name or '' }}" required>
+  <label>Hostname</label><input type="text" name="hostname" value="{{ device.hostname or '' }}" required>
+  <label>Port</label><input type="number" name="port" value="{{ device.port or '' }}">
+  <label>Description</label><input type="text" name="description" value="{{ device.description or '' }}">
+  <label>Groups</label>
+  <select name="group_ids" multiple size="5">
     {% for g in groups %}
-      <option value="{{ g.id }}"{% if device and device.group_id == g.id %} selected{% endif %}>{{ g.name }}</option>
+      <option value="{{ g.id }}"{% if device and g in device.groups %} selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
+  <label></label><span class="muted" style="font-size:12px">Hold Ctrl/Cmd to select multiple groups.</span>
 
   <label>Platform</label>
   <select name="platform_value">
@@ -53,10 +54,10 @@
   </select>
 
   <label>Connect timeout <span class="muted">(s)</span></label>
-  <input type="number" name="connect_timeout" value="{{ device.connect_timeout if device and device.connect_timeout else '' }}" placeholder="default ({{ default_connect_timeout }})">
+  <input type="number" name="connect_timeout" value="{{ device.connect_timeout or '' }}" placeholder="default ({{ default_connect_timeout }})">
 
   <label>Command timeout <span class="muted">(s)</span></label>
-  <input type="number" name="command_timeout" value="{{ device.command_timeout if device and device.command_timeout else '' }}" placeholder="default ({{ default_command_timeout }})">
+  <input type="number" name="command_timeout" value="{{ device.command_timeout or '' }}" placeholder="default ({{ default_command_timeout }})">
 
   <label>Credential override</label>
   <select name="credential_id">
