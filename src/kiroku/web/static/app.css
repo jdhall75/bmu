@@ -90,3 +90,4 @@ tr.row-failed td { background:#fff8f8; }
 .diff-hunk { background:#ddf4ff; color:#0969da; }
 .diff-hunk .diff-code { padding-left:8px; }
 .diff-context { background:#fff; }
+.perf-bar { text-align:right; font-size:11px; color:#bbb; padding:4px 24px 8px; }

@@ -25,5 +25,9 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  {% set _ms = elapsed_ms(request) %}
+  {% if _ms is not none %}
+  <div class="perf-bar">{{ _ms }} ms</div>
+  {% endif %}
 </body>
 </html>
