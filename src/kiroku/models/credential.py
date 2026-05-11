@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Boolean, Enum as SAEnum
 from sqlalchemy import LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -34,3 +34,6 @@ class Credential(Base, TimestampMixin):
     ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
     # Optional username (often public; helps the UI without resolving the secret).
     username: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # At most one credential can be the system-wide fallback default.
+    # Enforced by a partial unique index (uix_credentials_is_default).
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

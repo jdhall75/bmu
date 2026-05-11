@@ -3,7 +3,7 @@ from litestar.params import Body
 from litestar.enums import RequestEncodingType
 from litestar.response import Redirect, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from kiroku.credentials.local import LocalCredentialResolver
@@ -37,6 +37,14 @@ def _build_payload(provider: CredentialProvider, data: dict):
     return local.encrypt({k: v for k, v in secret.items() if v is not None})
 
 
+def _apply_default(cred: Credential, is_default: bool, db: Session) -> None:
+    if is_default:
+        db.execute(update(Credential).values(is_default=False))
+        cred.is_default = True
+    else:
+        cred.is_default = False
+
+
 @get("/", dependencies={"db": provide_db})
 async def list_creds(db: Session) -> Template:
     creds = db.scalars(select(Credential).order_by(Credential.name)).all()
@@ -66,6 +74,8 @@ async def create_cred(
         username=data.get("username") or None,
     )
     db.add(cred)
+    db.flush()
+    _apply_default(cred, bool(data.get("is_default")), db)
     db.commit()
     return Redirect(path="/credentials")
 
@@ -107,6 +117,7 @@ async def update_cred(
     cred.username = data.get("username") or None
     if data.get("password") or data.get("enable_password"):
         cred.encrypted_payload = _build_payload(provider, data)
+    _apply_default(cred, bool(data.get("is_default")), db)
     db.commit()
     return Redirect(path="/credentials")
 

@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.jobs import CredentialRef, JobSpec
-from kiroku.models import Device, DeviceGroup, Job, Run, RunBatch, RunStatus
+from kiroku.models import Credential, Device, DeviceGroup, Job, Run, RunBatch, RunStatus
 from kiroku.queue import publish_job
 
 
@@ -17,8 +18,9 @@ def _spec_for(
     schedule_id: int | None,
     *,
     group: DeviceGroup | None = None,
+    default_cred: Credential | None = None,
 ) -> JobSpec | None:
-    cred = device.credential or (group.default_credential if group else None)
+    cred = device.credential or (group.default_credential if group else None) or default_cred
     if cred is None:
         return None
 
@@ -68,6 +70,10 @@ def fire_job(
     """Create a RunBatch, queue specs for all enabled devices, and return the batch."""
     now = datetime.now(tz=timezone.utc)
 
+    default_cred: Credential | None = db.scalar(
+        select(Credential).where(Credential.is_default.is_(True))
+    )
+
     seen: set[int] = set()
     # Track (device, targeting_group) so credential fallback uses the right group.
     device_group_pairs: list[tuple[Device, DeviceGroup | None]] = []
@@ -107,7 +113,7 @@ def fire_job(
     db.flush()
 
     for device, group, run in pairs:
-        spec = _spec_for(device, job, run, schedule_id, group=group)
+        spec = _spec_for(device, job, run, schedule_id, group=group, default_cred=default_cred)
         if spec is None:
             run.status = RunStatus.FAILED
             run.error = "no credential available"
