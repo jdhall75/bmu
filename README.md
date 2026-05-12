@@ -4,24 +4,54 @@ Distributed network device backup and data collection.
 
 ## Architecture
 
-Five processes, all packaged in one image (`kiroku` CLI):
+Six processes across three Docker images, all driven by the same `kiroku` CLI:
 
-| Process     | Command            | Role                                                                          |
-|-------------|--------------------|-------------------------------------------------------------------------------|
-| `web`       | `kiroku serve`     | Litestar + Jinja UI for groups, devices, platforms, profiles, schedules, runs |
-| `scheduler` | `kiroku scheduler` | Polls schedules with `croniter`, single-leader via Postgres advisory lock, enqueues job specs onto a Redis Stream |
-| `worker`    | `kiroku worker`    | Consumes the job stream, runs scrapli2 (CLI / NETCONF), publishes results     |
-| `recorder`  | `kiroku recorder`  | Consumes the result stream, commits backups to a git repo, updates run rows   |
-| `migrate`   | `kiroku migrate`   | One-shot Alembic upgrade (run by the `web` container's entrypoint)            |
+| Process     | Image          | Command            | Role |
+|-------------|----------------|--------------------|------|
+| `web`       | `web`          | `kiroku serve`     | Litestar + Jinja UI for groups, devices, platforms, jobs, parsers, schedules, runs |
+| `scheduler` | `runtime-base` | `kiroku scheduler` | Polls schedules with croniter, single-leader via Postgres advisory lock, enqueues job specs onto a Redis Stream |
+| `worker`    | `worker`       | `kiroku worker`    | Consumes the job stream, runs scrapli2 (CLI / NETCONF), publishes results |
+| `recorder`  | `runtime-base` | `kiroku recorder`  | Consumes the result stream, commits backups to a git repo, updates run rows |
+| `migrate`   | `runtime-base` | `kiroku migrate`   | One-shot Alembic upgrade; runs as an init container before other services start |
 
 Backing services: Postgres (≥14) + Redis (≥7). Backup configs live in a git
-repo on a volume mounted into the `recorder` (and `web`, read-only) containers.
+repo on a volume mounted into `recorder` (read-write) and `web` (read-only).
 
 ## Quick start
 
 ```bash
 docker compose up --build
 # UI at http://localhost:8000
+```
+
+## Docker images
+
+The multi-stage `Dockerfile` produces three runtime targets. Each service in
+`docker-compose.yml` selects the smallest image that covers its dependencies.
+
+| Target          | System packages          | Python extras         | Used by |
+|-----------------|--------------------------|-----------------------|---------|
+| `runtime-base`  | git, ca-certificates     | *(base deps only)*    | migrate, scheduler, recorder |
+| `web`           | git, ca-certificates     | `.[web]`              | web |
+| `worker`        | openssh-client, ca-certs | `.[worker]`           | worker |
+
+Builder stages (`builder-base`, `builder-web`, `builder-worker`) use
+[uv](https://github.com/astral-sh/uv) for fast dependency installation and
+share a common base layer so incremental rebuilds are cheap.
+
+## Local development
+
+```bash
+# Install all extras for local development
+uv pip install -e ".[web,worker]"
+
+# Or with pip
+pip install -e ".[web,worker]"
+
+# Run the web server against local postgres/redis
+KIROKU_DATABASE_URL_SYNC=postgresql+psycopg://bmu:bmu@localhost:5432/bmu \
+KIROKU_REDIS_URL=redis://localhost:6379/0 \
+kiroku serve
 ```
 
 ## Configuration
@@ -71,14 +101,14 @@ so the stack runs out of the box with `docker compose up`.
 | Variable | Default | Description |
 |---|---|---|
 | `KIROKU_WORKER_CONCURRENCY` | `8` | Number of concurrent device jobs per worker process |
-| `KIROKU_WORKER_CONNECT_TIMEOUT` | `30` | Reserved for transport-level socket connect timeout (seconds) |
-| `KIROKU_WORKER_COMMAND_TIMEOUT` | `60` | scrapli per-operation timeout in seconds (covers auth + each command). When exceeded, scrapli raises `OperationException: TimeoutExceeded`; the worker records the failure and returns immediately without blocking on close. |
+| `KIROKU_WORKER_CONNECT_TIMEOUT` | `30` | Transport-level socket connect timeout (seconds) |
+| `KIROKU_WORKER_COMMAND_TIMEOUT` | `60` | scrapli per-operation timeout in seconds. When exceeded the worker records the failure and moves on without blocking on close. |
 
 ### Recorder
 
 | Variable | Default | Description |
 |---|---|---|
-| `KIROKU_RECORDER_BATCH_TIMEOUT` | `1800` | Seconds after a batch is created before the reaper force-closes it. Covers the case where a worker process is killed before publishing a result, leaving the batch stuck open. Set higher than your largest expected batch duration (`devices × command_timeout / concurrency`). |
+| `KIROKU_RECORDER_BATCH_TIMEOUT` | `1800` | Seconds after a batch is created before the reaper force-closes it. Set higher than your largest expected batch duration (`devices × command_timeout / concurrency`). |
 
 ### Web
 
@@ -100,49 +130,59 @@ so the stack runs out of the box with `docker compose up`.
 |---|---|---|
 | `KIROKU_NVD_API_KEY` | *(none)* | NVD API key. Without a key: 1 req/s. With a key: 5 req/s. Obtain at https://nvd.nist.gov/developers/request-an-api-key |
 
-## Platforms and Profiles
-
-### Platforms
+## Platforms
 
 Kiroku uses **scrapli2** for device connectivity. A Platform defines how
-scrapli talks to a device: prompt patterns, mode transitions (exec →
-configuration → etc.), failure indicators, and on-open / on-close
-instructions. Platform definitions are YAML files passed to scrapli's
-`Cli(definition_file_or_name=…)`.
+scrapli talks to a device: prompt patterns, mode transitions, failure
+indicators, and on-open / on-close instructions. Platform definitions are YAML
+files passed to scrapli's `Cli(definition_file_or_name=…)`.
 
-Built-in platforms (bundled in scrapli2):
+Built-in platforms (bundled with scrapli2):
 
 - `cisco_iosxe`, `cisco_iosxr`, `cisco_nxos`, `cisco_asa`
 - `arista_eos`
 - `juniper_junos`
 
-For any other vendor (Nokia SR Linux, Mikrotik, Adtran, Calix, etc.) create
-a **Custom Platform** at `/platforms/new`. The form includes an annotated
-YAML example and a full field reference.
+For any other vendor (Nokia SR Linux, Mikrotik, Adtran, Calix, etc.) create a
+**Custom Platform** at `/platforms/new`. The form includes an annotated YAML
+example and a full field reference.
 
-### Profiles
+## Jobs
 
-A Profile maps a platform to a set of commands:
+A Job defines *what* to do and *which devices* to target:
 
-- **CLI profiles** — reference a built-in or custom platform, a transport
-  (`ssh` / `telnet`), and the commands to run (e.g. `show running-config`).
-- **NETCONF profiles** — carry a raw RPC XML payload and an optional XSLT
-  transform.
+| Kind       | Purpose |
+|------------|---------|
+| `backup`   | Capture the running config and store it in Git |
+| `collect`  | Run one or more commands and optionally parse the output with a Parser template |
+| `cve_scan` | Detect the OS version and cross-reference it with NVD |
 
-Both kinds may attach a **parser template** (TextFSM or TTP) to normalize
-unstructured output into structured rows, and CVE vendor/product hints for
-automated vulnerability scanning.
+Jobs can be triggered immediately from the job list or run on a recurring basis
+via a Schedule. The ▶ button on the job list fires a one-off run without needing
+a schedule.
+
+## Parser templates
+
+A Parser template normalizes unstructured command output into structured rows.
+Supported engines: **TextFSM**, **TTP**, **XSLT** (for NETCONF XML).
+
+Use the **Test bed** (`/parsers/test`) to iterate quickly — paste real device
+output in the left pane, write the template on the right, and hit Run to see
+parsed output immediately.
 
 ## Credentials
 
 Credentials are referenced by name; the actual secret is fetched at job
 execution time from a configurable provider:
 
-| Provider | Status | Notes |
-|---|---|---|
-| `local` | Available | Fernet-encrypted blob in Postgres; key derived from `KIROKU_SECRET_KEY` |
-| `vault` | Planned | HashiCorp Vault KV v2; ABC in place |
-| `bitwarden` | Planned | Bitwarden Secrets Manager; ABC in place |
+| Provider    | Status    | Notes |
+|-------------|-----------|-------|
+| `local`     | Available | Fernet-encrypted blob in Postgres; key derived from `KIROKU_SECRET_KEY` |
+| `vault`     | Planned   | HashiCorp Vault KV v2; ABC in place |
+| `bitwarden` | Planned   | Bitwarden Secrets Manager; ABC in place |
+
+One credential can be marked as the **default fallback**, used automatically
+for any device or group that has no credential explicitly assigned.
 
 The job spec published to the Redis stream carries only `(provider, credential_id, ref)` — never the secret material itself.
 

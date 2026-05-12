@@ -2,6 +2,8 @@
 
 Kiroku is a network device configuration management system. It connects to routers and switches via SSH/Telnet or NETCONF, backs up their running configurations to a Git repository, collects structured operational data, and scans for known software vulnerabilities.
 
+> **Deploying?** See the [README](https://github.com/jdhall75/bmu#readme) for Docker, environment variables, and configuration reference.
+
 ## How the pieces fit together
 
 ```
@@ -22,8 +24,8 @@ Follow this sequence when setting up Kiroku for the first time.
 
 Go to **Credentials → New credential** and create at least one set of login details.
 
-- For lab environments, mark one credential as **Default fallback** — it will be used automatically for any device or group that has no credential assigned.
-- For production, assign credentials explicitly to groups or individual devices.
+- Mark one credential as **Default fallback** — it will be used automatically for any device or group that has no credential explicitly assigned. This is the lowest-priority fallback; device-level and group-level overrides take precedence.
+- For production environments, assign credentials explicitly to groups or individual devices rather than relying on the default.
 
 ### 2. Platforms (optional)
 
