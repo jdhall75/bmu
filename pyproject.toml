@@ -21,6 +21,7 @@ dependencies = [
     "structlog>=24.1",
     "httpx>=0.27",
     "GitPython>=3.1",
+    "cryptography>=43.0",
 ]
 
 [project.optional-dependencies]
@@ -35,7 +36,6 @@ worker = [
     "textfsm>=1.1",
     "ttp>=0.9",
     "lxml>=5.2",
-    "cryptography>=43.0",
     "hvac>=2.3",
     "bitwarden-sdk>=1.0; python_version<'4'",
 ]
