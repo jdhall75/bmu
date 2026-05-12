@@ -49,16 +49,6 @@
   <div class="perf-bar">{{ _ms }} ms</div>
   {% endif %}
 
-  <dialog id="help-dialog" class="help-dialog">
-    <div class="help-dialog-header">
-      <span class="help-dialog-title">Help</span>
-      <button class="help-dialog-close" onclick="document.getElementById('help-dialog').close()" title="Close">&times;</button>
-    </div>
-    <div id="help-body" class="help-dialog-body">
-      <p>Loading&hellip;</p>
-    </div>
-  </dialog>
-
   <script>
   function toggleTheme() {
     var current = document.documentElement.getAttribute('data-theme') || 'light';
@@ -76,15 +66,8 @@
   })();
 
   function openHelp(page) {
-    var body = document.getElementById('help-body');
-    var dialog = document.getElementById('help-dialog');
-    body.innerHTML = '<p class="muted">Loading…</p>';
-    dialog.showModal();
-    htmx.ajax('GET', '/docs/' + page, {target: '#help-body', swap: 'innerHTML'});
+    window.open('/help/' + page, 'kiroku-help', 'width=860,height=720,resizable=yes,scrollbars=yes');
   }
-  document.getElementById('help-dialog').addEventListener('click', function(e) {
-    if (e.target === this) this.close();
-  });
   </script>
 </body>
 </html>

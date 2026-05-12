@@ -1,4 +1,4 @@
-"""Serve documentation pages as rendered HTML fragments for the help modal."""
+"""Serve documentation pages — fragment endpoint for internal use, full page for help window."""
 from __future__ import annotations
 
 import re
@@ -18,6 +18,35 @@ _MD = markdown.Markdown(
 
 _SAFE_PAGE = re.compile(r"^[a-z0-9_-]+$")
 
+_HELP_SHELL = """\
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kiroku Help</title>
+  <link rel="stylesheet" href="/static/pico.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+  (function() {{
+    function getCookie(name) {{
+      var row = document.cookie.split('; ').find(function(r) {{ return r.startsWith(name + '='); }});
+      return row ? row.split('=')[1] : null;
+    }}
+    var saved = getCookie('kiroku_theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }})();
+  </script>
+</head>
+<body>
+  <main class="container">
+    <div class="prose">
+{content}
+    </div>
+  </main>
+</body>
+</html>"""
+
 
 @lru_cache(maxsize=64)
 def _render(page: str) -> str:
@@ -35,4 +64,13 @@ async def get_doc(page: str) -> str:
     return f'<div class="prose">{_render(page)}</div>'
 
 
-router = Router(path="/", route_handlers=[get_doc])
+@get("/help/{page:str}", media_type="text/html")
+async def get_help_page(page: str) -> str:
+    if not _SAFE_PAGE.match(page):
+        content = "<p>Invalid page name.</p>"
+    else:
+        content = _render(page)
+    return _HELP_SHELL.format(content=content)
+
+
+router = Router(path="/", route_handlers=[get_doc, get_help_page])
