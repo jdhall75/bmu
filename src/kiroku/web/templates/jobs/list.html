@@ -28,7 +28,7 @@
           {% if j.rpc %}RPC{% elif j.commands %}{{ j.commands[:40] }}{% if j.commands|length > 40 %}…{% endif %}{% else %}-{% endif %}
         </td>
         <td>
-          <button formaction="/jobs/{{ j.id }}/run" title="Run now" onclick="return confirm('Run {{ j.name }} now?')" style="font-size:15px; padding:4px 10px;">&#9654;</button>
+          <button formaction="/jobs/{{ j.id }}/run" title="Run now" onclick="return confirm('Run {{ j.name }} now?')">&#9654;</button>
           <a class="secondary" role="button" href="/jobs/{{ j.id }}/edit">edit</a>
           <button formaction="/jobs/{{ j.id }}/delete" onclick="return confirm('Delete {{ j.name }}?')">delete</button>
         </td>
