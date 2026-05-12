@@ -35,7 +35,7 @@ body { background: var(--pico-background-color); }
 
 /* ── Link styling ─────────────────────────────────────────────────────── */
 a { text-decoration: none; }
-a:hover, a:active { text-decoration: none; font-weight: 600; }
+a:hover, a:active { text-decoration: underline; color: #f48226; }
 main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
 /* ── Header / nav ─────────────────────────────────────────────────────── */
