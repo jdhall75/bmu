@@ -61,7 +61,7 @@
 
   <label>Credential override</label>
   <select name="credential_id">
-    <option value=""{% if not device or not device.credential_id %} selected{% endif %}>(use group default)</option>
+    <option value=""{% if not device or not device.credential_id %} selected{% endif %}>(group default → system default)</option>
     {% for c in credentials %}
       <option value="{{ c.id }}"{% if device and device.credential_id == c.id %} selected{% endif %}>{{ c.name }}</option>
     {% endfor %}

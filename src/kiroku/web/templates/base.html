@@ -20,6 +20,7 @@
       <a href="/runs">Runs</a>
       <a href="/cve">CVE Scans</a>
       <a href="/search">Search</a>
+      <button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button>
     </nav>
   </header>
   <main>
@@ -29,5 +30,28 @@
   {% if _ms is not none %}
   <div class="perf-bar">{{ _ms }} ms</div>
   {% endif %}
+
+  <dialog id="help-dialog" class="help-dialog">
+    <div class="help-dialog-header">
+      <span class="help-dialog-title">Help</span>
+      <button class="help-dialog-close" onclick="document.getElementById('help-dialog').close()" title="Close">&times;</button>
+    </div>
+    <div id="help-body" class="help-dialog-body">
+      <p>Loading&hellip;</p>
+    </div>
+  </dialog>
+
+  <script>
+  function openHelp(page) {
+    var body = document.getElementById('help-body');
+    var dialog = document.getElementById('help-dialog');
+    body.innerHTML = '<p class="muted">Loading…</p>';
+    dialog.showModal();
+    htmx.ajax('GET', '/docs/' + page, {target: '#help-body', swap: 'innerHTML'});
+  }
+  document.getElementById('help-dialog').addEventListener('click', function(e) {
+    if (e.target === this) this.close();
+  });
+  </script>
 </body>
 </html>

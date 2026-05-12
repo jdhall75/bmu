@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Runs - Kiroku{% endblock %}
 {% block content %}
-<h2>Runs</h2>
+<div class="toolbar">
+  <h2 style="margin:0">Runs</h2>
+  <button class="help-btn" onclick="openHelp('runs')">? Help</button>
+</div>
 <table>
   <thead>
     <tr>

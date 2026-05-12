@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Kiroku{% endblock %}
 {% block content %}
+<div class="toolbar">
+  <button class="help-btn" onclick="openHelp('index')">? Getting started</button>
+  <button class="help-btn" onclick="openHelp('dashboard')">? Dashboard help</button>
+</div>
 <div class="cards">
   <div class="card"><div class="lbl">Groups</div><div class="num">{{ counts.groups }}</div></div>
   <div class="card"><div class="lbl">Devices</div><div class="num">{{ counts.devices }}</div></div>

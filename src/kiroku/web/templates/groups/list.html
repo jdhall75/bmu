@@ -4,6 +4,7 @@
 <form class="table-form" method="POST" action="/groups/bulk">
   <div class="toolbar">
     <a class="btn" href="/groups/new">New group</a>
+    <button class="help-btn" onclick="openHelp('groups')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected groups?')">Delete selected</button>
     </span>

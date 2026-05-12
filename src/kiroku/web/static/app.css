@@ -4,7 +4,12 @@ body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; color:v
 header { padding:12px 24px; background:#fff; border-bottom:1px solid #ddd; display:flex; gap:24px; align-items:center; }
 header h1 { font-size:18px; margin:0; }
 header h1 a { color:var(--fg); text-decoration:none; }
+header nav { display:flex; align-items:center; flex-wrap:wrap; gap:0; }
 header nav a { margin-right:16px; color:var(--acc); text-decoration:none; }
+.help-nav-btn { margin-left:8px; width:22px; height:22px; padding:0; border-radius:50%; background:#e8e8e8; color:var(--muted); font-size:13px; font-weight:600; line-height:22px; border:0; cursor:pointer; flex-shrink:0; }
+.help-nav-btn:hover { background:var(--acc); color:#fff; }
+.help-btn { padding:4px 10px; background:#e8e8e8; color:var(--muted); font-size:12px; border:0; border-radius:4px; cursor:pointer; }
+.help-btn:hover { background:var(--acc); color:#fff; }
 main { padding:24px; max-width:1100px; margin:0 auto; }
 table:not(.search-snippet) { width:100%; border-collapse:collapse; background:#fff; }
 table:not(.search-snippet) th, table:not(.search-snippet) td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
@@ -91,3 +96,29 @@ tr.row-failed td { background:#fff8f8; }
 .diff-hunk .diff-code { padding-left:8px; }
 .diff-context { background:#fff; }
 .perf-bar { text-align:right; font-size:11px; color:#bbb; padding:4px 24px 8px; }
+
+/* ── Help dialog ─────────────────────────────────────────────────────── */
+.help-dialog { border:0; border-radius:8px; padding:0; width:min(760px,95vw); max-height:85vh; box-shadow:0 8px 40px rgba(0,0,0,.18); overflow:hidden; display:flex; flex-direction:column; }
+.help-dialog::backdrop { background:rgba(0,0,0,.35); }
+.help-dialog-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #eee; flex-shrink:0; background:#fff; }
+.help-dialog-title { font-weight:600; font-size:15px; }
+.help-dialog-close { background:none; border:0; font-size:20px; cursor:pointer; color:var(--muted); padding:0 4px; line-height:1; }
+.help-dialog-close:hover { color:var(--fg); }
+.help-dialog-body { overflow-y:auto; padding:20px 24px; background:#fff; }
+
+/* ── Prose styles for rendered markdown ──────────────────────────────── */
+.prose { line-height:1.65; color:var(--fg); }
+.prose h1 { font-size:20px; margin:0 0 16px; }
+.prose h2 { font-size:16px; margin:20px 0 8px; border-bottom:1px solid #eee; padding-bottom:4px; }
+.prose h3 { font-size:14px; margin:16px 0 6px; }
+.prose p { margin:0 0 12px; }
+.prose ul, .prose ol { margin:0 0 12px; padding-left:22px; }
+.prose li { margin-bottom:4px; }
+.prose code { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:#f0f0f0; padding:1px 5px; border-radius:3px; }
+.prose pre { background:#0e1116; color:#d6dde7; padding:12px; border-radius:6px; overflow-x:auto; font-size:12px; margin:0 0 12px; }
+.prose pre code { background:none; padding:0; color:inherit; }
+.prose table { width:100%; border-collapse:collapse; margin:0 0 12px; font-size:13px; }
+.prose table th, .prose table td { padding:6px 10px; border:1px solid #ddd; text-align:left; }
+.prose table th { background:#f3f3f3; font-weight:600; }
+.prose a { color:var(--acc); }
+.prose hr { border:none; border-top:1px solid #eee; margin:16px 0; }

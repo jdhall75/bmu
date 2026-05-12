@@ -4,6 +4,7 @@
 <form class="table-form" method="POST" action="/jobs/bulk">
   <div class="toolbar">
     <a class="btn" href="/jobs/new">New job</a>
+    <button class="help-btn" onclick="openHelp('jobs')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected jobs?')">Delete selected</button>
     </span>

@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Search configs - Kiroku{% endblock %}
 {% block content %}
-<h2>Config search</h2>
+<div class="toolbar">
+  <h2 style="margin:0">Config search</h2>
+  <button class="help-btn" onclick="openHelp('search')">? Help</button>
+</div>
 
 <form method="GET" action="/search" class="search-form">
   <div class="search-row">

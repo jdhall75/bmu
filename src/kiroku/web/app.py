@@ -12,6 +12,7 @@ from kiroku.web.routes import (
     cve,
     dashboard,
     devices,
+    docs,
     groups,
     jobs,
     parsers,
@@ -44,6 +45,7 @@ def create_app() -> Litestar:
     return Litestar(
         route_handlers=[
             dashboard.router,
+            docs.router,
             groups.router,
             devices.router,
             platforms.router,
