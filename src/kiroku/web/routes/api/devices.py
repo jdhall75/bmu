@@ -44,7 +44,7 @@ from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 
 
-@post("/devices/import", dependencies={"db": provide_db})
+@post("/import", dependencies={"db": provide_db})
 async def import_devices(request: Request, db: Session) -> dict:
     content_type = request.headers.get("content-type", "")
     raw = ""
