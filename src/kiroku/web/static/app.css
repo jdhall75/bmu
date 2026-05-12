@@ -63,8 +63,8 @@ form:not(.search-form, .table-form) label { align-self: center; margin-bottom: 0
 form:not(.search-form, .table-form) input,
 form:not(.search-form, .table-form) select,
 form:not(.search-form, .table-form) textarea { margin-bottom: 0; }
-form .actions { grid-column: 1 / -1; display: flex; gap: 8px; }
-form .actions > * { flex: 1; text-align: center; }
+form .actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: stretch; }
+form .actions > * { flex: 1; display: flex; align-items: center; justify-content: center; }
 form.table-form { display: block; max-width: 100%; background: transparent; padding: 0; border: none; box-shadow: none; }
 form.search-form { display: block; max-width: 100%; background: transparent; padding: 0; border: none; box-shadow: none; margin-bottom: 16px; }
 
