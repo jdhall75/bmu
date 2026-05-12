@@ -377,17 +377,18 @@ async def import_submit(
         )
 
     try:
-        results, created = import_csv(db, raw)
+        results, created, updated = import_csv(db, raw)
     except Exception as exc:
         db.rollback()
         return Template(
             template_name="devices/import_results.html",
-            context={"results": [], "created": 0, "error": f"{type(exc).__name__}: {exc}"},
+            context={"results": [], "created": 0, "updated": 0,
+                     "error": f"{type(exc).__name__}: {exc}"},
         )
 
     return Template(
         template_name="devices/import_results.html",
-        context={"results": results, "created": created, "error": None},
+        context={"results": results, "created": created, "updated": updated, "error": None},
     )
 
 

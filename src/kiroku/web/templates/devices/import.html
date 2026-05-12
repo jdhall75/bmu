@@ -5,10 +5,14 @@
 <p>
   Upload a CSV or paste rows below. Required columns:
   <code>name, hostname, group</code>.
-  Optional: <code>port, description, platform, transport, driver_kind, credentials, enabled</code>
-  (defaults to enabled). Lookups for <code>group</code>
-  and <code>credentials</code> are by name &mdash; create those first.
-  <code>platform</code> is a built-in scrapli platform name (e.g. <code>cisco_iosxe</code>).
+  Optional: <code>port, description, make, model, role, platform, transport, driver_kind, credentials, enabled</code>.
+  Lookups for <code>group</code> and <code>credentials</code> are by name &mdash; create those first.
+</p>
+<p>
+  <strong>Existing devices are updated, not rejected.</strong>
+  Only non-blank cells overwrite existing values &mdash; leave a cell blank to keep the current value.
+  Groups in the CSV are added to the device's existing group membership; no groups are removed.
+  A blank <code>enabled</code> cell leaves the current state unchanged (new devices default to enabled).
 </p>
 <p><a href="/devices/import/template">Download CSV template</a></p>
 
