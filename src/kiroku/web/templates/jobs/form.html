@@ -31,6 +31,9 @@
   <label>CVE product</label>
   <input type="text" name="cve_product" value="{{ job.cve_product or '' }}" placeholder="e.g. ios_xe">
 
+  <label>Show on device page</label>
+  <label><input type="checkbox" name="show_on_device" value="1"{% if job and job.show_on_device %} checked{% endif %}> Display latest collected data on the device detail page</label>
+
   <label>Device groups</label>
   <select name="device_group_ids" multiple size="6">
     {% for g in device_groups %}

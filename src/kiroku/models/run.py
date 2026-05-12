@@ -69,3 +69,8 @@ class Run(Base, TimestampMixin):
         ForeignKey("parser_templates.id", ondelete="SET NULL"), nullable=True
     )
     parser_template = relationship("ParserTemplate")
+    # Which job produced this run.
+    job_id: Mapped[int | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
+    )
+    job = relationship("Job")

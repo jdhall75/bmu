@@ -8,9 +8,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from kiroku.config import get_settings
-from kiroku.models import Credential, CveScan, Device, DeviceGroup, DriverKind, Platform, Run, TransportProtocol
+from kiroku.models import Credential, CveScan, Device, DeviceGroup, DriverKind, Job, Platform, Run, RunStatus, TransportProtocol
 from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
+from kiroku.web.routes.runs import _parsed_display
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
 _PAGE_SIZE = 100
@@ -401,9 +402,33 @@ async def view_device(device_id: int, db: Session) -> Template:
         .order_by(Run.created_at.desc())
         .limit(10)
     ).all()
+
+    show_jobs = db.scalars(
+        select(Job).where(Job.show_on_device == True, Job.kind == "collect")
+    ).all()
+
+    pinned_data: list[dict] = []
+    for job in show_jobs:
+        latest_run = db.scalars(
+            select(Run)
+            .where(
+                Run.device_id == device_id,
+                Run.job_id == job.id,
+                Run.status == RunStatus.SUCCESS,
+                Run.parsed_data.is_not(None),
+            )
+            .order_by(Run.finished_at.desc())
+            .limit(1)
+        ).first()
+        if latest_run:
+            tmpl = job.parser_template.jinja2_template if job.parser_template else None
+            display = _parsed_display(latest_run.parsed_data, tmpl)
+            if display:
+                pinned_data.append({"job": job, "run": latest_run, "display": display})
+
     return Template(
         template_name="devices/detail.html",
-        context={"device": device, "recent_runs": recent_runs},
+        context={"device": device, "recent_runs": recent_runs, "pinned_data": pinned_data},
     )
 
 

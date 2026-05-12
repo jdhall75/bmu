@@ -177,6 +177,8 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                     run.parse_error = result.parse_error
                 if result.parser_template_id:
                     run.parser_template_id = result.parser_template_id
+                if result.job_id:
+                    run.job_id = result.job_id
             elif result.kind == "cve_scan":
                 _record_cve_scan(db, result, run)
 

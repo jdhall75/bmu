@@ -44,6 +44,7 @@ def _apply_job_data(job: Job, data: dict, db: Session) -> None:
     job.parser_template_id = int(data["parser_template_id"]) if data.get("parser_template_id") else None
     job.cve_vendor = data.get("cve_vendor") or None
     job.cve_product = data.get("cve_product") or None
+    job.show_on_device = data.get("show_on_device") == "1"
 
     group_ids = _parse_multi(data, "device_group_ids")
     device_ids = _parse_multi(data, "device_ids")

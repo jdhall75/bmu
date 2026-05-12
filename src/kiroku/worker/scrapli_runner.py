@@ -177,6 +177,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         parsed=parsed,
         parse_error=parse_error,
         parser_template_id=spec.parser_template_id,
+        job_id=spec.job_id,
     )
 
 
@@ -233,6 +234,7 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         command_results=[],
         parsed=parsed,
         parser_template_id=spec.parser_template_id,
+        job_id=spec.job_id,
     )
 
 

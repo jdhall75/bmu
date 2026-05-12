@@ -36,6 +36,29 @@
 </dl>
 {% endif %}
 
+{% if pinned_data %}
+<h3>Collected data</h3>
+{% for item in pinned_data %}
+<h4>{{ item.job.name }}</h4>
+<p class="muted" style="font-size:0.85rem">Collected <a href="/runs/{{ item.run.id }}">{{ item.run.finished_at.strftime('%Y-%m-%d %H:%M UTC') if item.run.finished_at else '' }}</a></p>
+{% set d = item.display %}
+{% if d.type == 'jinja2' %}
+<div class="parsed-output">{{ d.html | safe }}</div>
+{% elif d.type == 'jinja2_error' %}
+<pre class="error-block">Template error: {{ d.error }}</pre>
+{% elif d.type == 'table' %}
+<div class="table-wrap">
+<table>
+  <thead><tr>{% for h in d.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for row in d.rows %}<tr>{% for h in d.headers %}<td>{{ row.get(h, '') }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+</div>
+{% elif d.type == 'json' %}
+<pre>{{ d.value }}</pre>
+{% endif %}
+{% endfor %}
+{% endif %}
+
 <h3>Recent runs</h3>
 <div class="table-wrap">
 <table>
