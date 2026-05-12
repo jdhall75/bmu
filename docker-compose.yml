@@ -22,7 +22,9 @@ services:
       retries: 10
 
   migrate:
-    build: .
+    build:
+      context: .
+      target: runtime-base
     command: ["migrate"]
     depends_on:
       postgres:
@@ -34,8 +36,9 @@ services:
     restart: "no"
 
   web:
-    build: .
-    command: ["serve"]
+    build:
+      context: .
+      target: web
     ports:
       - "8000:8000"
     depends_on:
@@ -52,7 +55,9 @@ services:
       - backups:/var/lib/kiroku/backups:ro
 
   scheduler:
-    build: .
+    build:
+      context: .
+      target: runtime-base
     command: ["scheduler"]
     depends_on:
       migrate:
@@ -65,8 +70,9 @@ services:
       KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
 
   worker:
-    build: .
-    command: ["worker"]
+    build:
+      context: .
+      target: worker
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -81,7 +87,9 @@ services:
       replicas: 1
 
   recorder:
-    build: .
+    build:
+      context: .
+      target: runtime-base
     command: ["recorder"]
     depends_on:
       migrate:
