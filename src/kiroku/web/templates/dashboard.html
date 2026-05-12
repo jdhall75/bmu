@@ -6,10 +6,10 @@
   <button class="help-btn" onclick="openHelp('dashboard')">? Dashboard help</button>
 </div>
 <div class="cards">
-  <div class="card"><div class="lbl">Groups</div><div class="num">{{ counts.groups }}</div></div>
-  <div class="card"><div class="lbl">Devices</div><div class="num">{{ counts.devices }}</div></div>
-  <div class="card"><div class="lbl">Schedules</div><div class="num">{{ counts.schedules }}</div></div>
-  <div class="card"><div class="lbl">Jobs Executed</div><div class="num">{{ counts.jobs_executed }}</div>{% if failing %}<div style="color:var(--bad)">{{ failing }} with failures</div>{% endif %}</div>
+  <article><div class="card-lbl">Groups</div><p class="card-num">{{ counts.groups }}</p></article>
+  <article><div class="card-lbl">Devices</div><p class="card-num">{{ counts.devices }}</p></article>
+  <article><div class="card-lbl">Schedules</div><p class="card-num">{{ counts.schedules }}</p></article>
+  <article><div class="card-lbl">Jobs Executed</div><p class="card-num">{{ counts.jobs_executed }}</p>{% if failing %}<div style="color:var(--bad)">{{ failing }} with failures</div>{% endif %}</article>
 </div>
 
 <h2>Recent jobs</h2>

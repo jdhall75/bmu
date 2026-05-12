@@ -3,7 +3,7 @@
 {% block content %}
 <form class="table-form" method="POST" action="/schedules/bulk">
   <div class="toolbar">
-    <a class="btn" href="/schedules/new">New schedule</a>
+    <a role="button" href="/schedules/new">New schedule</a>
     <button class="help-btn" onclick="openHelp('schedules')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected schedules?')">Delete selected</button>
@@ -28,7 +28,7 @@
         <td>{{ 'yes' if s.enabled else 'no' }}</td>
         <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
         <td>
-          <a class="btn btn-secondary" href="/schedules/{{ s.id }}/edit">edit</a>
+          <a class="secondary" role="button" href="/schedules/{{ s.id }}/edit">edit</a>
           <button formaction="/schedules/{{ s.id }}/delete" onclick="return confirm('Delete {{ s.name }}?')">delete</button>
         </td>
       </tr>

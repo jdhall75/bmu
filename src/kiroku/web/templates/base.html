@@ -1,26 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Kiroku{% endblock %}</title>
+  <link rel="stylesheet" href="/static/pico.min.css">
   <link rel="stylesheet" href="/static/app.css">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
 <body>
   <header>
-    <h1><a href="/">Kiroku</a></h1>
     <nav>
-      <a href="/groups">Groups</a>
-      <a href="/devices">Devices</a>
-      <a href="/platforms">Platforms</a>
-      <a href="/jobs">Jobs</a>
-      <a href="/parsers">Parsers</a>
-      <a href="/credentials">Credentials</a>
-      <a href="/schedules">Schedules</a>
-      <a href="/runs">Runs</a>
-      <a href="/cve">CVE Scans</a>
-      <a href="/search">Search</a>
-      <button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button>
+      <ul>
+        <li><a href="/" style="font-size:18px;font-weight:700;color:var(--fg);text-decoration:none">Kiroku</a></li>
+        <li><a href="/groups">Groups</a></li>
+        <li><a href="/devices">Devices</a></li>
+        <li><a href="/platforms">Platforms</a></li>
+        <li><a href="/jobs">Jobs</a></li>
+        <li><a href="/parsers">Parsers</a></li>
+        <li><a href="/credentials">Credentials</a></li>
+        <li><a href="/schedules">Schedules</a></li>
+        <li><a href="/runs">Runs</a></li>
+        <li><a href="/cve">CVE Scans</a></li>
+        <li><a href="/search">Search</a></li>
+      </ul>
+      <ul>
+        <li><button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button></li>
+      </ul>
     </nav>
   </header>
   <main>

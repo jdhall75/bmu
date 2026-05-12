@@ -3,8 +3,8 @@
 {% block content %}
 <form class="table-form" method="POST" action="/parsers/bulk">
   <div class="toolbar">
-    <a class="btn" href="/parsers/new">New parser template</a>
-    <a class="btn btn-secondary" href="/parsers/test">Test bed</a>
+    <a role="button" href="/parsers/new">New parser template</a>
+    <a class="secondary" role="button" href="/parsers/test">Test bed</a>
     <button class="help-btn" onclick="openHelp('parsers')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected templates?')">Delete selected</button>
@@ -25,8 +25,8 @@
         <td><code>{{ p.type.value }}</code></td>
         <td>{{ p.description or '' }}</td>
         <td>
-          <a class="btn btn-secondary" href="/parsers/{{ p.id }}/edit">edit</a>
-          <a class="btn btn-secondary" href="/parsers/test?load={{ p.id }}">test</a>
+          <a class="secondary" role="button" href="/parsers/{{ p.id }}/edit">edit</a>
+          <a class="secondary" role="button" href="/parsers/test?load={{ p.id }}">test</a>
           <button formaction="/parsers/{{ p.id }}/delete" onclick="return confirm('Delete {{ p.name }}?')">delete</button>
         </td>
       </tr>

@@ -1,124 +1,160 @@
-:root { --fg:#222; --bg:#fafafa; --acc:#1f6feb; --muted:#666; --bad:#c0392b; --ok:#27ae60; }
-* { box-sizing: border-box; }
-body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--bg); }
-header { padding:12px 24px; background:#fff; border-bottom:1px solid #ddd; display:flex; gap:24px; align-items:center; }
-header h1 { font-size:18px; margin:0; }
-header h1 a { color:var(--fg); text-decoration:none; }
-header nav { display:flex; align-items:center; flex-wrap:wrap; gap:0; }
-header nav a { margin-right:16px; color:var(--acc); text-decoration:none; }
-.help-nav-btn { margin-left:8px; width:22px; height:22px; padding:0; border-radius:50%; background:#e8e8e8; color:var(--muted); font-size:13px; font-weight:600; line-height:22px; border:0; cursor:pointer; flex-shrink:0; }
-.help-nav-btn:hover { background:var(--acc); color:#fff; }
-.help-btn { padding:4px 10px; background:#e8e8e8; color:var(--muted); font-size:12px; border:0; border-radius:4px; cursor:pointer; }
-.help-btn:hover { background:var(--acc); color:#fff; }
-main { padding:24px; max-width:1100px; margin:0 auto; }
-table:not(.search-snippet) { width:100%; border-collapse:collapse; background:#fff; }
-table:not(.search-snippet) th, table:not(.search-snippet) td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
-table:not(.search-snippet) th { background:#f3f3f3; font-weight:600; }
-form { display:grid; grid-template-columns:160px 1fr; gap:8px 16px; max-width:720px; background:#fff; padding:16px; border:1px solid #eee; }
-form label { align-self:center; }
-form input[type=text], form input[type=number], form select, form textarea { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
-form textarea { min-height:120px; font-family:ui-monospace,Menlo,Consolas,monospace; }
-form .actions { grid-column:1/-1; display:flex; gap:8px; }
-button, .btn { padding:6px 12px; background:var(--acc); color:#fff; border:0; border-radius:4px; cursor:pointer; text-decoration:none; display:inline-block; }
-.btn-secondary { background:#e5e5e5; color:var(--fg); }
-.cards { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
-.card { background:#fff; border:1px solid #eee; padding:14px; border-radius:6px; }
-.card .num { font-size:28px; font-weight:600; }
-.card .lbl { color:var(--muted); font-size:12px; text-transform:uppercase; }
-.status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; text-transform:uppercase; }
-.status-success { background:#dff5e3; color:var(--ok); }
-.status-failed, .status-timeout, .status-cancelled { background:#fde2dd; color:var(--bad); }
-.status-running { background:#fff5cc; color:#9a7b00; }
-.status-pending { background:#e8e8e8; color:var(--muted); }
-pre { background:#0e1116; color:#d6dde7; padding:12px; border-radius:6px; overflow:auto; font-size:12px; }
-.toolbar { margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.bulk-actions { display:contents; }
-form.table-form { display:block; max-width:100%; background:transparent; padding:0; border:none; }
-.bulk-edit-panel { background:#fff; border:1px solid #eee; padding:16px; margin-bottom:12px; display:grid; grid-template-columns:160px 1fr; gap:8px 16px; max-width:720px; }
-.bulk-edit-panel label { align-self:center; }
-.bulk-edit-panel input[type=number], .bulk-edit-panel select { width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
-.bulk-edit-panel .actions { grid-column:1/-1; display:flex; gap:8px; }
-.severity-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; text-transform:uppercase; text-decoration:none; }
-.severity-critical { background:#fde2dd; color:#a11; }
-.severity-high { background:#fef0d4; color:#955a00; }
-.severity-medium { background:#fff8cc; color:#7a6000; }
-.severity-low { background:#dff5e3; color:#1a6b2a; }
-.severity-none { background:#e8e8e8; color:var(--muted); }
-.severity-unscanned { background:#f0f0f0; color:#aaa; }
-.status-partial { background:#fef0d4; color:#955a00; }
-.status-complete { background:#dff5e3; color:var(--ok); }
-dl.detail-grid { display:grid; grid-template-columns:160px 1fr; gap:4px 16px; max-width:720px; background:#fff; padding:14px; border:1px solid #eee; border-radius:4px; margin-bottom:16px; }
-dl.detail-grid dt { font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; align-self:start; padding-top:2px; }
-dl.detail-grid dd { margin:0; }
-.muted { color:var(--muted); }
-.config-viewer { max-height:80vh; white-space:pre; }
-.error-block { background:#fde2dd; color:#6b1a1a; border:1px solid #f5c6c6; white-space:pre-wrap; word-break:break-all; }
-tr.row-failed td { background:#fff8f8; }
-.search-form { display:block; max-width:100%; background:transparent; padding:0; border:none; margin-bottom:16px; }
-.search-row { display:flex; gap:8px; margin-bottom:8px; }
-.search-row input[type=text] { flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:4px; font:inherit; font-size:15px; }
-.search-options { display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-size:13px; }
-.search-options label { display:flex; align-items:center; gap:4px; }
-.search-options select, .search-options input[type=number] { padding:4px 6px; border:1px solid #ccc; border-radius:4px; font:inherit; }
-.search-result { background:#fff; border:1px solid #eee; border-radius:6px; margin-bottom:16px; overflow:hidden; }
-.search-result-header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:1px solid #eee; flex-wrap:wrap; }
-.search-snippet { margin:0; border-radius:0; font-size:12px; line-height:1.6; background:#0e1116; color:#d6dde7; width:100%; border-collapse:collapse; font-family:ui-monospace,Menlo,Consolas,monospace; display:table; }
-.search-snippet + .search-snippet { border-top:1px solid #1e2a33; }
-.search-snippet .ln { color:#586474; user-select:none; text-align:right; padding:0 10px; white-space:pre; min-width:2.5em; }
-.search-snippet .lc { padding:0 12px; white-space:pre; width:100%; }
-.search-snippet tr.hit td { background:#fff5b1; color:#333; }
-.search-headline { padding:8px 14px; font-size:13px; color:#444; }
-.search-headline mark { background:#fff5b1; }
-.pagination { display:flex; gap:16px; align-items:center; margin-top:12px; font-size:13px; }
-.testbed-wrap { display:flex; flex-direction:column; height:calc(100vh - 120px); gap:8px; }
-.testbed-header { display:flex; align-items:baseline; gap:24px; flex-wrap:wrap; flex-shrink:0; }
-.testbed-header h2 { margin:0; }
-.testbed-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.testbed-controls label { font-size:13px; color:var(--muted); }
-.testbed-controls select { padding:5px 8px; border:1px solid #ccc; border-radius:4px; font:inherit; }
-.testbed-panes { flex:3; display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height:0; }
-.testbed-pane { display:flex; flex-direction:column; gap:4px; min-height:0; }
-.testbed-pane-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; }
-.testbed-textarea { flex:1; width:100%; height:0; min-height:0; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; padding:10px; border:1px solid #ccc; border-radius:4px; resize:none; background:#fff; }
-.testbed-result { flex:2; display:flex; flex-direction:column; gap:4px; min-height:0; }
-.testbed-result-textarea { background:#0e1116; color:#d6dde7; border-color:#1e2a33; }
-.testbed-result-error { color:#f28b82; }
-.diff-table { width:100%; border-collapse:collapse; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; }
-.diff-table th, .diff-table td { padding:1px 8px; border:none; vertical-align:top; }
-.diff-table th { background:#f3f3f3; font-weight:600; text-align:center; }
-.diff-ln { color:#888; text-align:right; user-select:none; white-space:nowrap; width:3em; min-width:3em; }
-.diff-code { white-space:pre; width:100%; }
-.diff-added { background:#e6ffec; }
-.diff-added .diff-ln { background:#ccffd8; }
-.diff-removed { background:#ffebe9; }
-.diff-removed .diff-ln { background:#ffd7d5; }
-.diff-hunk { background:#ddf4ff; color:#0969da; }
-.diff-hunk .diff-code { padding-left:8px; }
-.diff-context { background:#fff; }
-.perf-bar { text-align:right; font-size:11px; color:#bbb; padding:4px 24px 8px; }
+/* ── Pico v2 variable overrides ───────────────────────────────────────── */
+:root {
+  --pico-primary: #1f6feb;
+  --pico-primary-background: #1f6feb;
+  --pico-primary-hover: #1a5ecb;
+  --pico-primary-focus: rgba(31, 111, 235, 0.375);
+  --pico-primary-inverse: #fff;
+  --pico-font-size: 87.5%;       /* render at 14px instead of Pico's 16px */
+  --pico-line-height: 1.5;
+  /* Custom palette used by components below */
+  --fg: #222;
+  --bg: #f5f5f5;
+  --acc: #1f6feb;
+  --muted: #666;
+  --bad: #c0392b;
+  --ok: #27ae60;
+}
 
-/* ── Help dialog ─────────────────────────────────────────────────────── */
-.help-dialog { border:0; border-radius:8px; padding:0; width:min(760px,95vw); max-height:85vh; box-shadow:0 8px 40px rgba(0,0,0,.18); overflow:hidden; display:flex; flex-direction:column; }
-.help-dialog::backdrop { background:rgba(0,0,0,.35); }
-.help-dialog-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #eee; flex-shrink:0; background:#fff; }
-.help-dialog-title { font-weight:600; font-size:15px; }
-.help-dialog-close { background:none; border:0; font-size:20px; cursor:pointer; color:var(--muted); padding:0 4px; line-height:1; }
-.help-dialog-close:hover { color:var(--fg); }
-.help-dialog-body { overflow-y:auto; padding:20px 24px; background:#fff; }
+/* ── Global layout ────────────────────────────────────────────────────── */
+body { background: var(--bg); }
+main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
-/* ── Prose styles for rendered markdown ──────────────────────────────── */
-.prose { line-height:1.65; color:var(--fg); }
-.prose h1 { font-size:20px; margin:0 0 16px; }
-.prose h2 { font-size:16px; margin:20px 0 8px; border-bottom:1px solid #eee; padding-bottom:4px; }
-.prose h3 { font-size:14px; margin:16px 0 6px; }
-.prose p { margin:0 0 12px; }
-.prose ul, .prose ol { margin:0 0 12px; padding-left:22px; }
-.prose li { margin-bottom:4px; }
-.prose code { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:#f0f0f0; padding:1px 5px; border-radius:3px; }
-.prose pre { background:#0e1116; color:#d6dde7; padding:12px; border-radius:6px; overflow-x:auto; font-size:12px; margin:0 0 12px; }
-.prose pre code { background:none; padding:0; color:inherit; }
-.prose table { width:100%; border-collapse:collapse; margin:0 0 12px; font-size:13px; }
-.prose table th, .prose table td { padding:6px 10px; border:1px solid #ddd; text-align:left; }
-.prose table th { background:#f3f3f3; font-weight:600; }
-.prose a { color:var(--acc); }
-.prose hr { border:none; border-top:1px solid #eee; margin:16px 0; }
+/* ── Header / nav ─────────────────────────────────────────────────────── */
+header { padding: 0 24px; }
+header nav { --pico-nav-element-spacing-horizontal: 8px; }
+.help-nav-btn { width: 24px; height: 24px; padding: 0; border-radius: 50%; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* ── Help buttons (sidebar/toolbar) ───────────────────────────────────── */
+.help-btn { font-size: 12px; }
+
+/* ── Form layout — restore 2-col grid over Pico's block defaults ──────── */
+form:not(.search-form, .table-form) {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 16px;
+  max-width: 720px;
+  background: var(--pico-card-background-color, #fff);
+  padding: 16px;
+  border: 1px solid var(--pico-card-border-color, #eee);
+  border-radius: var(--pico-border-radius, 4px);
+}
+form:not(.search-form, .table-form) label { align-self: center; margin-bottom: 0; }
+form:not(.search-form, .table-form) input,
+form:not(.search-form, .table-form) select,
+form:not(.search-form, .table-form) textarea { margin-bottom: 0; }
+form .actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+form.table-form { display: block; max-width: 100%; background: transparent; padding: 0; border: none; box-shadow: none; }
+form.search-form { display: block; max-width: 100%; background: transparent; padding: 0; border: none; box-shadow: none; margin-bottom: 16px; }
+
+/* ── Dashboard cards — use <article> which Pico styles as cards ───────── */
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.cards article { padding: 14px; margin: 0; }
+.card-num { font-size: 28px; font-weight: 600; margin: 0; }
+.card-lbl { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+
+/* ── Status badges ────────────────────────────────────────────────────── */
+.status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; text-transform: uppercase; }
+.status-success { background: #dff5e3; color: var(--ok); }
+.status-failed, .status-timeout, .status-cancelled { background: #fde2dd; color: var(--bad); }
+.status-running { background: #fff5cc; color: #9a7b00; }
+.status-pending { background: #e8e8e8; color: var(--muted); }
+.status-partial { background: #fef0d4; color: #955a00; }
+.status-complete { background: #dff5e3; color: var(--ok); }
+
+/* ── CVE severity badges ──────────────────────────────────────────────── */
+.severity-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; text-decoration: none; }
+.severity-critical { background: #fde2dd; color: #a11; }
+.severity-high { background: #fef0d4; color: #955a00; }
+.severity-medium { background: #fff8cc; color: #7a6000; }
+.severity-low { background: #dff5e3; color: #1a6b2a; }
+.severity-none { background: #e8e8e8; color: var(--muted); }
+.severity-unscanned { background: #f0f0f0; color: #aaa; }
+
+/* ── Toolbar ──────────────────────────────────────────────────────────── */
+.toolbar { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bulk-actions { display: contents; }
+.bulk-edit-panel { background: var(--pico-card-background-color, #fff); border: 1px solid #eee; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; max-width: 720px; }
+.bulk-edit-panel label { align-self: center; margin-bottom: 0; }
+.bulk-edit-panel input[type=number], .bulk-edit-panel select { width: 100%; margin-bottom: 0; }
+.bulk-edit-panel .actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+
+/* ── Detail grid (dl/dt/dd two-col layout) ────────────────────────────── */
+dl.detail-grid { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; max-width: 720px; background: var(--pico-card-background-color, #fff); padding: 14px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 16px; }
+dl.detail-grid dt { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; align-self: start; padding-top: 2px; margin-bottom: 0; }
+dl.detail-grid dd { margin: 0; }
+
+/* ── Misc utilities ───────────────────────────────────────────────────── */
+.muted { color: var(--muted); }
+tr.row-failed td { background: #fff8f8; }
+
+/* ── Config / pre overrides ───────────────────────────────────────────── */
+pre { background: #0e1116; color: #d6dde7; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; }
+.config-viewer { max-height: 80vh; white-space: pre; }
+.error-block { background: #fde2dd; color: #6b1a1a; border: 1px solid #f5c6c6; white-space: pre-wrap; word-break: break-all; }
+
+/* ── Pagination ───────────────────────────────────────────────────────── */
+.pagination { display: flex; gap: 16px; align-items: center; margin-top: 12px; font-size: 13px; }
+
+/* ── Config diff ──────────────────────────────────────────────────────── */
+.diff-table { width: 100%; border-collapse: collapse; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; }
+.diff-table th, .diff-table td { padding: 1px 8px; border: none; vertical-align: top; }
+.diff-table th { background: #f3f3f3; font-weight: 600; text-align: center; }
+.diff-ln { color: #888; text-align: right; user-select: none; white-space: nowrap; width: 3em; min-width: 3em; }
+.diff-code { white-space: pre; width: 100%; }
+.diff-added { background: #e6ffec; }
+.diff-added .diff-ln { background: #ccffd8; }
+.diff-removed { background: #ffebe9; }
+.diff-removed .diff-ln { background: #ffd7d5; }
+.diff-hunk { background: #ddf4ff; color: #0969da; }
+.diff-hunk .diff-code { padding-left: 8px; }
+.diff-context { background: #fff; }
+
+/* ── Search ───────────────────────────────────────────────────────────── */
+.search-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.search-row input[type=text] { flex: 1; }
+.search-options { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.search-options label { display: flex; align-items: center; gap: 4px; margin-bottom: 0; }
+.search-options select, .search-options input[type=number] { margin-bottom: 0; }
+.search-result { background: #fff; border: 1px solid #eee; border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.search-result-header { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
+.search-snippet { margin: 0; border-radius: 0; font-size: 12px; line-height: 1.6; background: #0e1116; color: #d6dde7; width: 100%; border-collapse: collapse; font-family: ui-monospace, Menlo, Consolas, monospace; display: table; }
+.search-snippet + .search-snippet { border-top: 1px solid #1e2a33; }
+.search-snippet .ln { color: #586474; user-select: none; text-align: right; padding: 0 10px; white-space: pre; min-width: 2.5em; }
+.search-snippet .lc { padding: 0 12px; white-space: pre; width: 100%; }
+.search-snippet tr.hit td { background: #fff5b1; color: #333; }
+.search-headline { padding: 8px 14px; font-size: 13px; color: #444; }
+.search-headline mark { background: #fff5b1; }
+
+/* ── Parser test bed ──────────────────────────────────────────────────── */
+.testbed-wrap { display: flex; flex-direction: column; height: calc(100vh - 120px); gap: 8px; }
+.testbed-header { display: flex; align-items: baseline; gap: 24px; flex-wrap: wrap; flex-shrink: 0; }
+.testbed-header h2 { margin: 0; }
+.testbed-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.testbed-controls label { font-size: 13px; color: var(--muted); margin-bottom: 0; }
+.testbed-controls select { margin-bottom: 0; }
+.testbed-panes { flex: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
+.testbed-pane { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.testbed-pane-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+.testbed-textarea { flex: 1; width: 100%; height: 0; min-height: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; background: #fff; }
+.testbed-result { flex: 2; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.testbed-result-textarea { background: #0e1116; color: #d6dde7; border-color: #1e2a33; }
+.testbed-result-error { color: #f28b82; }
+
+/* ── Performance bar ──────────────────────────────────────────────────── */
+.perf-bar { text-align: right; font-size: 11px; color: #bbb; padding: 4px 24px 8px; }
+
+/* ── Help dialog ──────────────────────────────────────────────────────── */
+dialog.help-dialog { width: min(760px, 95vw); max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+.help-dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--pico-card-border-color, #eee); flex-shrink: 0; }
+.help-dialog-title { font-weight: 600; font-size: 15px; margin: 0; }
+.help-dialog-close { background: none; border: 0; font-size: 20px; cursor: pointer; color: var(--muted); padding: 0 4px; line-height: 1; }
+.help-dialog-close:hover { color: var(--fg); }
+.help-dialog-body { overflow-y: auto; padding: 20px 24px; }
+
+/* ── Prose (rendered markdown inside help dialog) ─────────────────────── */
+.prose h1 { font-size: 20px; margin: 0 0 16px; }
+.prose h2 { font-size: 16px; margin: 20px 0 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+.prose h3 { font-size: 14px; margin: 16px 0 6px; }
+.prose pre { margin: 0 0 12px; }
+.prose table { margin: 0 0 12px; font-size: 13px; }

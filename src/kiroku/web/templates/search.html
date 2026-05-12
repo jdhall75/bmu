@@ -45,7 +45,7 @@
         {% if r.captured_at %}
           <span class="muted">— {{ r.captured_at.strftime('%Y-%m-%d %H:%M') }}</span>
         {% endif %}
-        <a class="btn btn-secondary" href="/devices/{{ r.device_id }}/config" style="margin-left:auto">View config</a>
+        <a class="secondary" role="button" href="/devices/{{ r.device_id }}/config" style="margin-left:auto">View config</a>
       </div>
       {% if r.blocks %}
         {% for block in r.blocks %}

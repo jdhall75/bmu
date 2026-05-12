@@ -3,7 +3,7 @@
 {% block content %}
 <div class="toolbar">
   <h2 style="margin:0">Custom Platforms</h2>
-  <a class="btn" href="/platforms/new">New platform</a>
+  <a role="button" href="/platforms/new">New platform</a>
   <button class="help-btn" onclick="openHelp('platforms')">? Help</button>
 </div>
 
@@ -24,7 +24,7 @@
       <td><strong>{{ p.name }}</strong></td>
       <td>{{ p.description or '-' }}</td>
       <td>
-        <a class="btn btn-secondary" href="/platforms/{{ p.id }}/edit">Edit</a>
+        <a class="secondary" role="button" href="/platforms/{{ p.id }}/edit">Edit</a>
         <form method="post" action="/platforms/{{ p.id }}/delete" style="display:inline">
           <button onclick="return confirm('Delete platform {{ p.name }}?')">Delete</button>
         </form>

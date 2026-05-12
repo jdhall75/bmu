@@ -15,7 +15,7 @@
   <label>Max parallel</label><input type="number" name="max_parallel" value="{{ group.max_parallel if group else 8 }}" min="1">
   <div class="actions">
     <button type="submit">{% if group %}Save{% else %}Create{% endif %}</button>
-    <a class="btn btn-secondary" href="/groups">Cancel</a>
+    <a class="secondary" role="button" href="/groups">Cancel</a>
   </div>
 </form>
 {% endblock %}

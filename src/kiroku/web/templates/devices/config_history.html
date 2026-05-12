@@ -6,7 +6,7 @@
 
 {% if history %}
 <div class="toolbar">
-  <button class="btn" id="compare-btn" disabled
+  <button id="compare-btn" disabled
           onclick="submitCompare({{ device.id }})">Compare selected</button>
   <span class="muted" id="compare-hint" style="font-size:13px">Select 2 commits to compare</span>
 </div>
@@ -27,7 +27,7 @@
       <td>{{ entry.date[:19].replace('T', ' ') }}</td>
       <td><code>{{ entry.sha }}</code></td>
       <td>{{ entry.message }}</td>
-      <td><a class="btn btn-secondary" href="/devices/{{ device.id }}/config?sha={{ entry.sha_full }}" style="font-size:12px; padding:3px 8px">View</a></td>
+      <td><a class="secondary" role="button" href="/devices/{{ device.id }}/config?sha={{ entry.sha_full }}" style="font-size:12px; padding:3px 8px">View</a></td>
     </tr>
   {% endfor %}
   </tbody>

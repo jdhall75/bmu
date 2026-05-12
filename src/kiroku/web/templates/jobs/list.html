@@ -3,7 +3,7 @@
 {% block content %}
 <form class="table-form" method="POST" action="/jobs/bulk">
   <div class="toolbar">
-    <a class="btn" href="/jobs/new">New job</a>
+    <a role="button" href="/jobs/new">New job</a>
     <button class="help-btn" onclick="openHelp('jobs')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected jobs?')">Delete selected</button>
@@ -29,7 +29,7 @@
         </td>
         <td>
           <button formaction="/jobs/{{ j.id }}/run" title="Run now" onclick="return confirm('Run {{ j.name }} now?')" style="font-size:15px; padding:4px 10px;">&#9654;</button>
-          <a class="btn btn-secondary" href="/jobs/{{ j.id }}/edit">edit</a>
+          <a class="secondary" role="button" href="/jobs/{{ j.id }}/edit">edit</a>
           <button formaction="/jobs/{{ j.id }}/delete" onclick="return confirm('Delete {{ j.name }}?')">delete</button>
         </td>
       </tr>

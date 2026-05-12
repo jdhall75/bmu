@@ -3,7 +3,7 @@
 {% block content %}
 <form class="table-form" method="POST" action="/groups/bulk">
   <div class="toolbar">
-    <a class="btn" href="/groups/new">New group</a>
+    <a role="button" href="/groups/new">New group</a>
     <button class="help-btn" onclick="openHelp('groups')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected groups?')">Delete selected</button>
@@ -25,7 +25,7 @@
         <td>{{ g.default_credential.name if g.default_credential else '-' }}</td>
         <td>{{ g.max_parallel }}</td>
         <td>
-          <a class="btn btn-secondary" href="/groups/{{ g.id }}/edit">edit</a>
+          <a class="secondary" role="button" href="/groups/{{ g.id }}/edit">edit</a>
           <button formaction="/groups/{{ g.id }}/delete" onclick="return confirm('Delete {{ g.name }}?')">delete</button>
         </td>
       </tr>

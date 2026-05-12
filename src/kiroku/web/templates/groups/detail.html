@@ -2,7 +2,7 @@
 {% block title %}{{ group.name }} - Kiroku{% endblock %}
 {% block content %}
 <div class="toolbar">
-  <a class="btn btn-secondary" href="/groups/{{ group.id }}/edit">Edit group</a>
+  <a class="secondary" role="button" href="/groups/{{ group.id }}/edit">Edit group</a>
   <form method="POST" action="/groups/{{ group.id }}/delete" style="display:contents">
     <button onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
   </form>

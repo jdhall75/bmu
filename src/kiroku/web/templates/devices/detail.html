@@ -18,10 +18,10 @@
 </dl>
 
 <div class="actions">
-  <a class="btn" href="/devices/{{ device.id }}/edit">Edit</a>
+  <a role="button" href="/devices/{{ device.id }}/edit">Edit</a>
   {% if device.latest_backup_path %}
-    <a class="btn" href="/devices/{{ device.id }}/config">View Config</a>
-    <a class="btn btn-secondary" href="/devices/{{ device.id }}/config/history">Git History</a>
+    <a role="button" href="/devices/{{ device.id }}/config">View Config</a>
+    <a class="secondary" role="button" href="/devices/{{ device.id }}/config/history">Git History</a>
   {% endif %}
 </div>
 

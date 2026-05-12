@@ -69,7 +69,7 @@
   <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not device or device.enabled %} checked{% endif %}>
   <div class="actions">
     <button type="submit">{% if device %}Save{% else %}Create{% endif %}</button>
-    <a class="btn btn-secondary" href="/devices">Cancel</a>
+    <a class="secondary" role="button" href="/devices">Cancel</a>
   </div>
 </form>
 {% endblock %}

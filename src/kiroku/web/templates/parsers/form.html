@@ -22,9 +22,9 @@
   <div class="actions">
     <button type="submit">{% if parser %}Save{% else %}Create{% endif %}</button>
     {% if parser %}
-      <a class="btn btn-secondary" href="/parsers/test?load={{ parser.id }}">Test this template</a>
+      <a class="secondary" role="button" href="/parsers/test?load={{ parser.id }}">Test this template</a>
     {% endif %}
-    <a class="btn btn-secondary" href="/parsers">Cancel</a>
+    <a class="secondary" role="button" href="/parsers">Cancel</a>
   </div>
 </form>
 {% endblock %}

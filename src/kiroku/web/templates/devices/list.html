@@ -3,8 +3,8 @@
 {% block content %}
 <form class="table-form" method="POST" action="/devices/bulk">
   <div class="toolbar">
-    <a class="btn" href="/devices/new">New device</a>
-    <a class="btn btn-secondary" href="/devices/import">Bulk import</a>
+    <a role="button" href="/devices/new">New device</a>
+    <a class="secondary" role="button" href="/devices/import">Bulk import</a>
     <button class="help-btn" onclick="openHelp('devices')">? Help</button>
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected devices?')">Delete selected</button>
@@ -68,7 +68,7 @@
           {% endif %}
         </td>
         <td>
-          <a class="btn btn-secondary" href="/devices/{{ d.id }}/edit">edit</a>
+          <a class="secondary" role="button" href="/devices/{{ d.id }}/edit">edit</a>
           <button formaction="/devices/{{ d.id }}/delete" onclick="return confirm('Delete {{ d.name }}?')">delete</button>
         </td>
       </tr>
