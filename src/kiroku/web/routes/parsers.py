@@ -117,7 +117,7 @@ class _TestRequest(BaseModel):
     template: str
 
 
-@post("/test/run")
+@post("/test/run", status_code=200)
 async def run_test(data: _TestRequest) -> dict:
     from kiroku.worker.parsers import parse
     try:

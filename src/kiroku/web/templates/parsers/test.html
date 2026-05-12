@@ -80,11 +80,16 @@
         body: JSON.stringify({ type: type, input: input, template: template }),
       });
       var data = await resp.json();
-      if (data.ok) {
-        resultEl.value = JSON.stringify(data.result, null, 2);
+      if (!resp.ok) {
+        // Litestar HTTP error: {status_code, detail}
+        resultEl.value = 'HTTP ' + resp.status + ': ' + (data.detail || resp.statusText);
+        resultEl.classList.add('testbed-result-error');
+        label.textContent = 'Result — error';
+      } else if (data.ok) {
+        resultEl.value = data.result != null ? JSON.stringify(data.result, null, 2) : '(no results)';
         label.textContent = 'Result (' + (Array.isArray(data.result) ? data.result.length + ' row(s)' : 'object') + ')';
       } else {
-        resultEl.value = data.error;
+        resultEl.value = data.error || 'Unknown error';
         resultEl.classList.add('testbed-result-error');
         label.textContent = 'Result — error';
       }
