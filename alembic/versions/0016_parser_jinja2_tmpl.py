@@ -1,13 +1,13 @@
 """Add jinja2_template to parser_templates; add parser_template_id FK to runs.
 
-Revision ID: 0016_parser_jinja2_and_run_parser_fk
+Revision ID: 0016_parser_jinja2_tmpl
 Revises: 0015_run_parse_error
 Create Date: 2026-05-12
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0016_parser_jinja2_and_run_parser_fk"
+revision = "0016_parser_jinja2_tmpl"
 down_revision = "0015_run_parse_error"
 branch_labels = None
 depends_on = None
