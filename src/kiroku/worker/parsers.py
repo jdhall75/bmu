@@ -2,11 +2,22 @@
 from __future__ import annotations
 
 import io
+import re
+
+# Juniper outputs a routing-engine indicator line (e.g. "{master}", "{master:0}",
+# "{backup}") before the prompt. NTC TextFSM templates don't account for it and
+# raise a State Error. Strip these lines universally before any parse attempt.
+_JUNIPER_RE_INDICATOR = re.compile(r"^\{[a-z][a-z0-9]*(?::\d+)?\}\s*$", re.MULTILINE)
+
+
+def _clean(payload: str) -> str:
+    return _JUNIPER_RE_INDICATOR.sub("", payload)
 
 
 def parse(parser_type: str | None, body: str | None, payload: str) -> list[dict] | dict | None:
     if not parser_type or not body:
         return None
+    payload = _clean(payload)
     if parser_type == "textfsm":
         return _textfsm(body, payload)
     if parser_type == "ttp":
