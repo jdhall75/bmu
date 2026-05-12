@@ -19,9 +19,9 @@
       <th>Job</th>
       <th>Started</th>
       <th>Finished</th>
-      <th style="text-align:right">Total</th>
-      <th style="text-align:right">OK</th>
-      <th style="text-align:right">Failed</th>
+      <th class="col-num">Total</th>
+      <th class="col-num">OK</th>
+      <th class="col-num">Failed</th>
       <th>Commit</th>
     </tr>
   </thead>
@@ -32,9 +32,9 @@
       <td><a href="/runs/batches/{{ b.id }}">{{ row.job_name }}</a></td>
       <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '—' }}</td>
       <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '<span class="status status-running">running</span>' | safe }}</td>
-      <td style="text-align:right">{{ b.total }}</td>
-      <td style="text-align:right; color:var(--ok)">{{ b.succeeded }}</td>
-      <td style="text-align:right{% if b.failed %}; color:var(--bad){% endif %}">{{ b.failed }}</td>
+      <td class="col-num">{{ b.total }}</td>
+      <td class="col-ok">{{ b.succeeded }}</td>
+      <td class="{{ 'col-bad' if b.failed else 'col-num' }}">{{ b.failed }}</td>
       <td>{{ b.commit_sha[:8] if b.commit_sha else '' }}</td>
     </tr>
   {% else %}

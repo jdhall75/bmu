@@ -94,7 +94,11 @@ dl.detail-grid dd { margin: 0; }
 
 /* ── Misc utilities ───────────────────────────────────────────────────── */
 .muted { color: var(--muted); }
-tr.row-failed td { background: #fff8f8; }
+tr.row-failed td { background: rgba(192, 57, 43, 0.08); }
+[data-theme="dark"] tr.row-failed td { background: rgba(248, 81, 73, 0.12); }
+.col-num { text-align: right; }
+.col-ok  { text-align: right; color: var(--ok); }
+.col-bad { text-align: right; color: var(--bad); }
 
 /* ── Config / pre overrides ───────────────────────────────────────────── */
 pre { background: #0e1116; color: #d6dde7; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; }
