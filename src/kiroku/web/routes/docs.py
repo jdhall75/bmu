@@ -1,7 +1,6 @@
 """Serve documentation pages as rendered HTML fragments for the help modal."""
 from __future__ import annotations
 
-import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -9,11 +8,8 @@ from pathlib import Path
 import markdown
 from litestar import Router, get
 
-# In development the docs live at the repo root.  In a container set the
-# KIROKU_DOCS_PATH environment variable to wherever the docs/ directory was
-# copied (e.g. COPY docs/ /app/docs/ → KIROKU_DOCS_PATH=/app/docs).
-_DEFAULT_DOCS_ROOT = Path(__file__).parents[4] / "docs"
-DOCS_ROOT = Path(os.environ.get("KIROKU_DOCS_PATH", _DEFAULT_DOCS_ROOT))
+# Docs live alongside the package so they're always available after install.
+DOCS_ROOT = Path(__file__).parents[1] / "docs"
 
 _MD = markdown.Markdown(
     extensions=["tables", "fenced_code", "toc", "attr_list"],
