@@ -14,6 +14,9 @@
   <dt>Driver</dt><dd>{{ device.driver_kind.value if device.driver_kind else '-' }}</dd>
   <dt>Transport</dt><dd>{{ device.transport.value if device.transport else '-' }}</dd>
   <dt>Enabled</dt><dd>{{ 'yes' if device.enabled else 'no' }}</dd>
+  {% if device.make %}<dt>Make</dt><dd>{{ device.make }}</dd>{% endif %}
+  {% if device.model %}<dt>Model</dt><dd>{{ device.model }}</dd>{% endif %}
+  {% if device.role %}<dt>Role</dt><dd>{{ device.role }}</dd>{% endif %}
   {% if device.description %}<dt>Description</dt><dd>{{ device.description }}</dd>{% endif %}
 </dl>
 

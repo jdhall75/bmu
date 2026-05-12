@@ -7,6 +7,20 @@
   <label>Hostname</label><input type="text" name="hostname" value="{{ device.hostname or '' }}" required>
   <label>Port</label><input type="number" name="port" value="{{ device.port or '' }}">
   <label>Description</label><input type="text" name="description" value="{{ device.description or '' }}">
+  <label>Make</label><input type="text" name="make" value="{{ device.make or '' }}" placeholder="e.g. Cisco, Juniper, Arista">
+  <label>Model</label><input type="text" name="model" value="{{ device.model or '' }}" placeholder="e.g. ASR-9000, MX480">
+  <label>Role</label>
+  <input type="text" name="role" value="{{ device.role or '' }}" list="role-suggestions" placeholder="e.g. core, edge, access">
+  <datalist id="role-suggestions">
+    <option value="core">
+    <option value="distribution">
+    <option value="access">
+    <option value="edge">
+    <option value="WAN">
+    <option value="datacenter">
+    <option value="OOB">
+    <option value="management">
+  </datalist>
   <label>Groups</label>
   <select name="group_ids" multiple size="5">
     {% for g in groups %}

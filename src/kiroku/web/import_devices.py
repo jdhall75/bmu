@@ -3,11 +3,12 @@
 Accepts either a file upload or a pasted blob. Headers (case-insensitive,
 order doesn't matter):
 
-    name, hostname, port, description, group, platform, transport,
-    driver_kind, credentials, enabled
+    name, hostname, port, description, make, model, role, group, platform,
+    transport, driver_kind, credentials, enabled
 
 Required: name, hostname, group.
-Optional: platform, transport, driver_kind, port, description, credentials, enabled.
+Optional: make, model, role, platform, transport, driver_kind, port,
+          description, credentials, enabled.
 ``enabled`` accepts 1/0, true/false, yes/no (case-insensitive); blank => true.
 ``credentials`` is optional; blank means "use the group's default".
 ``platform`` is a built-in scrapli platform name (e.g. cisco_iosxe); optional.
@@ -146,6 +147,9 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int]:
                 hostname=hostname,
                 port=port,
                 description=get("description") or None,
+                make=get("make") or None,
+                model=get("model") or None,
+                role=get("role") or None,
                 platform=platform_raw,
                 transport=transport,
                 driver_kind=driver_kind,

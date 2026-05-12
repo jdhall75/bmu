@@ -452,10 +452,18 @@ pre {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
+  align-items: center;
 }
 
 .search-row input[type="text"] {
   flex: 1;
+  margin-bottom: 0;
+}
+
+/* Pico sets width:100% on button[type=submit] — override for inline search rows */
+.search-row [type="submit"] {
+  width: auto;
+  margin-bottom: 0;
 }
 
 .search-options {
@@ -476,6 +484,44 @@ pre {
 .search-options select,
 .search-options input[type="number"] {
   margin-bottom: 0;
+  width: auto;
+}
+
+
+/* -----------------------------------------------------------------------------
+   Device filter bar
+   -------------------------------------------------------------------------- */
+
+.device-filters {
+  margin-bottom: 0;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-row input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+  margin-bottom: 0;
+}
+
+.filter-row select {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.filter-row [type="submit"] {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.filter-row a {
+  white-space: nowrap;
+  font-size: 13px;
 }
 
 .search-result {

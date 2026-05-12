@@ -1,11 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Devices - Kiroku{% endblock %}
 {% block content %}
+
+<div class="toolbar">
+  <a role="button" href="/devices/new">New device</a>
+  <a class="secondary" role="button" href="/devices/import">Bulk import</a>
+  <a class="secondary" role="button" href="/devices/report">Report</a>
+  <button class="help-btn" onclick="openHelp('devices')">? Help</button>
+</div>
+
+<form class="search-form device-filters" method="GET" action="/devices">
+  <div class="filter-row">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name or hostname…">
+    <select name="group_id">
+      <option value="">All groups</option>
+      {% for g in groups %}<option value="{{ g.id }}" {% if group_id == g.id|string %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select>
+    <input type="text" name="make" value="{{ make_filter }}" placeholder="Make…">
+    <input type="text" name="role" value="{{ role_filter }}" placeholder="Role…">
+    <select name="enabled">
+      <option value="" {% if enabled_filter == '' %}selected{% endif %}>Any status</option>
+      <option value="1" {% if enabled_filter == '1' %}selected{% endif %}>Enabled</option>
+      <option value="0" {% if enabled_filter == '0' %}selected{% endif %}>Disabled</option>
+    </select>
+    <button type="submit">Filter</button>
+    {% if has_filters %}<a href="/devices">Clear</a>{% endif %}
+  </div>
+</form>
+
 <form class="table-form" method="POST" action="/devices/bulk">
-  <div class="toolbar">
-    <a role="button" href="/devices/new">New device</a>
-    <a class="secondary" role="button" href="/devices/import">Bulk import</a>
-    <button class="help-btn" onclick="openHelp('devices')">? Help</button>
+  <div class="toolbar" style="margin-top:8px">
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected devices?')">Delete selected</button>
       <button type="button" onclick="toggleBulkEdit()">Edit selected</button>
@@ -26,6 +50,12 @@
       <option value="NONE">(use group default)</option>
       {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
     </select>
+    <label>Make</label>
+    <input type="text" name="bulk_make" placeholder="(no change)">
+    <label>Model</label>
+    <input type="text" name="bulk_model" placeholder="(no change)">
+    <label>Role</label>
+    <input type="text" name="bulk_role" placeholder="(no change)">
     <label>Enabled</label>
     <select name="bulk_enabled">
       <option value="">(no change)</option>
@@ -42,7 +72,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Hostname</th><th>Group</th><th>Platform</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
+        <th>Name</th><th>Hostname</th><th>Group</th><th>Platform</th><th>Make / Model</th><th>Role</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -57,6 +87,12 @@
           {% elif d.custom_platform %}{{ d.custom_platform.name }}
           {% else %}-{% endif %}
         </td>
+        <td>
+          {% if d.make or d.model %}
+            {{ d.make or '' }}{% if d.make and d.model %} / {% endif %}{{ d.model or '' }}
+          {% else %}-{% endif %}
+        </td>
+        <td>{{ d.role or '-' }}</td>
         <td>{{ 'yes' if d.enabled else 'no' }}</td>
         <td>
           {% set badge = cve_badges.get(d.id) %}
@@ -73,7 +109,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="8">No devices.</td></tr>
+      <tr><td colspan="10">No devices{% if has_filters %} matching the current filters{% endif %}.</td></tr>
     {% endfor %}
     </tbody>
   </table>
@@ -81,11 +117,12 @@
 
 {% if total_pages > 1 %}
 <div class="pagination">
-  {% if page > 1 %}<a href="?page={{ page - 1 }}">&larr; Prev</a>{% endif %}
+  {% if page > 1 %}<a href="?page={{ page - 1 }}{% if filter_qs %}&{{ filter_qs }}{% endif %}">&larr; Prev</a>{% endif %}
   <span>Page {{ page }} of {{ total_pages }} ({{ total }} devices)</span>
-  {% if page < total_pages %}<a href="?page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+  {% if page < total_pages %}<a href="?page={{ page + 1 }}{% if filter_qs %}&{{ filter_qs }}{% endif %}">Next &rarr;</a>{% endif %}
 </div>
 {% endif %}
+
 <script>
 (function () {
   var sa = document.getElementById('select-all');

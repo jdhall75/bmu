@@ -68,6 +68,11 @@ class Device(Base, TimestampMixin):
     )
     credential = relationship("Credential")
 
+    # Asset metadata for inventory / reporting
+    make: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    model: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    role: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     latest_backup_path: Mapped[str | None] = mapped_column(String(512), nullable=True)

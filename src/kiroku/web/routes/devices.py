@@ -4,7 +4,7 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Response, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from kiroku.config import get_settings
@@ -44,8 +44,8 @@ def _cve_badges(db: Session) -> dict[int, dict]:
 
 
 CSV_TEMPLATE = (
-    "name,hostname,port,description,group,platform,transport,driver_kind,credentials,enabled\n"
-    "edge-rtr-01,10.0.0.1,22,Core edge router,core,cisco_iosxe,ssh,cli,core-admin,1\n"
+    "name,hostname,port,description,make,model,role,group,platform,transport,driver_kind,credentials,enabled\n"
+    "edge-rtr-01,10.0.0.1,22,Core edge router,Cisco,ASR-9000,edge,core,cisco_iosxe,ssh,cli,core-admin,1\n"
 )
 
 
@@ -108,20 +108,68 @@ def _apply_platform(device: Device, data: dict) -> None:
         device.custom_platform_id = None
 
 
+def _build_filter_qs(q: str, group_id: str, make_filter: str, role_filter: str, enabled_filter: str) -> str:
+    parts = []
+    if q:
+        parts.append(f"q={q}")
+    if group_id:
+        parts.append(f"group_id={group_id}")
+    if make_filter:
+        parts.append(f"make={make_filter}")
+    if role_filter:
+        parts.append(f"role={role_filter}")
+    if enabled_filter:
+        parts.append(f"enabled={enabled_filter}")
+    return "&".join(parts)
+
+
 @get("/", dependencies={"db": provide_db})
-async def list_devices(db: Session, page: int = 1) -> Template:
+async def list_devices(
+    db: Session,
+    page: int = 1,
+    q: str = "",
+    group_id: str = "",
+    make: str = "",
+    role: str = "",
+    enabled: str = "",
+) -> Template:
     page = max(1, page)
-    total = db.scalar(select(func.count()).select_from(Device)) or 0
+
+    base = select(Device).options(selectinload(Device.groups))
+    count_base = select(func.count()).select_from(Device)
+
+    if q:
+        like = f"%{q}%"
+        filt = or_(Device.name.ilike(like), Device.hostname.ilike(like))
+        base = base.where(filt)
+        count_base = count_base.where(filt)
+    if group_id:
+        filt = Device.groups.any(DeviceGroup.id == int(group_id))
+        base = base.where(filt)
+        count_base = count_base.where(filt)
+    if make:
+        filt = Device.make.ilike(f"%{make}%")
+        base = base.where(filt)
+        count_base = count_base.where(filt)
+    if role:
+        filt = Device.role.ilike(f"%{role}%")
+        base = base.where(filt)
+        count_base = count_base.where(filt)
+    if enabled in ("1", "0"):
+        filt = Device.enabled == (enabled == "1")
+        base = base.where(filt)
+        count_base = count_base.where(filt)
+
+    total = db.scalar(count_base) or 0
     total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
     page = min(page, total_pages)
     offset = (page - 1) * _PAGE_SIZE
-    devices = db.scalars(
-        select(Device)
-        .options(selectinload(Device.groups))
-        .order_by(Device.name)
-        .offset(offset)
-        .limit(_PAGE_SIZE)
-    ).all()
+
+    devices = db.scalars(base.order_by(Device.name).offset(offset).limit(_PAGE_SIZE)).all()
+
+    has_filters = any([q, group_id, make, role, enabled])
+    filter_qs = _build_filter_qs(q, group_id, make, role, enabled)
+
     return Template(
         template_name="devices/list.html",
         context={
@@ -130,8 +178,33 @@ async def list_devices(db: Session, page: int = 1) -> Template:
             "page": page,
             "total_pages": total_pages,
             "total": total,
+            "q": q,
+            "group_id": group_id,
+            "make_filter": make,
+            "role_filter": role,
+            "enabled_filter": enabled,
+            "has_filters": has_filters,
+            "filter_qs": filter_qs,
             **_device_form_options(db),
         },
+    )
+
+
+@get("/report", dependencies={"db": provide_db})
+async def device_report(db: Session) -> Template:
+    rows = db.execute(
+        select(
+            Device.make,
+            Device.model,
+            func.count().label("total"),
+            func.count(Device.latest_backup_at).label("backed_up"),
+        )
+        .group_by(Device.make, Device.model)
+        .order_by(Device.make.nulls_last(), Device.model.nulls_last())
+    ).all()
+    return Template(
+        template_name="devices/report.html",
+        context={"rows": rows},
     )
 
 
@@ -154,6 +227,9 @@ async def create_device(
         hostname=data["hostname"],
         port=int(data["port"]) if data.get("port") else None,
         description=data.get("description") or None,
+        make=data.get("make") or None,
+        model=data.get("model") or None,
+        role=data.get("role") or None,
         credential_id=int(data["credential_id"]) if data.get("credential_id") else None,
         transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
         driver_kind=DriverKind(data["driver_kind"]) if data.get("driver_kind") else None,
@@ -207,6 +283,12 @@ async def bulk_devices(
                 device.enabled = True
             elif bulk_enabled == "0":
                 device.enabled = False
+            if data.get("bulk_make"):
+                device.make = data["bulk_make"] or None
+            if data.get("bulk_model"):
+                device.model = data["bulk_model"] or None
+            if data.get("bulk_role"):
+                device.role = data["bulk_role"] or None
         db.commit()
 
     return Redirect(path="/devices")
@@ -232,6 +314,9 @@ async def update_device(
     device.hostname = data["hostname"]
     device.port = int(data["port"]) if data.get("port") else None
     device.description = data.get("description") or None
+    device.make = data.get("make") or None
+    device.model = data.get("model") or None
+    device.role = data.get("role") or None
     device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
     device.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
     device.driver_kind = DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
@@ -378,6 +463,7 @@ router = Router(
         new_device,
         create_device,
         bulk_devices,
+        device_report,
         view_device,
         edit_device,
         update_device,

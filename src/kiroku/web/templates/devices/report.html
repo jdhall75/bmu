@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Device Report - Kiroku{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h2 style="margin:0">Device inventory report</h2>
+  <a class="secondary" role="button" href="/devices">All devices</a>
+</div>
+
+{% if rows %}
+<table>
+  <thead>
+    <tr>
+      <th>Make</th>
+      <th>Model</th>
+      <th class="col-num">Total</th>
+      <th class="col-num">Backed up</th>
+      <th class="col-num">Success %</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% set total_devices = rows | sum(attribute='total') %}
+  {% set total_backed = rows | sum(attribute='backed_up') %}
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.make or '<span class="muted">(unset)</span>' }}</td>
+      <td>{{ r.model or '<span class="muted">(unset)</span>' }}</td>
+      <td class="col-num">{{ r.total }}</td>
+      <td class="col-num {% if r.backed_up == r.total %}col-ok{% elif r.backed_up == 0 %}col-bad{% endif %}">{{ r.backed_up }}</td>
+      <td class="col-num {% if r.backed_up == r.total %}col-ok{% elif r.backed_up == 0 %}col-bad{% endif %}">
+        {% if r.total > 0 %}{{ ((r.backed_up / r.total) * 100) | int }}%{% else %}—{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2"><strong>Total</strong></td>
+      <td class="col-num"><strong>{{ total_devices }}</strong></td>
+      <td class="col-num"><strong>{{ total_backed }}</strong></td>
+      <td class="col-num"><strong>
+        {% if total_devices > 0 %}{{ ((total_backed / total_devices) * 100) | int }}%{% else %}—{% endif %}
+      </strong></td>
+    </tr>
+  </tfoot>
+</table>
+<p class="muted" style="font-size:12px;margin-top:8px">
+  "Backed up" = device has at least one successful configuration backup on record.
+</p>
+{% else %}
+<p>No devices in the system yet.</p>
+{% endif %}
+{% endblock %}
