@@ -1,16 +1,16 @@
 /* ── Pico v2 variable overrides ───────────────────────────────────────── */
 :root {
-  --pico-primary: #1f6feb;
-  --pico-primary-background: #1f6feb;
-  --pico-primary-hover: #1a5ecb;
-  --pico-primary-focus: rgba(31, 111, 235, 0.375);
+  --pico-primary: #d97320;
+  --pico-primary-background: #d97320;
+  --pico-primary-hover: #b85e18;
+  --pico-primary-focus: rgba(217, 115, 32, 0.375);
   --pico-primary-inverse: #fff;
   --pico-font-size: 87.5%;       /* render at 14px instead of Pico's 16px */
   --pico-line-height: 1.5;
   /* Semantic aliases — light defaults, overridden in dark below */
   --fg: #222;
   --bg: #f5f5f5;
-  --acc: #1f6feb;
+  --acc: #d97320;
   --muted: #666;
   --bad: #c0392b;
   --ok: #27ae60;
@@ -32,6 +32,10 @@
 
 /* ── Global layout ────────────────────────────────────────────────────── */
 body { background: var(--pico-background-color); }
+
+/* ── Link styling ─────────────────────────────────────────────────────── */
+a { text-decoration: none; }
+a:hover, a:active { text-decoration: none; font-weight: 600; }
 main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
 /* ── Header / nav ─────────────────────────────────────────────────────── */
