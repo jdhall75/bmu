@@ -23,8 +23,8 @@
   {% set total_backed = rows | sum(attribute='backed_up') %}
   {% for r in rows %}
     <tr>
-      <td>{{ r.make or '<span class="muted">(unset)</span>' }}</td>
-      <td>{{ r.model or '<span class="muted">(unset)</span>' }}</td>
+      <td>{% if r.make %}{{ r.make }}{% else %}<span class="muted">(unset)</span>{% endif %}</td>
+      <td>{% if r.model %}{{ r.model }}{% else %}<span class="muted">(unset)</span>{% endif %}</td>
       <td class="col-num">{{ r.total }}</td>
       <td class="col-num {% if r.backed_up == r.total %}col-ok{% elif r.backed_up == 0 %}col-bad{% endif %}">{{ r.backed_up }}</td>
       <td class="col-num {% if r.backed_up == r.total %}col-ok{% elif r.backed_up == 0 %}col-bad{% endif %}">
