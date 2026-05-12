@@ -17,6 +17,12 @@
 }
 
 [data-theme="dark"] {
+  --pico-primary: #f48226;
+  --pico-primary-background: #f48226;
+  --pico-primary-hover: #d97320;
+  --pico-primary-focus: rgba(244, 130, 38, 0.375);
+  --pico-primary-inverse: #fff;
+  --acc: #f48226;
   --fg: #c9d1d9;
   --bg: #0d1117;
   --muted: #8b949e;
