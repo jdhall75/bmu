@@ -68,8 +68,7 @@ body {
 
 main {
   padding: 24px;
-  max-width: 1100px;
-  margin: 0 auto;
+  /* No max-width: forms constrain themselves (720px); tables use full viewport */
 }
 
 
@@ -336,6 +335,23 @@ dl.detail-grid dt {
 
 dl.detail-grid dd {
   margin: 0;
+}
+
+
+/* -----------------------------------------------------------------------------
+   Table layout helpers
+   -------------------------------------------------------------------------- */
+
+/* Horizontal scroll wrapper — used by all list/detail tables */
+.table-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Action buttons in table cells: add breathing room when they wrap to new lines */
+table td [role="button"],
+table td button {
+  margin-bottom: 4px;
 }
 
 

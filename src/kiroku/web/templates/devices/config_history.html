@@ -10,6 +10,7 @@
           onclick="submitCompare({{ device.id }})">Compare selected</button>
   <span class="muted" id="compare-hint" style="font-size:13px">Select 2 commits to compare</span>
 </div>
+<div class="table-wrap">
 <table>
   <thead>
     <tr>
@@ -32,6 +33,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
 <p>No git history found for this device's config file.</p>
 {% endif %}
