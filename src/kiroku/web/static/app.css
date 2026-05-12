@@ -161,16 +161,10 @@ form .actions > * {
            var(--pico-form-element-spacing-horizontal);
   box-sizing: border-box;
   line-height: var(--pico-line-height);
-}
-
-form .actions a[role="button"], 
-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: auto; /* Ensures they grow with content equally */
-  vertical-align: middle;
-  line-height: normal; /* Fixes browser-specific internal spacing */
+  text-decoration: none;
+  /* margin: 0; */
+  /* margin-bottom: 0; */
+  --pico-spacing: 0;
 }
 
 /* Table-embedded and search forms: reset the grid back to normal flow */
