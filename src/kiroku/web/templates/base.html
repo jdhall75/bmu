@@ -1,10 +1,22 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Kiroku{% endblock %}</title>
   <link rel="stylesheet" href="/static/pico.min.css">
   <link rel="stylesheet" href="/static/app.css">
+  <!-- Apply saved theme before first paint to prevent flash -->
+  <script>
+  (function() {
+    function getCookie(name) {
+      var row = document.cookie.split('; ').find(function(r) { return r.startsWith(name + '='); });
+      return row ? row.split('=')[1] : null;
+    }
+    var saved = getCookie('kiroku_theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+  </script>
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
 <body>
@@ -24,6 +36,7 @@
         <li><a href="/search">Search</a></li>
       </ul>
       <ul>
+        <li><button id="theme-toggle" class="help-nav-btn" onclick="toggleTheme()" title="Toggle light/dark theme">&#9790;</button></li>
         <li><button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button></li>
       </ul>
     </nav>
@@ -47,6 +60,21 @@
   </dialog>
 
   <script>
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.cookie = 'kiroku_theme=' + next + '; path=/; max-age=31536000; SameSite=Lax';
+    document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀' : '☾';
+  }
+
+  // Sync toggle icon to current theme on every page load
+  (function() {
+    var theme = document.documentElement.getAttribute('data-theme') || 'light';
+    var btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☀' : '☾';
+  })();
+
   function openHelp(page) {
     var body = document.getElementById('help-body');
     var dialog = document.getElementById('help-dialog');

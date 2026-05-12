@@ -7,7 +7,7 @@
   --pico-primary-inverse: #fff;
   --pico-font-size: 87.5%;       /* render at 14px instead of Pico's 16px */
   --pico-line-height: 1.5;
-  /* Custom palette used by components below */
+  /* Semantic aliases — light defaults, overridden in dark below */
   --fg: #222;
   --bg: #f5f5f5;
   --acc: #1f6feb;
@@ -16,8 +16,16 @@
   --ok: #27ae60;
 }
 
+[data-theme="dark"] {
+  --fg: #c9d1d9;
+  --bg: #0d1117;
+  --muted: #8b949e;
+  --bad: #f85149;
+  --ok: #3fb950;
+}
+
 /* ── Global layout ────────────────────────────────────────────────────── */
-body { background: var(--bg); }
+body { background: var(--pico-background-color); }
 main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
 /* ── Header / nav ─────────────────────────────────────────────────────── */
@@ -108,7 +116,7 @@ pre { background: #0e1116; color: #d6dde7; padding: 12px; border-radius: 6px; ov
 .diff-removed .diff-ln { background: #ffd7d5; }
 .diff-hunk { background: #ddf4ff; color: #0969da; }
 .diff-hunk .diff-code { padding-left: 8px; }
-.diff-context { background: #fff; }
+.diff-context { background: var(--pico-card-background-color, #fff); }
 
 /* ── Search ───────────────────────────────────────────────────────────── */
 .search-row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -116,7 +124,7 @@ pre { background: #0e1116; color: #d6dde7; padding: 12px; border-radius: 6px; ov
 .search-options { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 13px; }
 .search-options label { display: flex; align-items: center; gap: 4px; margin-bottom: 0; }
 .search-options select, .search-options input[type=number] { margin-bottom: 0; }
-.search-result { background: #fff; border: 1px solid #eee; border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.search-result { background: var(--pico-card-background-color, #fff); border: 1px solid var(--pico-card-border-color, #eee); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
 .search-result-header { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
 .search-snippet { margin: 0; border-radius: 0; font-size: 12px; line-height: 1.6; background: #0e1116; color: #d6dde7; width: 100%; border-collapse: collapse; font-family: ui-monospace, Menlo, Consolas, monospace; display: table; }
 .search-snippet + .search-snippet { border-top: 1px solid #1e2a33; }
@@ -136,7 +144,7 @@ pre { background: #0e1116; color: #d6dde7; padding: 12px; border-radius: 6px; ov
 .testbed-panes { flex: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
 .testbed-pane { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
 .testbed-pane-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
-.testbed-textarea { flex: 1; width: 100%; height: 0; min-height: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; background: #fff; }
+.testbed-textarea { flex: 1; width: 100%; height: 0; min-height: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; padding: 10px; border: 1px solid var(--pico-form-element-border-color, #ccc); border-radius: 4px; resize: none; background: var(--pico-form-element-background-color, #fff); color: var(--pico-color); }
 .testbed-result { flex: 2; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
 .testbed-result-textarea { background: #0e1116; color: #d6dde7; border-color: #1e2a33; }
 .testbed-result-error { color: #f28b82; }
