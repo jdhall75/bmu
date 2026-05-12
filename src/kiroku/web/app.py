@@ -21,6 +21,7 @@ from kiroku.web.routes import (
     schedules,
     search,
 )
+from kiroku.web.routes.api import router as api_router
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
@@ -44,6 +45,7 @@ def create_app() -> Litestar:
     configure_logging()
     return Litestar(
         route_handlers=[
+            api_router,
             dashboard.router,
             docs.router,
             groups.router,
