@@ -49,6 +49,7 @@ async def create_parser(
         description=data.get("description") or None,
         type=ParserType(data["type"]),
         body=data["body"],
+        jinja2_template=data.get("jinja2_template") or None,
     )
     db.add(p)
     db.commit()
@@ -85,6 +86,7 @@ async def update_parser(
     parser.description = data.get("description") or None
     parser.type = ParserType(data["type"])
     parser.body = data["body"]
+    parser.jinja2_template = data.get("jinja2_template") or None
     db.commit()
     return Redirect(path="/parsers")
 

@@ -176,6 +176,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         command_results=cmd_results,
         parsed=parsed,
         parse_error=parse_error,
+        parser_template_id=spec.parser_template_id,
     )
 
 
@@ -231,6 +232,7 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         config_text=raw_xml if spec.kind == "backup" else None,
         command_results=[],
         parsed=parsed,
+        parser_template_id=spec.parser_template_id,
     )
 
 

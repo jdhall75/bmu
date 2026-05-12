@@ -28,3 +28,4 @@ class ParserTemplate(Base, TimestampMixin):
         nullable=False,
     )
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    jinja2_template: Mapped[str | None] = mapped_column(Text, nullable=True)

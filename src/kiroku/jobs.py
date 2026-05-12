@@ -86,6 +86,7 @@ class JobResult(BaseModel):
     parsed: list[dict] | dict | None = None
     # Set when parsing was attempted but failed; None means not attempted or succeeded.
     parse_error: str | None = None
+    parser_template_id: int | None = None
 
     # CVE scan results (only populated for kind="cve_scan").
     cve_entries: list[dict] = Field(default_factory=list)

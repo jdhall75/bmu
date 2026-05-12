@@ -55,11 +55,100 @@ You can load any saved template from the **Load saved template** dropdown. After
 
 If the result shows an error, the pane turns red and shows the exception message, which usually pinpoints the syntax problem.
 
+## Output template (Jinja2)
+
+After a collect run, Kiroku stores the parsed rows and displays them as a plain key/value table by default. If you want a custom layout — grouping fields, hiding columns, adding labels, or formatting values — add a **Jinja2 output template** to the parser.
+
+### Variables available inside the template
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `rows` | `list[dict]` | Every parsed row. Always a list, even for single-row output. |
+| `headers` | `list[str]` | The keys from the first row (column names). |
+| `data` | same as `rows` | Alias for `rows`. Use whichever reads more naturally. |
+
+Each dict in `rows` has the same keys as the `Value` names in a TextFSM template (or group keys for TTP).
+
+### Examples
+
+**Simple table with custom column order** — `show chassis hardware` (Juniper):
+
+```jinja2
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Name</th><th>Description</th><th>Part Number</th><th>Serial</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.NAME }}</td>
+      <td>{{ r.DESCR }}</td>
+      <td><code>{{ r.PID }}</code></td>
+      <td><code>{{ r.SN }}</code></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+```
+
+**Summary card** — highlight totals or key fields:
+
+```jinja2
+{% set r = rows[0] %}
+<dl class="detail-grid">
+  <dt>Hostname</dt><dd>{{ r.HOSTNAME }}</dd>
+  <dt>Version</dt><dd>{{ r.VERSION }}</dd>
+  <dt>Uptime</dt><dd>{{ r.UPTIME }}</dd>
+</dl>
+```
+
+**Conditional formatting** — colour-code a status field:
+
+```jinja2
+<ul>
+{% for r in rows %}
+  <li>
+    <strong>{{ r.INTERFACE }}</strong>
+    {% if r.STATUS == 'up' %}
+      <span class="status status-success">up</span>
+    {% else %}
+      <span class="status status-failed">{{ r.STATUS }}</span>
+    {% endif %}
+    — {{ r.PROTOCOL }}
+  </li>
+{% endfor %}
+</ul>
+```
+
+**Filter rows inside the template** — show only down interfaces:
+
+```jinja2
+{% set down = rows | selectattr('STATUS', 'ne', 'up') | list %}
+{% if down %}
+<p><strong>{{ down | length }} interface(s) down:</strong></p>
+<ul>
+  {% for r in down %}<li>{{ r.INTERFACE }}</li>{% endfor %}
+</ul>
+{% else %}
+<p class="muted">All interfaces are up.</p>
+{% endif %}
+```
+
+### Notes
+
+- The template runs in a **sandboxed Jinja2 environment** — standard filters (`| upper`, `| length`, `| join`, `selectattr`, `map`, etc.) all work, but arbitrary Python execution is blocked.
+- If the template raises an error, a red **Template error** block is shown on the run detail page with the exception message. Fix the template and re-run the job to get a clean render.
+- Leave the field blank to keep the default auto-generated table.
+- You can use Kiroku's existing CSS classes (`detail-grid`, `table-wrap`, `status`, `status-success`, `status-failed`, `muted`) to make the output match the rest of the UI.
+
 ## Saving and using a template
 
 1. Click **New parser template** or open an existing one via **Edit**.
 2. Paste the template body and choose the type.
-3. Save. The template is now available in the **Parser template** dropdown on job forms.
+3. Optionally add a Jinja2 output template for a custom display.
+4. Save. The template is now available in the **Parser template** dropdown on job forms.
 
 ## Tips
 

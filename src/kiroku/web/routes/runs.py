@@ -1,5 +1,6 @@
 import json
 
+from jinja2.sandbox import SandboxedEnvironment
 from litestar import Router, get
 from litestar.response import Template
 from sqlalchemy import select
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from kiroku.models import Run, RunBatch
 from kiroku.web.deps import provide_db
+
+_sandbox = SandboxedEnvironment(autoescape=False)
 
 
 @get("/", dependencies={"db": provide_db})
@@ -44,16 +47,31 @@ async def batch_row_fragment(batch_id: int, db: Session) -> Template:
 @get("/{run_id:int}", dependencies={"db": provide_db})
 async def view_run(run_id: int, db: Session) -> Template:
     run = db.get(Run, run_id)
-    parsed_display = _parsed_display(run.parsed_data if run else None)
+    jinja2_template = (
+        run.parser_template.jinja2_template
+        if run and run.parser_template
+        else None
+    )
+    parsed_display = _parsed_display(run.parsed_data if run else None, jinja2_template)
     return Template(
         template_name="runs/detail.html",
         context={"run": run, "parsed_display": parsed_display},
     )
 
 
-def _parsed_display(data: list | dict | None) -> dict | None:
+def _parsed_display(data: list | dict | None, jinja2_template: str | None = None) -> dict | None:
     if data is None:
         return None
+    if jinja2_template:
+        try:
+            rows = data if isinstance(data, list) else [data]
+            headers = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
+            html = _sandbox.from_string(jinja2_template).render(
+                data=data, rows=rows, headers=headers
+            )
+            return {"type": "jinja2", "html": html}
+        except Exception as exc:
+            return {"type": "jinja2_error", "error": f"{type(exc).__name__}: {exc}"}
     if isinstance(data, list) and data and isinstance(data[0], dict):
         return {"type": "table", "headers": list(data[0].keys()), "rows": data}
     return {"type": "json", "value": json.dumps(data, indent=2)}

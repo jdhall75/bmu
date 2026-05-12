@@ -19,6 +19,9 @@
   <label>Template body</label>
   <textarea name="body" rows="20" required style="min-height:360px">{{ parser.body or '' }}</textarea>
 
+  <label>Output template <span class="muted" style="font-size:12px;font-weight:normal">(optional Jinja2 — variables: <code>rows</code>, <code>headers</code>, <code>data</code>)</span></label>
+  <textarea name="jinja2_template" rows="12" style="min-height:200px;font-family:monospace" placeholder="Leave blank to use the default table view.">{{ parser.jinja2_template or '' }}</textarea>
+
   <div class="actions">
     <button type="submit">{% if parser %}Save{% else %}Create{% endif %}</button>
     {% if parser %}

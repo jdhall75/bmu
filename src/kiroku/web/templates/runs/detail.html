@@ -24,7 +24,11 @@
 
 {% if parsed_display %}
 <h3>Parsed output</h3>
-{% if parsed_display.type == 'table' %}
+{% if parsed_display.type == 'jinja2' %}
+<div class="parsed-output">{{ parsed_display.html | safe }}</div>
+{% elif parsed_display.type == 'jinja2_error' %}
+<pre class="error-block">Template error: {{ parsed_display.error }}</pre>
+{% elif parsed_display.type == 'table' %}
 <div class="table-wrap">
 <table>
   <thead>

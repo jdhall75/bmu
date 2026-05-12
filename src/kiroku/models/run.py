@@ -64,3 +64,8 @@ class Run(Base, TimestampMixin):
     parsed_data: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
     # Set when parsing was attempted but failed.
     parse_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Which parser template produced parsed_data (kept even if the template is later edited).
+    parser_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("parser_templates.id", ondelete="SET NULL"), nullable=True
+    )
+    parser_template = relationship("ParserTemplate")
