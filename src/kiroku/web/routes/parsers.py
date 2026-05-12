@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+import json as _json
 
 from litestar import Router, get, post
+from litestar.connection import Request
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
-from litestar.response import Redirect, Template
+from litestar.response import Redirect, Response, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -111,20 +112,16 @@ async def test_bed(db: Session) -> Template:
     return Template("parsers/test.html", context={"parsers": parsers})
 
 
-class _TestRequest(BaseModel):
-    type: str
-    input: str
-    template: str
-
-
 @post("/test/run", status_code=200)
-async def run_test(data: _TestRequest) -> dict:
+async def run_test(request: Request) -> Response:
     from kiroku.worker.parsers import parse
     try:
-        result = parse(data.type, data.template, data.input)
-        return {"ok": True, "result": result}
+        body = await request.json()
+        result = parse(body.get("type", ""), body.get("template", ""), body.get("input", ""))
+        payload = _json.dumps({"ok": True, "result": result}, default=str)
     except Exception as exc:
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        payload = _json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+    return Response(content=payload, media_type="application/json")
 
 
 router = Router(
