@@ -40,19 +40,20 @@
 <div class="table-wrap">
 <table>
   <thead>
-    <tr><th>When</th><th>Kind</th><th>Status</th><th>Batch</th><th>Error</th></tr>
+    <tr><th>When</th><th>Kind</th><th>Status</th><th>Batch</th><th>Parsed</th><th>Error</th></tr>
   </thead>
   <tbody>
   {% for r in recent_runs %}
     <tr>
-      <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td><a href="/runs/{{ r.id }}">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</a></td>
       <td>{{ r.kind }}</td>
       <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
       <td>{% if r.batch_id %}<a href="/runs/batches/{{ r.batch_id }}">#{{ r.batch_id }}</a>{% else %}-{% endif %}</td>
+      <td>{% if r.parsed_data is not none %}<a href="/runs/{{ r.id }}" title="View parsed output">&#10003;</a>{% endif %}</td>
       <td>{% if r.error %}<a href="/runs/{{ r.id }}">{{ r.error[:60] }}{% if r.error|length > 60 %}…{% endif %}</a>{% endif %}</td>
     </tr>
   {% else %}
-    <tr><td colspan="5">No runs yet.</td></tr>
+    <tr><td colspan="6">No runs yet.</td></tr>
   {% endfor %}
   </tbody>
 </table>
