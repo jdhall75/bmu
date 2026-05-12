@@ -68,7 +68,7 @@ body {
 
 main {
   padding: 24px;
-  /* No max-width: forms constrain themselves (720px); tables use full viewport */
+  /* No max-width: forms constrain themselves (960px); tables use full viewport */
 }
 
 
@@ -126,7 +126,7 @@ form:not(.search-form, .table-form) {
   display: grid;
   grid-template-columns: 160px 1fr;
   gap: 8px 16px;
-  max-width: 720px;
+  max-width: 960px;
   background: var(--pico-card-background-color, #fff);
   padding: 16px;
   border: 1px solid var(--pico-card-border-color, #eee);
@@ -282,7 +282,7 @@ form.search-form {
   display: grid;
   grid-template-columns: 160px 1fr;
   gap: 8px 16px;
-  max-width: 720px;
+  max-width: 960px;
   background: var(--pico-card-background-color, #fff);
   border: 1px solid #eee;
   padding: 16px;
@@ -315,7 +315,7 @@ dl.detail-grid {
   display: grid;
   grid-template-columns: 160px 1fr;
   gap: 4px 16px;
-  max-width: 720px;
+  max-width: 960px;
   background: var(--pico-card-background-color, #fff);
   padding: 14px;
   border: 1px solid #eee;
