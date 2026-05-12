@@ -173,6 +173,8 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                         run_id=result.run_id,
                         device=result.device_name,
                     )
+                if result.parse_error:
+                    run.parse_error = result.parse_error
             elif result.kind == "cve_scan":
                 _record_cve_scan(db, result, run)
 

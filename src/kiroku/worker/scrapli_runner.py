@@ -144,6 +144,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 os.unlink(temp_path)
 
     parsed = None
+    parse_error: str | None = None
     if spec.kind == "collect" and spec.parser_type and cmd_results:
         joined = "\n".join(c.output for c in cmd_results)
         try:
@@ -156,6 +157,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 rows=len(parsed) if isinstance(parsed, list) else None,
             )
         except Exception as exc:
+            parse_error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
             log.error("parser failed", device=spec.device_name,
                       parser=spec.parser_type, error=str(exc), exc_info=True)
     elif spec.kind == "collect" and not spec.parser_type:
@@ -173,6 +175,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         config_text="\n".join(config_chunks) if config_chunks else None,
         command_results=cmd_results,
         parsed=parsed,
+        parse_error=parse_error,
     )
 
 

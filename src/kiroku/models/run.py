@@ -62,3 +62,5 @@ class Run(Base, TimestampMixin):
 
     # Structured output from TTP/TextFSM/XSLT parsers for collect/NETCONF runs.
     parsed_data: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
+    # Set when parsing was attempted but failed.
+    parse_error: Mapped[str | None] = mapped_column(Text, nullable=True)

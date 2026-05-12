@@ -17,6 +17,11 @@
 <pre class="error-block">{{ run.error }}</pre>
 {% endif %}
 
+{% if run.parse_error %}
+<h3>Parse error</h3>
+<pre class="error-block">{{ run.parse_error }}</pre>
+{% endif %}
+
 {% if parsed_display %}
 <h3>Parsed output</h3>
 {% if parsed_display.type == 'table' %}

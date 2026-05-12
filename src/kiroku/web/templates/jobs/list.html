@@ -14,7 +14,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Kind</th><th>Groups</th><th>Devices</th><th>Commands / RPC</th><th>Actions</th>
+        <th>Name</th><th>Kind</th><th>Groups</th><th>Devices</th><th>Commands / RPC</th><th>Parser</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -28,6 +28,7 @@
         <td>
           {% if j.rpc %}RPC{% elif j.commands %}{{ j.commands[:40] }}{% if j.commands|length > 40 %}…{% endif %}{% else %}-{% endif %}
         </td>
+        <td>{{ j.parser_template.name if j.parser_template else '-' }}</td>
         <td>
           <button formaction="/jobs/{{ j.id }}/run" title="Run now" onclick="return confirm('Run {{ j.name }} now?')">&#9654;</button>
           <a class="secondary" role="button" href="/jobs/{{ j.id }}/edit">edit</a>
@@ -35,7 +36,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="7">No jobs.</td></tr>
+      <tr><td colspan="8">No jobs.</td></tr>
     {% endfor %}
     </tbody>
   </table>
