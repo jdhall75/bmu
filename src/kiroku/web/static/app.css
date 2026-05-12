@@ -163,6 +163,16 @@ form .actions > * {
   line-height: var(--pico-line-height);
 }
 
+form .actions a[role="button"], 
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto; /* Ensures they grow with content equally */
+  vertical-align: middle;
+  line-height: normal; /* Fixes browser-specific internal spacing */
+}
+
 /* Table-embedded and search forms: reset the grid back to normal flow */
 form.table-form {
   display: block;
