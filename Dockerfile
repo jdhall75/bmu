@@ -4,19 +4,19 @@ FROM ghcr.io/astral-sh/uv:latest AS uv
 # ─── builder-base: shared deps (migrate · scheduler · recorder) ───────────────
 FROM python:3.12-slim AS builder-base
 COPY --from=uv /uv /usr/local/bin/uv
+ENV VIRTUAL_ENV=/opt/venv PATH="/opt/venv/bin:$PATH"
 WORKDIR /build
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
-RUN uv venv /opt/venv \
- && uv pip install --python /opt/venv/python --no-cache .
+RUN uv venv $VIRTUAL_ENV && uv pip install --no-cache .
 
 # ─── builder-web: base + web framework ────────────────────────────────────────
 FROM builder-base AS builder-web
-RUN uv pip install --python /opt/venv/python --no-cache ".[web]"
+RUN uv pip install --no-cache ".[web]"
 
 # ─── builder-worker: base + network/parsing stack ─────────────────────────────
 FROM builder-base AS builder-worker
-RUN uv pip install --python /opt/venv/python --no-cache ".[worker]"
+RUN uv pip install --no-cache ".[worker]"
 
 # ─── runtime-base: migrate · scheduler · recorder ─────────────────────────────
 FROM python:3.12-slim AS runtime-base
