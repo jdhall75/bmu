@@ -119,13 +119,15 @@ async def delete_parser(parser_id: int, db: Session) -> Redirect:
 
 @get("/test", dependencies={"db": provide_db})
 async def test_bed(db: Session) -> Template:
+    logger.info("Logging for fun")
     parsers = db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all()
     return Template("parsers/test.html", context={"parsers": parsers})
 
 
 @post("/test/run", status_code=200)
 async def run_test(request: Request) -> Response:
-    from kiroku.worker.parsers import parse
+    logger.info("Entered handler")
+    from kiroku.parsers import parse
 
     body = await request.json()
     try:
@@ -134,6 +136,7 @@ async def run_test(request: Request) -> Response:
         )
         payload = _json.dumps({"ok": True, "result": result}, default=str)
     except Exception as exc:
+        print(exc, flush=True)
         logger.exception(
             "failed_to_parse", content=_json.dumps(body), args=_json.dumps(exc.args)
         )

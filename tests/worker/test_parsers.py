@@ -1,8 +1,8 @@
-"""Tests for kiroku.worker.parsers."""
+"""Tests for kiroku.parsers."""
 
 import pytest
 
-from kiroku.worker.parsers import parse
+from kiroku..parsers import parse
 
 # ---------------------------------------------------------------------------
 # Helpers

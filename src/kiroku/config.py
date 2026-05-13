@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     web_port: int = 8000
     web_workers: int = 5
 
-    log_level: str = "DEBUG"
+    log_level: str = "INFO"
     log_json: bool = False
 
     # UI dev locally, override with environment variable

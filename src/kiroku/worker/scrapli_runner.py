@@ -38,7 +38,7 @@ from kiroku.config import get_settings
 from kiroku.credentials.base import CredentialMaterial
 from kiroku.jobs import CommandResult, JobResult, JobSpec
 from kiroku.logging import get_logger
-from kiroku.worker.parsers import parse
+from kiroku.parsers import parse
 
 log = get_logger(__name__)
 
