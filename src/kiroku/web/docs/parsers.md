@@ -252,6 +252,22 @@ Devices with no collected data appear in `devices` with `rows = []` and `collect
 </div>
 ```
 
+### CSV download
+
+Add a `data-csv="filename.csv"` attribute to any `<table>` in your aggregate template and a **↓ Download CSV** link is automatically injected above it at page load — no JavaScript needed in the template itself.
+
+```jinja2
+<table data-csv="{{ job.name }}-bgp-neighbors.csv">
+  ...
+</table>
+
+<table data-csv="{{ job.name }}-interfaces.csv">
+  ...
+</table>
+```
+
+Each table gets its own independent download link. The filename is whatever string you pass to `data-csv`.
+
 ### Notes
 
 - The aggregate template uses the same **sandboxed Jinja2 environment** as the output template — standard filters work, arbitrary Python execution is blocked.

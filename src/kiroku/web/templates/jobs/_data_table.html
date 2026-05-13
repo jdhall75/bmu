@@ -1,9 +1,8 @@
 {% if not headers %}
   <p class="muted">No parsed data collected yet. Run the job to populate this view.</p>
 {% else %}
-<p style="text-align:right;margin-bottom:4px"><a href="#" style="font-size:12px" onclick="downloadTableCSV(document.getElementById('job-data-table'),'{{ job.name | replace(' ','_') }}-data.csv');return false">&#8595; Download CSV</a></p>
 <div class="table-wrap">
-<table id="job-data-table">
+<table data-csv="{{ job.name | replace(' ','_') }}-data.csv">
   <thead>
     <tr>
       <th>Device</th>

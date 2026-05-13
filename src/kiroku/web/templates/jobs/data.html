@@ -21,4 +21,23 @@
   {% include "jobs/_data_table.html" %}
 {% endif %}
 
+<script>
+// Auto-inject a "Download CSV" link above every table[data-csv] on this page.
+document.querySelectorAll('table[data-csv]').forEach(function (table) {
+  var filename = table.getAttribute('data-csv');
+  var p = document.createElement('p');
+  p.style.cssText = 'text-align:right;margin-bottom:4px';
+  var a = document.createElement('a');
+  a.href = '#';
+  a.style.fontSize = '12px';
+  a.textContent = '↓ Download CSV';
+  a.addEventListener('click', function (e) {
+    e.preventDefault();
+    downloadTableCSV(table, filename);
+  });
+  p.appendChild(a);
+  var anchor = table.closest('.table-wrap') || table;
+  anchor.parentNode.insertBefore(p, anchor);
+});
+</script>
 {% endblock %}
