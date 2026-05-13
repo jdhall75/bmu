@@ -24,13 +24,14 @@
         <td>{{ j.name }}</td>
         <td>{{ j.kind.value }}</td>
         <td>{{ j.device_groups | map(attribute='name') | join(', ') or '-' }}</td>
-        <td>{{ j.devices | map(attribute='name') | join(', ') or '-' }}</td>
+        <td>{{ j.devices | length or '-' }}</td>
         <td>
           {% if j.rpc %}RPC{% elif j.commands %}{{ j.commands[:40] }}{% if j.commands|length > 40 %}…{% endif %}{% else %}-{% endif %}
         </td>
         <td>{{ j.parser_template.name if j.parser_template else '-' }}</td>
         <td>
           <button class="icon-btn icon-btn-run" formaction="/jobs/{{ j.id }}/run" title="Run now" aria-label="Run now" onclick="return confirm('Run {{ j.name }} now?')"><svg class="icon" aria-hidden="true"><use href="#icon-run"></use></svg></button>
+          {% if j.parser_template %}<a class="icon-btn" role="button" href="/jobs/{{ j.id }}/data" title="View collected data" aria-label="View collected data"><svg class="icon" aria-hidden="true"><use href="#icon-data"></use></svg></a>{% endif %}
           <a class="icon-btn" role="button" href="/jobs/{{ j.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
           <button class="icon-btn icon-btn-delete" formaction="/jobs/{{ j.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ j.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
