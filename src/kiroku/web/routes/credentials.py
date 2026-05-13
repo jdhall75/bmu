@@ -48,7 +48,9 @@ def _apply_default(cred: Credential, is_default: bool, db: Session) -> None:
 @get("/", dependencies={"db": provide_db})
 async def list_creds(db: Session) -> Template:
     creds = db.scalars(select(Credential).order_by(Credential.name)).all()
-    return Template(template_name="credentials/list.html", context={"credentials": creds})
+    return Template(
+        template_name="credentials/list.html", context={"credentials": creds}
+    )
 
 
 @get("/new")
@@ -122,7 +124,11 @@ async def update_cred(
     return Redirect(path="/credentials")
 
 
-@post("/{cred_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{cred_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_cred(cred_id: int, db: Session) -> Redirect:
     cred = db.get(Credential, cred_id)
     if cred:
@@ -133,5 +139,13 @@ async def delete_cred(cred_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/credentials",
-    route_handlers=[list_creds, new_cred, create_cred, bulk_creds, edit_cred, update_cred, delete_cred],
+    route_handlers=[
+        list_creds,
+        new_cred,
+        create_cred,
+        bulk_creds,
+        edit_cred,
+        update_cred,
+        delete_cred,
+    ],
 )

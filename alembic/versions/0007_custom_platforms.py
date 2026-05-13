@@ -5,6 +5,7 @@ Revises: 0006_device_configs
 Create Date: 2026-05-07
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

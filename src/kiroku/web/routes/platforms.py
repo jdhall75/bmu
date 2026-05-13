@@ -98,7 +98,11 @@ async def edit_platform(platform_id: int, db: Session) -> Template:
     )
 
 
-@post("/{platform_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{platform_id:int}",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def update_platform(
     platform_id: int,
     db: Session,
@@ -112,7 +116,11 @@ async def update_platform(
     return Redirect(path="/platforms")
 
 
-@post("/{platform_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{platform_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_platform(platform_id: int, db: Session) -> Redirect:
     platform = db.get(Platform, platform_id)
     if platform:

@@ -24,6 +24,6 @@ class CredentialResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, *, ref: str | None, encrypted_payload: bytes | None,
-                username: str | None) -> CredentialMaterial:
-        ...
+    def resolve(
+        self, *, ref: str | None, encrypted_payload: bytes | None, username: str | None
+    ) -> CredentialMaterial: ...

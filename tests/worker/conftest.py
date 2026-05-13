@@ -1,4 +1,5 @@
 """Shared fixtures and helpers for worker tests."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,7 +9,9 @@ from kiroku.jobs import CredentialRef, JobSpec
 
 
 def make_cred(**kwargs) -> CredentialMaterial:
-    defaults = dict(username="admin", password="secret", enable_password=None, private_key=None)
+    defaults = dict(
+        username="admin", password="secret", enable_password=None, private_key=None
+    )
     return CredentialMaterial(**{**defaults, **kwargs})
 
 

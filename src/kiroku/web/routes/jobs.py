@@ -29,8 +29,12 @@ def _job_form_context(db: Session, job=None) -> dict:
     return {
         "job": job,
         "kinds": [k.value for k in JobKind],
-        "parsers": db.scalars(select(ParserTemplate).order_by(ParserTemplate.name)).all(),
-        "device_groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
+        "parsers": db.scalars(
+            select(ParserTemplate).order_by(ParserTemplate.name)
+        ).all(),
+        "device_groups": db.scalars(
+            select(DeviceGroup).order_by(DeviceGroup.name)
+        ).all(),
         "devices": db.scalars(select(Device).order_by(Device.name)).all(),
     }
 
@@ -41,7 +45,9 @@ def _apply_job_data(job: Job, data: dict, db: Session) -> None:
     job.kind = JobKind(data["kind"])
     job.commands = data.get("commands") or None
     job.rpc = data.get("rpc") or None
-    job.parser_template_id = int(data["parser_template_id"]) if data.get("parser_template_id") else None
+    job.parser_template_id = (
+        int(data["parser_template_id"]) if data.get("parser_template_id") else None
+    )
     job.cve_vendor = data.get("cve_vendor") or None
     job.cve_product = data.get("cve_product") or None
     job.show_on_device = data.get("show_on_device") == "1"
@@ -49,13 +55,17 @@ def _apply_job_data(job: Job, data: dict, db: Session) -> None:
     group_ids = _parse_multi(data, "device_group_ids")
     device_ids = _parse_multi(data, "device_ids")
 
-    job.device_groups = db.scalars(
-        select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))
-    ).all() if group_ids else []
+    job.device_groups = (
+        db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()
+        if group_ids
+        else []
+    )
 
-    job.devices = db.scalars(
-        select(Device).where(Device.id.in_(device_ids))
-    ).all() if device_ids else []
+    job.devices = (
+        db.scalars(select(Device).where(Device.id.in_(device_ids))).all()
+        if device_ids
+        else []
+    )
 
 
 @get("/", dependencies={"db": provide_db})
@@ -118,7 +128,11 @@ async def update_job(
     return Redirect(path="/jobs")
 
 
-@post("/{job_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{job_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_job(job_id: int, db: Session) -> Redirect:
     job = db.get(Job, job_id)
     if job:
@@ -127,7 +141,9 @@ async def delete_job(job_id: int, db: Session) -> Redirect:
     return Redirect(path="/jobs")
 
 
-@post("/{job_id:int}/run", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{job_id:int}/run", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+)
 async def run_job_adhoc(job_id: int, db: Session) -> Redirect:
     job = db.get(Job, job_id)
     if job is None:

@@ -5,6 +5,7 @@ Revises: 0004_cve_tables
 Create Date: 2026-05-07
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -29,8 +30,18 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("commit_sha", sa.String(64), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["schedule_id"], ["schedules.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -38,11 +49,21 @@ def upgrade() -> None:
 
     op.add_column("runs", sa.Column("batch_id", sa.Integer(), nullable=True))
     op.create_foreign_key(
-        "fk_runs_batch_id", "runs", "run_batches", ["batch_id"], ["id"], ondelete="SET NULL"
+        "fk_runs_batch_id",
+        "runs",
+        "run_batches",
+        ["batch_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
-    op.add_column("devices", sa.Column("latest_backup_path", sa.String(512), nullable=True))
-    op.add_column("devices", sa.Column("latest_backup_at", sa.DateTime(timezone=True), nullable=True))
+    op.add_column(
+        "devices", sa.Column("latest_backup_path", sa.String(512), nullable=True)
+    )
+    op.add_column(
+        "devices",
+        sa.Column("latest_backup_at", sa.DateTime(timezone=True), nullable=True),
+    )
 
 
 def downgrade() -> None:

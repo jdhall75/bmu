@@ -22,8 +22,12 @@ class RunBatch(Base, TimestampMixin):
     succeeded: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     failed: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
 
-    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     runs = relationship("Run", back_populates="batch", foreign_keys="[Run.batch_id]")

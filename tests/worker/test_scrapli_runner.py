@@ -2,11 +2,17 @@
 
 All network I/O is patched; no real connections are made.
 """
+
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from kiroku.worker.scrapli_runner import _build_cli_driver, _run_cli, _run_netconf, execute
+from kiroku.worker.scrapli_runner import (
+    _build_cli_driver,
+    _run_cli,
+    _run_netconf,
+    execute,
+)
 
 from .conftest import make_cred, make_driver, make_spec, mock_response
 
@@ -21,7 +27,9 @@ class TestBuildCliDriver:
     def _build(self, spec, cred=None, mock_settings=None):
         if cred is None:
             cred = make_cred()
-        ctx = patch("kiroku.worker.scrapli_runner.get_settings", return_value=mock_settings)
+        ctx = patch(
+            "kiroku.worker.scrapli_runner.get_settings", return_value=mock_settings
+        )
         with ctx, patch("kiroku.worker.scrapli_runner.Cli") as MockCli:
             MockCli.return_value = MagicMock()
             driver, temp = _build_cli_driver(spec, cred)
@@ -53,12 +61,15 @@ class TestBuildCliDriver:
         assert "prompt_pattern" in content
         definition = MockCli.call_args.kwargs["definition_file_or_name"]
         assert definition == temp
-        import os; os.unlink(temp)
+        import os
+
+        os.unlink(temp)
 
     # ---- transport ---------------------------------------------------------
 
     def test_ssh_transport_uses_bin_options(self, mock_settings):
         from scrapli import TransportBinOptions
+
         spec = make_spec(platform="cisco_iosxe", transport="ssh")
         MockCli, _, _ = self._build(spec, mock_settings=mock_settings)
         opts = MockCli.call_args.kwargs["transport_options"]
@@ -66,15 +77,21 @@ class TestBuildCliDriver:
 
     def test_none_transport_uses_bin_options(self, mock_settings):
         from scrapli import TransportBinOptions
+
         spec = make_spec(platform="cisco_iosxe", transport=None)
         MockCli, _, _ = self._build(spec, mock_settings=mock_settings)
-        assert isinstance(MockCli.call_args.kwargs["transport_options"], TransportBinOptions)
+        assert isinstance(
+            MockCli.call_args.kwargs["transport_options"], TransportBinOptions
+        )
 
     def test_telnet_transport_uses_telnet_options(self, mock_settings):
         from scrapli import TransportTelnetOptions
+
         spec = make_spec(platform="cisco_iosxe", transport="telnet")
         MockCli, _, _ = self._build(spec, mock_settings=mock_settings)
-        assert isinstance(MockCli.call_args.kwargs["transport_options"], TransportTelnetOptions)
+        assert isinstance(
+            MockCli.call_args.kwargs["transport_options"], TransportTelnetOptions
+        )
 
     def test_bin_transport_disables_strict_key(self, mock_settings):
         spec = make_spec(platform="cisco_iosxe", transport="ssh")
@@ -108,6 +125,7 @@ class TestBuildCliDriver:
 
     def test_credentials_in_auth_options(self, mock_settings):
         from scrapli import AuthOptions
+
         spec = make_spec(platform="cisco_iosxe")
         cred = make_cred(username="netops", password="p@ss")
         MockCli, _, _ = self._build(spec, cred=cred, mock_settings=mock_settings)
@@ -150,6 +168,7 @@ class TestBuildCliDriver:
 
     def test_command_timeout_in_session_options(self, mock_settings):
         from scrapli import SessionOptions
+
         mock_settings.worker_command_timeout = 45
         spec = make_spec(platform="cisco_iosxe")
         MockCli, _, _ = self._build(spec, mock_settings=mock_settings)
@@ -171,7 +190,10 @@ class TestRunCli:
             cred = make_cred()
         if driver is None:
             driver = make_driver()
-        with patch("kiroku.worker.scrapli_runner._build_cli_driver", return_value=(driver, None)):
+        with patch(
+            "kiroku.worker.scrapli_runner._build_cli_driver",
+            return_value=(driver, None),
+        ):
             return _run_cli(spec, cred)
 
     # ---- backup mode -------------------------------------------------------
@@ -190,8 +212,13 @@ class TestRunCli:
 
     def test_backup_does_not_call_parser(self):
         spec = make_spec(kind="backup", commands=["show run"])
-        with patch("kiroku.worker.scrapli_runner.parse") as mock_parse, \
-             patch("kiroku.worker.scrapli_runner._build_cli_driver", return_value=(make_driver(), None)):
+        with (
+            patch("kiroku.worker.scrapli_runner.parse") as mock_parse,
+            patch(
+                "kiroku.worker.scrapli_runner._build_cli_driver",
+                return_value=(make_driver(), None),
+            ),
+        ):
             _run_cli(spec, make_cred())
             mock_parse.assert_not_called()
 
@@ -217,9 +244,15 @@ class TestRunCli:
             parser_type="textfsm",
             parser_body="Value X (.*)\n\nStart\n  ^${X} -> Record\n\nEOF",
         )
-        with patch("kiroku.worker.scrapli_runner.parse", return_value=[{"X": "val"}]) as mock_parse, \
-             patch("kiroku.worker.scrapli_runner._build_cli_driver",
-                   return_value=(make_driver(mock_response("val")), None)):
+        with (
+            patch(
+                "kiroku.worker.scrapli_runner.parse", return_value=[{"X": "val"}]
+            ) as mock_parse,
+            patch(
+                "kiroku.worker.scrapli_runner._build_cli_driver",
+                return_value=(make_driver(mock_response("val")), None),
+            ),
+        ):
             result = _run_cli(spec, make_cred())
             mock_parse.assert_called_once_with("textfsm", spec.parser_body, "val")
             assert result.parsed == [{"X": "val"}]
@@ -231,16 +264,29 @@ class TestRunCli:
             parser_type="textfsm",
             parser_body="bad template",
         )
-        with patch("kiroku.worker.scrapli_runner.parse", side_effect=Exception("parse error")), \
-             patch("kiroku.worker.scrapli_runner._build_cli_driver", return_value=(make_driver(), None)):
+        with (
+            patch(
+                "kiroku.worker.scrapli_runner.parse",
+                side_effect=Exception("parse error"),
+            ),
+            patch(
+                "kiroku.worker.scrapli_runner._build_cli_driver",
+                return_value=(make_driver(), None),
+            ),
+        ):
             result = _run_cli(spec, make_cred())
             assert result.success is True
             assert result.parsed is None
 
     def test_collect_no_parser_type_skips_parse(self):
         spec = make_spec(kind="collect", commands=["show version"], parser_type=None)
-        with patch("kiroku.worker.scrapli_runner.parse") as mock_parse, \
-             patch("kiroku.worker.scrapli_runner._build_cli_driver", return_value=(make_driver(), None)):
+        with (
+            patch("kiroku.worker.scrapli_runner.parse") as mock_parse,
+            patch(
+                "kiroku.worker.scrapli_runner._build_cli_driver",
+                return_value=(make_driver(), None),
+            ),
+        ):
             _run_cli(spec, make_cred())
             mock_parse.assert_not_called()
 
@@ -303,7 +349,9 @@ class TestRunCli:
     # ---- result fields -----------------------------------------------------
 
     def test_result_preserves_run_id_and_device_fields(self):
-        spec = make_spec(run_id=42, device_id=99, device_name="core-rtr-01", kind="backup")
+        spec = make_spec(
+            run_id=42, device_id=99, device_name="core-rtr-01", kind="backup"
+        )
         result = self._run(spec)
         assert result.run_id == 42
         assert result.device_id == 99
@@ -340,8 +388,10 @@ class TestRunNetconf:
     def _run(self, spec, driver=None):
         if driver is None:
             driver = self._make_netconf_driver()
-        with patch("kiroku.worker.scrapli_runner.Netconf", return_value=driver), \
-             patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs:
+        with (
+            patch("kiroku.worker.scrapli_runner.Netconf", return_value=driver),
+            patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs,
+        ):
             mock_gs.return_value = MagicMock(worker_command_timeout=60)
             return _run_netconf(spec, make_cred())
 
@@ -359,6 +409,7 @@ class TestRunNetconf:
             credential=CredentialRef(provider="local", credential_id=1),
         )
         from kiroku.jobs import JobSpec
+
         return JobSpec(**{**defaults, **kwargs})
 
     def test_backup_config_text_is_raw_xml(self):
@@ -382,7 +433,9 @@ class TestRunNetconf:
     def test_open_exception_sets_error(self):
         driver = self._make_netconf_driver()
         driver.open.side_effect = ConnectionRefusedError("port closed")
-        result = self._run(make_spec(driver_kind="netconf", rpc="<get/>"), driver=driver)
+        result = self._run(
+            make_spec(driver_kind="netconf", rpc="<get/>"), driver=driver
+        )
         assert result.success is False
         assert "ConnectionRefusedError" in result.error
 
@@ -401,9 +454,12 @@ class TestRunNetconf:
 
     def test_netconf_driver_constructed_with_correct_args(self):
         from scrapli import AuthOptions, SessionOptions, TransportBinOptions
+
         spec = self._netconf_spec(hostname="10.1.2.3", port=830)
-        with patch("kiroku.worker.scrapli_runner.Netconf") as MockNetconf, \
-             patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs:
+        with (
+            patch("kiroku.worker.scrapli_runner.Netconf") as MockNetconf,
+            patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs,
+        ):
             mock_gs.return_value = MagicMock(worker_command_timeout=20)
             MockNetconf.return_value = self._make_netconf_driver()
             _run_netconf(spec, make_cred(username="ops", password="pw"))
@@ -420,8 +476,10 @@ class TestRunNetconf:
 
     def test_netconf_port_defaults_to_830(self):
         spec = self._netconf_spec(port=None)
-        with patch("kiroku.worker.scrapli_runner.Netconf") as MockNetconf, \
-             patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs:
+        with (
+            patch("kiroku.worker.scrapli_runner.Netconf") as MockNetconf,
+            patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs,
+        ):
             mock_gs.return_value = MagicMock(worker_command_timeout=60)
             MockNetconf.return_value = self._make_netconf_driver()
             _run_netconf(spec, make_cred())
@@ -441,9 +499,13 @@ class TestRunNetconf:
             parser_body="<xsl:stylesheet/>",
         )
         driver = self._make_netconf_driver(rpc_result="<data/>")
-        with patch("kiroku.worker.scrapli_runner.Netconf", return_value=driver), \
-             patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs, \
-             patch("kiroku.worker.scrapli_runner.parse", return_value={"transformed": ""}) as mock_parse:
+        with (
+            patch("kiroku.worker.scrapli_runner.Netconf", return_value=driver),
+            patch("kiroku.worker.scrapli_runner.get_settings") as mock_gs,
+            patch(
+                "kiroku.worker.scrapli_runner.parse", return_value={"transformed": ""}
+            ) as mock_parse,
+        ):
             mock_gs.return_value = MagicMock(worker_command_timeout=60)
             result = _run_netconf(spec, make_cred())
             mock_parse.assert_called_once_with("xslt", "<xsl:stylesheet/>", "<data/>")

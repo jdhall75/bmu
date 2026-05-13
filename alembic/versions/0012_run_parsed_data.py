@@ -4,6 +4,7 @@ Revision ID: 0012_run_parsed_data
 Revises: 0011_device_many_groups
 Create Date: 2026-05-11
 """
+
 from alembic import op
 import sqlalchemy as sa
 

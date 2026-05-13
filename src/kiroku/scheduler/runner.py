@@ -11,6 +11,7 @@ Single-leader (Postgres advisory lock). Each tick:
 The advisory lock keeps two scheduler instances from double-firing. If we
 lose the lock (or never get it), we sleep and try again.
 """
+
 from __future__ import annotations
 
 import signal
@@ -44,8 +45,11 @@ def _install_signals() -> None:
 
 
 def _try_acquire_lock(db: Session, lock_id: int) -> bool:
-    return bool(db.execute(text("SELECT pg_try_advisory_lock(:lock_id)"),
-                           {"lock_id": lock_id}).scalar())
+    return bool(
+        db.execute(
+            text("SELECT pg_try_advisory_lock(:lock_id)"), {"lock_id": lock_id}
+        ).scalar()
+    )
 
 
 def _release_lock(db: Session, lock_id: int) -> None:
@@ -55,6 +59,7 @@ def _release_lock(db: Session, lock_id: int) -> None:
 def _next_fire(cron: str, tz_name: str, base: datetime) -> datetime:
     try:
         from zoneinfo import ZoneInfo
+
         tz = ZoneInfo(tz_name)
     except Exception:
         tz = timezone.utc
@@ -63,13 +68,10 @@ def _next_fire(cron: str, tz_name: str, base: datetime) -> datetime:
     return itr.get_next(datetime).astimezone(timezone.utc)
 
 
-
 def _fire_due(db: Session, now: datetime) -> int:
     """Returns number of jobs queued."""
     queued = 0
-    due = db.scalars(
-        select(Schedule).where(Schedule.enabled.is_(True))
-    ).all()
+    due = db.scalars(select(Schedule).where(Schedule.enabled.is_(True))).all()
 
     for sched in due:
         if sched.next_run_at is None:
@@ -158,9 +160,11 @@ def run_scheduler() -> None:
     ensure_consumer_group(settings.job_stream, settings.job_consumer_group)
     ensure_consumer_group(settings.result_stream, settings.result_consumer_group)
 
-    log.info("scheduler starting",
-             tick_seconds=settings.scheduler_tick_seconds,
-             lock_id=settings.scheduler_advisory_lock_id)
+    log.info(
+        "scheduler starting",
+        tick_seconds=settings.scheduler_tick_seconds,
+        lock_id=settings.scheduler_advisory_lock_id,
+    )
 
     have_lock = False
     while not _stop:

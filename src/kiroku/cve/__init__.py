@@ -3,6 +3,7 @@
 ``query_cpe(cpe)`` is the single entry point called by the worker.
 Provider selection is controlled by settings.cve_provider (default: "nvd").
 """
+
 from __future__ import annotations
 
 from kiroku.cve.base import CveEntry

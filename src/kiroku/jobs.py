@@ -3,6 +3,7 @@
 The contents are JSON-serialized into the stream entry's ``data`` field.
 Workers must never receive resolved secrets here; only references.
 """
+
 from __future__ import annotations
 
 from typing import Literal

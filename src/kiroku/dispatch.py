@@ -1,4 +1,5 @@
 """Fire a Job against its devices, creating a RunBatch + Run rows and publishing specs."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -20,7 +21,11 @@ def _spec_for(
     group: DeviceGroup | None = None,
     default_cred: Credential | None = None,
 ) -> JobSpec | None:
-    cred = device.credential or (group.default_credential if group else None) or default_cred
+    cred = (
+        device.credential
+        or (group.default_credential if group else None)
+        or default_cred
+    )
     if cred is None:
         return None
 
@@ -113,7 +118,9 @@ def fire_job(
     db.flush()
 
     for device, group, run in pairs:
-        spec = _spec_for(device, job, run, schedule_id, group=group, default_cred=default_cred)
+        spec = _spec_for(
+            device, job, run, schedule_id, group=group, default_cred=default_cred
+        )
         if spec is None:
             run.status = RunStatus.FAILED
             run.error = "no credential available"

@@ -31,7 +31,9 @@ async def list_cve_scans(db: Session) -> Template:
         rows.append(
             {
                 "scan": scan,
-                "device_name": scan.device.name if scan.device else f"device:{scan.device_id}",
+                "device_name": scan.device.name
+                if scan.device
+                else f"device:{scan.device_id}",
                 "cve_count": len(scan.results),
                 "highest_severity": _highest_severity(scan.results),
             }

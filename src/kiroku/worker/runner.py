@@ -3,6 +3,7 @@
 Pulls JobSpecs off the Redis stream, resolves credentials, talks to the
 device with scrapli, publishes a JobResult back, and acks the job.
 """
+
 from __future__ import annotations
 
 import os
@@ -44,7 +45,9 @@ def _mark_running(run_id: int) -> None:
 
 
 def _handle(msg_id: str, spec: JobSpec) -> None:
-    log.info("job received", run_id=spec.run_id, device=spec.device_name, kind=spec.kind)
+    log.info(
+        "job received", run_id=spec.run_id, device=spec.device_name, kind=spec.kind
+    )
     _mark_running(spec.run_id)
 
     with session_scope() as db:
@@ -69,8 +72,12 @@ def _handle(msg_id: str, spec: JobSpec) -> None:
         result = execute(spec, material)
     except Exception as exc:
         tb = traceback.format_exc()
-        log.error("worker execute crashed",
-                  device=spec.device_name, error=str(exc), exc_info=True)
+        log.error(
+            "worker execute crashed",
+            device=spec.device_name,
+            error=str(exc),
+            exc_info=True,
+        )
         now = datetime.now(tz=timezone.utc).isoformat()
         result = JobResult(
             run_id=spec.run_id,
@@ -85,8 +92,12 @@ def _handle(msg_id: str, spec: JobSpec) -> None:
 
     publish_result(result)
     ack_job(msg_id)
-    log.info("job completed", run_id=spec.run_id, device=spec.device_name,
-             success=result.success)
+    log.info(
+        "job completed",
+        run_id=spec.run_id,
+        device=spec.device_name,
+        success=result.success,
+    )
 
 
 def run_worker() -> None:
@@ -95,19 +106,24 @@ def run_worker() -> None:
     _install_signals()
     consumer = f"worker-{os.getpid()}"
 
-    log.info("worker starting", consumer=consumer,
-             concurrency=settings.worker_concurrency)
+    log.info(
+        "worker starting", consumer=consumer, concurrency=settings.worker_concurrency
+    )
 
     with ProcessPoolExecutor(max_workers=settings.worker_concurrency) as pool:
         while not _stop:
             try:
-                jobs = read_jobs(consumer, count=settings.worker_concurrency,
-                                 block_ms=2000)
+                jobs = read_jobs(
+                    consumer, count=settings.worker_concurrency, block_ms=2000
+                )
             except Exception as exc:
                 log.error("read_jobs failed", error=str(exc))
                 continue
             for msg_id, spec in jobs:
                 future = pool.submit(_handle, msg_id, spec)
                 future.add_done_callback(
-                    lambda f: f.exception() and log.error("job subprocess failed", error=str(f.exception()))
+                    lambda f: (
+                        f.exception()
+                        and log.error("job subprocess failed", error=str(f.exception()))
+                    )
                 )

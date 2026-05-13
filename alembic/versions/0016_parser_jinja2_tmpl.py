@@ -4,6 +4,7 @@ Revision ID: 0016_parser_jinja2_tmpl
 Revises: 0015_run_parse_error
 Create Date: 2026-05-12
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -14,7 +15,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("parser_templates", sa.Column("jinja2_template", sa.Text(), nullable=True))
+    op.add_column(
+        "parser_templates", sa.Column("jinja2_template", sa.Text(), nullable=True)
+    )
     op.add_column(
         "runs",
         sa.Column(

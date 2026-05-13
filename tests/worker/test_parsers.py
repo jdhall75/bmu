@@ -1,4 +1,5 @@
 """Tests for kiroku.worker.parsers."""
+
 import pytest
 
 from kiroku.worker.parsers import parse

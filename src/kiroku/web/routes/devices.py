@@ -8,7 +8,18 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from kiroku.config import get_settings
-from kiroku.models import Credential, CveScan, Device, DeviceGroup, DriverKind, Job, Platform, Run, RunStatus, TransportProtocol
+from kiroku.models import (
+    Credential,
+    CveScan,
+    Device,
+    DeviceGroup,
+    DriverKind,
+    Job,
+    Platform,
+    Run,
+    RunStatus,
+    TransportProtocol,
+)
 from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 from kiroku.web.routes.runs import _parsed_display
@@ -99,17 +110,19 @@ def _apply_platform(device: Device, data: dict) -> None:
     """Parse the combined platform_value and set device.platform / custom_platform_id."""
     pv = data.get("platform_value", "")
     if pv.startswith("builtin:"):
-        device.platform = pv[len("builtin:"):]
+        device.platform = pv[len("builtin:") :]
         device.custom_platform_id = None
     elif pv.startswith("custom:"):
-        device.custom_platform_id = int(pv[len("custom:"):])
+        device.custom_platform_id = int(pv[len("custom:") :])
         device.platform = None
     else:
         device.platform = None
         device.custom_platform_id = None
 
 
-def _build_filter_qs(q: str, group_id: str, make_filter: str, role_filter: str, enabled_filter: str) -> str:
+def _build_filter_qs(
+    q: str, group_id: str, make_filter: str, role_filter: str, enabled_filter: str
+) -> str:
     parts = []
     if q:
         parts.append(f"q={q}")
@@ -166,7 +179,9 @@ async def list_devices(
     page = min(page, total_pages)
     offset = (page - 1) * _PAGE_SIZE
 
-    devices = db.scalars(base.order_by(Device.name).offset(offset).limit(_PAGE_SIZE)).all()
+    devices = db.scalars(
+        base.order_by(Device.name).offset(offset).limit(_PAGE_SIZE)
+    ).all()
 
     has_filters = any([q, group_id, make, role, enabled])
     filter_qs = _build_filter_qs(q, group_id, make, role, enabled)
@@ -232,15 +247,25 @@ async def create_device(
         model=data.get("model") or None,
         role=data.get("role") or None,
         credential_id=int(data["credential_id"]) if data.get("credential_id") else None,
-        transport=TransportProtocol(data["transport"]) if data.get("transport") else None,
-        driver_kind=DriverKind(data["driver_kind"]) if data.get("driver_kind") else None,
-        connect_timeout=int(data["connect_timeout"]) if data.get("connect_timeout") else None,
-        command_timeout=int(data["command_timeout"]) if data.get("command_timeout") else None,
+        transport=TransportProtocol(data["transport"])
+        if data.get("transport")
+        else None,
+        driver_kind=DriverKind(data["driver_kind"])
+        if data.get("driver_kind")
+        else None,
+        connect_timeout=int(data["connect_timeout"])
+        if data.get("connect_timeout")
+        else None,
+        command_timeout=int(data["command_timeout"])
+        if data.get("command_timeout")
+        else None,
         enabled=bool(data.get("enabled")),
     )
     _apply_platform(d, data)
     if group_ids:
-        d.groups = list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all())
+        d.groups = list(
+            db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()
+        )
     db.add(d)
     db.commit()
     return Redirect(path="/devices")
@@ -304,7 +329,9 @@ async def edit_device(device_id: int, db: Session) -> Template:
     )
 
 
-@post("/{device_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{device_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+)
 async def update_device(
     device_id: int,
     db: Session,
@@ -318,20 +345,38 @@ async def update_device(
     device.make = data.get("make") or None
     device.model = data.get("model") or None
     device.role = data.get("role") or None
-    device.credential_id = int(data["credential_id"]) if data.get("credential_id") else None
-    device.transport = TransportProtocol(data["transport"]) if data.get("transport") else None
-    device.driver_kind = DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
-    device.connect_timeout = int(data["connect_timeout"]) if data.get("connect_timeout") else None
-    device.command_timeout = int(data["command_timeout"]) if data.get("command_timeout") else None
+    device.credential_id = (
+        int(data["credential_id"]) if data.get("credential_id") else None
+    )
+    device.transport = (
+        TransportProtocol(data["transport"]) if data.get("transport") else None
+    )
+    device.driver_kind = (
+        DriverKind(data["driver_kind"]) if data.get("driver_kind") else None
+    )
+    device.connect_timeout = (
+        int(data["connect_timeout"]) if data.get("connect_timeout") else None
+    )
+    device.command_timeout = (
+        int(data["command_timeout"]) if data.get("command_timeout") else None
+    )
     _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
     group_ids = _parse_group_ids(data)
-    device.groups = list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()) if group_ids else []
+    device.groups = (
+        list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all())
+        if group_ids
+        else []
+    )
     db.commit()
     return Redirect(path="/devices")
 
 
-@post("/{device_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{device_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_device(device_id: int, db: Session) -> Redirect:
     device = db.get(Device, device_id)
     if device:
@@ -350,7 +395,9 @@ async def import_template() -> Response:
     return Response(
         content=CSV_TEMPLATE,
         media_type="text/csv",
-        headers={"content-disposition": 'attachment; filename="kiroku-devices-template.csv"'},
+        headers={
+            "content-disposition": 'attachment; filename="kiroku-devices-template.csv"'
+        },
     )
 
 
@@ -360,7 +407,11 @@ async def import_submit(
     data: dict = Body(media_type=RequestEncodingType.MULTI_PART),
 ) -> Template:
     upload = data.get("file")
-    pasted = (data.get("pasted") or "").strip() if isinstance(data.get("pasted"), str) else ""
+    pasted = (
+        (data.get("pasted") or "").strip()
+        if isinstance(data.get("pasted"), str)
+        else ""
+    )
 
     raw = ""
     if isinstance(upload, UploadFile):
@@ -373,8 +424,11 @@ async def import_submit(
     if not raw:
         return Template(
             template_name="devices/import_results.html",
-            context={"results": [], "created": 0,
-                     "error": "Provide a CSV file or paste CSV text."},
+            context={
+                "results": [],
+                "created": 0,
+                "error": "Provide a CSV file or paste CSV text.",
+            },
         )
 
     try:
@@ -383,13 +437,22 @@ async def import_submit(
         db.rollback()
         return Template(
             template_name="devices/import_results.html",
-            context={"results": [], "created": 0, "updated": 0,
-                     "error": f"{type(exc).__name__}: {exc}"},
+            context={
+                "results": [],
+                "created": 0,
+                "updated": 0,
+                "error": f"{type(exc).__name__}: {exc}",
+            },
         )
 
     return Template(
         template_name="devices/import_results.html",
-        context={"results": results, "created": created, "updated": updated, "error": None},
+        context={
+            "results": results,
+            "created": created,
+            "updated": updated,
+            "error": None,
+        },
     )
 
 
@@ -428,7 +491,11 @@ async def view_device(device_id: int, db: Session) -> Template:
 
     return Template(
         template_name="devices/detail.html",
-        context={"device": device, "recent_runs": recent_runs, "pinned_data": pinned_data},
+        context={
+            "device": device,
+            "recent_runs": recent_runs,
+            "pinned_data": pinned_data,
+        },
     )
 
 
@@ -439,6 +506,7 @@ async def view_config(device_id: int, db: Session, sha: str | None = None) -> Te
     if device and device.latest_backup_path:
         if sha:
             from kiroku.recorder.git_store import GitStore
+
             content = GitStore().read_at(device.latest_backup_path, sha)
         else:
             path = get_settings().backup_repo_path / device.latest_backup_path
@@ -458,13 +526,19 @@ async def view_config_diff(
     to_sha: str,
 ) -> Template:
     from kiroku.recorder.git_store import GitStore
+
     device = db.get(Device, device_id)
     diff_rows: list[dict] = []
     if device and device.latest_backup_path:
         diff_rows = GitStore().diff_commits(device.latest_backup_path, from_sha, to_sha)
     return Template(
         template_name="devices/config_diff.html",
-        context={"device": device, "diff_rows": diff_rows, "from_sha": from_sha, "to_sha": to_sha},
+        context={
+            "device": device,
+            "diff_rows": diff_rows,
+            "from_sha": from_sha,
+            "to_sha": to_sha,
+        },
     )
 
 
@@ -474,6 +548,7 @@ async def view_config_history(device_id: int, db: Session) -> Template:
     history: list[dict] = []
     if device and device.latest_backup_path:
         from kiroku.recorder.git_store import GitStore
+
         store = GitStore()
         history = store.history(device.latest_backup_path)
     return Template(

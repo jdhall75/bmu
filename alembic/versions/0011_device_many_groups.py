@@ -4,6 +4,7 @@ Revision ID: 0011_device_many_groups
 Revises: 0010_device_timeouts
 Create Date: 2026-05-11
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -19,7 +20,9 @@ def upgrade() -> None:
         sa.Column("device_id", sa.Integer(), nullable=False),
         sa.Column("device_group_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["device_id"], ["devices.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["device_group_id"], ["device_groups.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["device_group_id"], ["device_groups.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("device_id", "device_group_id"),
     )
     # Migrate existing single-group memberships into the junction table.
@@ -36,8 +39,10 @@ def downgrade() -> None:
     op.add_column("devices", sa.Column("group_id", sa.Integer(), nullable=True))
     op.create_foreign_key(
         "devices_group_id_fkey",
-        "devices", "device_groups",
-        ["group_id"], ["id"],
+        "devices",
+        "device_groups",
+        ["group_id"],
+        ["id"],
         ondelete="CASCADE",
     )
     # Restore first group as the canonical group_id.

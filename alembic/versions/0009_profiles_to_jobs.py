@@ -5,6 +5,7 @@ Revises: 0008_drop_profile_generic_fields
 Create Date: 2026-05-07
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

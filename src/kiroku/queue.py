@@ -1,4 +1,5 @@
 """Thin Redis Streams helpers for job dispatch and result collection."""
+
 from __future__ import annotations
 
 import json
@@ -42,7 +43,9 @@ def publish_result(result: JobResult) -> str:
     return msg_id
 
 
-def read_jobs(consumer: str, *, count: int = 1, block_ms: int = 5000) -> list[tuple[str, JobSpec]]:
+def read_jobs(
+    consumer: str, *, count: int = 1, block_ms: int = 5000
+) -> list[tuple[str, JobSpec]]:
     settings = get_settings()
     r = _client()
     ensure_consumer_group(settings.job_stream, settings.job_consumer_group)
@@ -56,7 +59,9 @@ def read_jobs(consumer: str, *, count: int = 1, block_ms: int = 5000) -> list[tu
     return list(_unpack(entries, JobSpec))
 
 
-def read_results(consumer: str, *, count: int = 8, block_ms: int = 5000) -> list[tuple[str, JobResult]]:
+def read_results(
+    consumer: str, *, count: int = 8, block_ms: int = 5000
+) -> list[tuple[str, JobResult]]:
     settings = get_settings()
     r = _client()
     ensure_consumer_group(settings.result_stream, settings.result_consumer_group)
@@ -91,4 +96,6 @@ def _unpack(entries, model_cls) -> Iterable[tuple[str, object]]:
             try:
                 yield msg_id, model_cls.model_validate_json(data)
             except Exception as exc:
-                log.error("failed to decode stream entry", msg_id=msg_id, error=str(exc))
+                log.error(
+                    "failed to decode stream entry", msg_id=msg_id, error=str(exc)
+                )

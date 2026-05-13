@@ -71,7 +71,11 @@ class Job(Base, TimestampMixin):
     parser_template = relationship("ParserTemplate")
     cve_vendor: Mapped[str | None] = mapped_column(String(64), nullable=True)
     cve_product: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    show_on_device: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=False)
+    show_on_device: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, default=False
+    )
 
-    device_groups = relationship("DeviceGroup", secondary=job_device_groups, backref="jobs")
+    device_groups = relationship(
+        "DeviceGroup", secondary=job_device_groups, backref="jobs"
+    )
     devices = relationship("Device", secondary=job_devices, backref="jobs")

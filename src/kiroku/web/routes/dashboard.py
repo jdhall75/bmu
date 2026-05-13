@@ -23,15 +23,19 @@ async def index(db: Session) -> Template:
         .limit(20)
     ).all()
     recent_batches = [
-        {"batch": b, "job_name": job_name or b.schedule_name}
-        for b, job_name in rows
+        {"batch": b, "job_name": job_name or b.schedule_name} for b, job_name in rows
     ]
-    failing = db.scalar(
-        select(func.count()).select_from(RunBatch).where(RunBatch.failed > 0)
-    ) or 0
+    failing = (
+        db.scalar(select(func.count()).select_from(RunBatch).where(RunBatch.failed > 0))
+        or 0
+    )
     return Template(
         template_name="dashboard.html",
-        context={"counts": counts, "recent_batches": recent_batches, "failing": failing},
+        context={
+            "counts": counts,
+            "recent_batches": recent_batches,
+            "failing": failing,
+        },
     )
 
 

@@ -24,6 +24,7 @@ Upsert behaviour
 The whole import runs in a single transaction. If any row fails to
 validate, nothing is committed and the results page lists per-row errors.
 """
+
 from __future__ import annotations
 
 import csv
@@ -86,10 +87,14 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
 
     missing = [h for h in REQUIRED if h not in headers]
     if missing:
-        results.append(RowResult(
-            line=1, name="", ok=False,
-            message=f"missing required column(s): {', '.join(missing)}",
-        ))
+        results.append(
+            RowResult(
+                line=1,
+                name="",
+                ok=False,
+                message=f"missing required column(s): {', '.join(missing)}",
+            )
+        )
         return results, 0, 0
 
     # One round-trip per related table.
@@ -174,10 +179,15 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
                     if g.id not in existing_group_ids:
                         device.groups.append(g)
                 pending_update.append(device)
-                results.append(RowResult(
-                    line=idx, name=name, ok=True,
-                    message="will be updated", action="update",
-                ))
+                results.append(
+                    RowResult(
+                        line=idx,
+                        name=name,
+                        ok=True,
+                        message="will be updated",
+                        action="update",
+                    )
+                )
             else:
                 device = Device(
                     name=name,
@@ -195,18 +205,28 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
                 )
                 device.groups = matched_groups
                 pending_add.append(device)
-                results.append(RowResult(
-                    line=idx, name=name, ok=True,
-                    message="will be created", action="create",
-                ))
+                results.append(
+                    RowResult(
+                        line=idx,
+                        name=name,
+                        ok=True,
+                        message="will be created",
+                        action="create",
+                    )
+                )
 
             seen_names.add(name)
 
         except Exception as exc:
-            results.append(RowResult(
-                line=idx, name=name, ok=False,
-                message=str(exc), action="update" if is_update else "create",
-            ))
+            results.append(
+                RowResult(
+                    line=idx,
+                    name=name,
+                    ok=False,
+                    message=str(exc),
+                    action="update" if is_update else "create",
+                )
+            )
 
     if any(not r.ok for r in results):
         return results, 0, 0

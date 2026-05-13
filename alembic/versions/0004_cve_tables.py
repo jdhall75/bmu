@@ -5,6 +5,7 @@ Revises: 0003_cve_scan_job_kind
 Create Date: 2026-05-06
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -26,8 +27,12 @@ def upgrade() -> None:
         sa.Column("version_found", sa.String(128), nullable=True),
         sa.Column("raw_version", sa.String(128), nullable=True),
         sa.Column("scanned_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["device_id"], ["devices.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["run_id"], ["runs.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),

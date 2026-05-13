@@ -34,6 +34,7 @@ curl examples:
          -H "Content-Type: text/csv" \
          -d $'name,hostname,group\nrouter-01,10.0.0.1,core'
 """
+
 from __future__ import annotations
 
 from litestar import Router, post

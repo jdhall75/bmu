@@ -1,4 +1,5 @@
 """Parser pipeline: TextFSM, TTP, XSLT."""
+
 from __future__ import annotations
 
 import io
@@ -14,7 +15,9 @@ def _clean(payload: str) -> str:
     return _JUNIPER_RE_INDICATOR.sub("", payload)
 
 
-def parse(parser_type: str | None, body: str | None, payload: str) -> list[dict] | dict | None:
+def parse(
+    parser_type: str | None, body: str | None, payload: str
+) -> list[dict] | dict | None:
     if not parser_type or not body:
         return None
     payload = _clean(payload)

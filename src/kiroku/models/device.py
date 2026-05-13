@@ -76,4 +76,6 @@ class Device(Base, TimestampMixin):
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     latest_backup_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    latest_backup_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    latest_backup_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

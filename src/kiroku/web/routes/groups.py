@@ -63,7 +63,9 @@ async def bulk_groups(
 ) -> Redirect:
     ids = _parse_ids(data)
     if ids and data.get("action") == "delete":
-        for group in db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(ids))).all():
+        for group in db.scalars(
+            select(DeviceGroup).where(DeviceGroup.id.in_(ids))
+        ).all():
             db.delete(group)
         db.commit()
     return Redirect(path="/groups")
@@ -78,7 +80,9 @@ async def edit_group(group_id: int, db: Session) -> Template:
     )
 
 
-@post("/{group_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{group_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+)
 async def update_group(
     group_id: int,
     db: Session,
@@ -89,13 +93,19 @@ async def update_group(
     group.description = data.get("description") or None
     group.max_parallel = int(data.get("max_parallel") or 8)
     group.default_credential_id = (
-        int(data["default_credential_id"]) if data.get("default_credential_id") else None
+        int(data["default_credential_id"])
+        if data.get("default_credential_id")
+        else None
     )
     db.commit()
     return Redirect(path="/groups")
 
 
-@post("/{group_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{group_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_group(group_id: int, db: Session) -> Redirect:
     group = db.get(DeviceGroup, group_id)
     if group:

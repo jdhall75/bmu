@@ -1,4 +1,5 @@
 """Git-on-disk backup store. One repo, one file per device."""
+
 from __future__ import annotations
 
 import hashlib
@@ -116,7 +117,9 @@ class GitStore:
 
         rows: list[dict] = []
         old_no = new_no = 0
-        for line in difflib.unified_diff(a, b, fromfile=sha_a[:8], tofile=sha_b[:8], lineterm=""):
+        for line in difflib.unified_diff(
+            a, b, fromfile=sha_a[:8], tofile=sha_b[:8], lineterm=""
+        ):
             text = line.rstrip("\n")
             if text.startswith("@@"):
                 # parse @@ -old_start,... +new_start,... @@
@@ -126,23 +129,49 @@ class GitStore:
                     new_no = abs(int(parts[2].split(",")[0]))
                 except Exception:
                     pass
-                rows.append({"type": "header", "old_no": None, "new_no": None, "text": text})
+                rows.append(
+                    {"type": "header", "old_no": None, "new_no": None, "text": text}
+                )
             elif text.startswith("---") or text.startswith("+++"):
-                rows.append({"type": "header", "old_no": None, "new_no": None, "text": text})
+                rows.append(
+                    {"type": "header", "old_no": None, "new_no": None, "text": text}
+                )
             elif text.startswith("-"):
-                rows.append({"type": "removed", "old_no": old_no, "new_no": None, "text": text[1:]})
+                rows.append(
+                    {
+                        "type": "removed",
+                        "old_no": old_no,
+                        "new_no": None,
+                        "text": text[1:],
+                    }
+                )
                 old_no += 1
             elif text.startswith("+"):
-                rows.append({"type": "added", "old_no": None, "new_no": new_no, "text": text[1:]})
+                rows.append(
+                    {
+                        "type": "added",
+                        "old_no": None,
+                        "new_no": new_no,
+                        "text": text[1:],
+                    }
+                )
                 new_no += 1
             else:
-                rows.append({"type": "context", "old_no": old_no, "new_no": new_no, "text": text[1:] if text.startswith(" ") else text})
+                rows.append(
+                    {
+                        "type": "context",
+                        "old_no": old_no,
+                        "new_no": new_no,
+                        "text": text[1:] if text.startswith(" ") else text,
+                    }
+                )
                 old_no += 1
                 new_no += 1
         return rows
 
-    def write(self, *, group: str, device: str, content: str,
-              author_note: str = "") -> tuple[str | None, str]:
+    def write(
+        self, *, group: str, device: str, content: str, author_note: str = ""
+    ) -> tuple[str | None, str]:
         """Write content, commit if changed. Returns (commit_sha_or_None, sha256)."""
         changed, sha256 = self.stage(group=group, device=device, content=content)
         if not changed:

@@ -82,7 +82,9 @@ async def search_configs(
         if mode == "exact":
             params["pattern"] = f"%{q}%"
             where_group = _GROUP_FILTER if gid else ""
-            rows = db.execute(text(f"""
+            rows = (
+                db.execute(
+                    text(f"""
                 SELECT dc.device_id, dc.captured_at, dc.content,
                        d.name AS device_name,
                        {_GROUP_NAMES_SUBQ} AS group_name
@@ -92,11 +94,18 @@ async def search_configs(
                   {where_group}
                 ORDER BY dc.captured_at DESC
                 LIMIT :limit
-            """), {**params, **({"gid": gid} if gid else {})}).mappings().all()
+            """),
+                    {**params, **({"gid": gid} if gid else {})},
+                )
+                .mappings()
+                .all()
+            )
             terms = [q]
         else:
             where_group = _GROUP_FILTER if gid else ""
-            rows = db.execute(text(f"""
+            rows = (
+                db.execute(
+                    text(f"""
                 SELECT dc.device_id, dc.captured_at, dc.content,
                        d.name AS device_name,
                        {_GROUP_NAMES_SUBQ} AS group_name,
@@ -109,18 +118,27 @@ async def search_configs(
                   {where_group}
                 ORDER BY dc.captured_at DESC
                 LIMIT :limit
-            """), {**params, **({"gid": gid} if gid else {})}).mappings().all()
+            """),
+                    {**params, **({"gid": gid} if gid else {})},
+                )
+                .mappings()
+                .all()
+            )
             terms = q.split()
 
         for row in rows:
-            results.append({
-                "device_id": row["device_id"],
-                "device_name": row["device_name"],
-                "group_name": row["group_name"],
-                "captured_at": row["captured_at"],
-                "headline": row.get("headline"),
-                "blocks": _extract_context(row["content"] or "", terms, context_lines),
-            })
+            results.append(
+                {
+                    "device_id": row["device_id"],
+                    "device_name": row["device_name"],
+                    "group_name": row["group_name"],
+                    "captured_at": row["captured_at"],
+                    "headline": row.get("headline"),
+                    "blocks": _extract_context(
+                        row["content"] or "", terms, context_lines
+                    ),
+                }
+            )
 
     return Template(
         template_name="search.html",

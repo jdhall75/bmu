@@ -9,6 +9,7 @@ Revises: 0007_custom_platforms
 Create Date: 2026-05-07
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -27,6 +28,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.add_column("profiles", sa.Column("disable_paging_command", sa.String(256), nullable=True))
+    op.add_column(
+        "profiles", sa.Column("disable_paging_command", sa.String(256), nullable=True)
+    )
     op.add_column("profiles", sa.Column("pre_commands", sa.Text(), nullable=True))
-    op.add_column("profiles", sa.Column("prompt_pattern", sa.String(256), nullable=True))
+    op.add_column(
+        "profiles", sa.Column("prompt_pattern", sa.String(256), nullable=True)
+    )

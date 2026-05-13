@@ -1,4 +1,5 @@
 """Serve documentation pages — fragment endpoint for internal use, full page for help window."""
+
 from __future__ import annotations
 
 import re

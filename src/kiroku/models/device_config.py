@@ -15,7 +15,9 @@ class DeviceConfig(Base):
     batch_id: Mapped[int | None] = mapped_column(
         ForeignKey("run_batches.id", ondelete="SET NULL"), nullable=True
     )
-    captured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    captured_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     # content_fts (tsvector) populated via raw SQL upsert — not mapped here
 

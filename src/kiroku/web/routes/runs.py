@@ -26,7 +26,9 @@ async def view_batch(batch_id: int, db: Session) -> Template:
     runs = db.scalars(
         select(Run).where(Run.batch_id == batch_id).order_by(Run.device_id)
     ).all()
-    return Template(template_name="runs/batch_detail.html", context={"batch": batch, "runs": runs})
+    return Template(
+        template_name="runs/batch_detail.html", context={"batch": batch, "runs": runs}
+    )
 
 
 @get("/batches/{batch_id:int}/live", dependencies={"db": provide_db})
@@ -35,7 +37,9 @@ async def batch_live_fragment(batch_id: int, db: Session) -> Template:
     runs = db.scalars(
         select(Run).where(Run.batch_id == batch_id).order_by(Run.device_id)
     ).all()
-    return Template(template_name="runs/_batch_live.html", context={"batch": batch, "runs": runs})
+    return Template(
+        template_name="runs/_batch_live.html", context={"batch": batch, "runs": runs}
+    )
 
 
 @get("/batches/{batch_id:int}/row", dependencies={"db": provide_db})
@@ -48,9 +52,7 @@ async def batch_row_fragment(batch_id: int, db: Session) -> Template:
 async def view_run(run_id: int, db: Session) -> Template:
     run = db.get(Run, run_id)
     jinja2_template = (
-        run.parser_template.jinja2_template
-        if run and run.parser_template
-        else None
+        run.parser_template.jinja2_template if run and run.parser_template else None
     )
     parsed_display = _parsed_display(run.parsed_data if run else None, jinja2_template)
     return Template(
@@ -59,7 +61,9 @@ async def view_run(run_id: int, db: Session) -> Template:
     )
 
 
-def _parsed_display(data: list | dict | None, jinja2_template: str | None = None) -> dict | None:
+def _parsed_display(
+    data: list | dict | None, jinja2_template: str | None = None
+) -> dict | None:
     if data is None:
         return None
     if jinja2_template:

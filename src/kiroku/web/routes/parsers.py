@@ -13,6 +13,9 @@ from sqlalchemy.orm import Session
 
 from kiroku.models import ParserTemplate, ParserType
 from kiroku.web.deps import provide_db
+from kiroku.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def _parse_ids(data: dict) -> list[int]:
@@ -64,7 +67,9 @@ async def bulk_parsers(
 ) -> Redirect:
     ids = _parse_ids(data)
     if ids and data.get("action") == "delete":
-        for p in db.scalars(select(ParserTemplate).where(ParserTemplate.id.in_(ids))).all():
+        for p in db.scalars(
+            select(ParserTemplate).where(ParserTemplate.id.in_(ids))
+        ).all():
             db.delete(p)
         db.commit()
     return Redirect(path="/parsers")
@@ -76,7 +81,9 @@ async def edit_parser(parser_id: int, db: Session) -> Template:
     return Template("parsers/form.html", context=_form_context(db, parser))
 
 
-@post("/{parser_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{parser_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+)
 async def update_parser(
     parser_id: int,
     db: Session,
@@ -92,7 +99,11 @@ async def update_parser(
     return Redirect(path="/parsers")
 
 
-@post("/{parser_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{parser_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_parser(parser_id: int, db: Session) -> Redirect:
     parser = db.get(ParserTemplate, parser_id)
     if parser:
@@ -115,11 +126,17 @@ async def test_bed(db: Session) -> Template:
 @post("/test/run", status_code=200)
 async def run_test(request: Request) -> Response:
     from kiroku.worker.parsers import parse
+
+    body = await request.json()
     try:
-        body = await request.json()
-        result = parse(body.get("type", ""), body.get("template", ""), body.get("input", ""))
+        result = parse(
+            body.get("type", ""), body.get("template", ""), body.get("input", "")
+        )
         payload = _json.dumps({"ok": True, "result": result}, default=str)
     except Exception as exc:
+        logger.exception(
+            "failed_to_parse", content=_json.dumps(body), args=_json.dumps(exc.args)
+        )
         payload = _json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
     return Response(content=payload, media_type="application/json")
 

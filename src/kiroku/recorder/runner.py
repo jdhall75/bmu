@@ -8,6 +8,7 @@ count (total) before dispatching. As results arrive, files are staged but not
 committed. When succeeded + failed reaches total the whole batch is committed
 in a single git operation.
 """
+
 from __future__ import annotations
 
 import os
@@ -50,7 +51,11 @@ def _parse_iso(value: str | None) -> datetime | None:
 
 
 def _record_cve_scan(db, result: JobResult, run: Run) -> None:
-    rows = result.parsed if isinstance(result.parsed, list) else ([result.parsed] if result.parsed else [])
+    rows = (
+        result.parsed
+        if isinstance(result.parsed, list)
+        else ([result.parsed] if result.parsed else [])
+    )
     version_found = None
     raw_version = None
     for row in rows:
@@ -86,7 +91,9 @@ def _record_cve_scan(db, result: JobResult, run: Run) -> None:
     run.bytes_captured = len(result.cve_entries)
 
 
-def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[str]]) -> None:
+def _persist(
+    result: JobResult, store: GitStore, batch_staged: dict[int, list[str]]
+) -> None:
     """Persist one job result. batch_staged accumulates changed file paths per batch_id."""
     with session_scope() as db:
         run = db.get(Run, result.run_id)
@@ -94,7 +101,9 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
             log.error("recorder: run not found", run_id=result.run_id)
             return
 
-        batch: RunBatch | None = db.get(RunBatch, run.batch_id) if run.batch_id else None
+        batch: RunBatch | None = (
+            db.get(RunBatch, run.batch_id) if run.batch_id else None
+        )
 
         run.started_at = _parse_iso(result.started_at) or run.started_at
         run.finished_at = _parse_iso(result.finished_at) or run.finished_at
@@ -111,7 +120,9 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
 
             if result.kind == "backup" and result.config_text is not None:
                 device = db.get(Device, result.device_id)
-                group_name = device.groups[0].name if device and device.groups else "ungrouped"
+                group_name = (
+                    device.groups[0].name if device and device.groups else "ungrouped"
+                )
                 rel_path = store.file_path(group=group_name, device=result.device_name)
 
                 if batch:
@@ -139,7 +150,8 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                     device.latest_backup_path = rel_path
                     device.latest_backup_at = captured_at
 
-                db.execute(text("""
+                db.execute(
+                    text("""
                     INSERT INTO device_configs (device_id, batch_id, captured_at, content, content_fts)
                     VALUES (:device_id, :batch_id, :captured_at, :content,
                             to_tsvector('simple', :content))
@@ -148,12 +160,14 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                         captured_at = EXCLUDED.captured_at,
                         content = EXCLUDED.content,
                         content_fts = EXCLUDED.content_fts
-                """), {
-                    "device_id": result.device_id,
-                    "batch_id": run.batch_id,
-                    "captured_at": captured_at,
-                    "content": result.config_text,
-                })
+                """),
+                    {
+                        "device_id": result.device_id,
+                        "batch_id": run.batch_id,
+                        "captured_at": captured_at,
+                        "content": result.config_text,
+                    },
+                )
 
             elif result.kind == "collect":
                 run.bytes_captured = sum(
@@ -164,7 +178,9 @@ def _persist(result: JobResult, store: GitStore, batch_staged: dict[int, list[st
                         "recorder: saving parsed data",
                         run_id=result.run_id,
                         device=result.device_name,
-                        rows=len(result.parsed) if isinstance(result.parsed, list) else 1,
+                        rows=len(result.parsed)
+                        if isinstance(result.parsed, list)
+                        else 1,
                     )
                     run.parsed_data = result.parsed
                 else:
@@ -255,12 +271,13 @@ def _reap_stale_batches(
             if changed_paths:
                 msg = (
                     f"backup batch (reaped): {batch.schedule_name}\n\n"
-                    f"batch_id={batch.id}, age_s={age_s}\n"
-                    + "\n".join(changed_paths)
+                    f"batch_id={batch.id}, age_s={age_s}\n" + "\n".join(changed_paths)
                 )
                 commit_sha = store.commit_batch(changed_paths, msg)
                 if commit_sha:
-                    log.info("reaped batch committed", batch_id=batch.id, sha=commit_sha[:8])
+                    log.info(
+                        "reaped batch committed", batch_id=batch.id, sha=commit_sha[:8]
+                    )
 
             batch.finished_at = now
             if commit_sha:
@@ -299,8 +316,12 @@ def run_recorder() -> None:
     store = GitStore()
     # In-memory accumulator: batch_id → [relative file paths staged but not yet committed]
     batch_staged: dict[int, list[str]] = {}
-    log.info("recorder starting", consumer=consumer, repo=str(store.root),
-             batch_timeout_s=settings.recorder_batch_timeout)
+    log.info(
+        "recorder starting",
+        consumer=consumer,
+        repo=str(store.root),
+        batch_timeout_s=settings.recorder_batch_timeout,
+    )
 
     last_reap = time.monotonic()
     while not _stop:
@@ -324,6 +345,8 @@ def run_recorder() -> None:
         if time.monotonic() - last_reap >= _REAP_INTERVAL_S:
             last_reap = time.monotonic()
             try:
-                _reap_stale_batches(store, batch_staged, settings.recorder_batch_timeout)
+                _reap_stale_batches(
+                    store, batch_staged, settings.recorder_batch_timeout
+                )
             except Exception as exc:
                 log.error("stale batch reaper failed", error=str(exc), exc_info=True)

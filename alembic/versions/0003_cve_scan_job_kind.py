@@ -5,6 +5,7 @@ Revises: 0002_profile_cve_fields
 Create Date: 2026-05-06
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op

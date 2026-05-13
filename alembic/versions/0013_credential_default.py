@@ -4,6 +4,7 @@ Revision ID: 0013_credential_default
 Revises: 0012_run_parsed_data
 Create Date: 2026-05-11
 """
+
 from alembic import op
 import sqlalchemy as sa
 

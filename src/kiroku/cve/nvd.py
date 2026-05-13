@@ -3,6 +3,7 @@
 Queries https://services.nvd.nist.gov/rest/json/cves/2.0 by CPE name.
 An optional API key raises the rate limit from 1 req/s to 5 req/s.
 """
+
 from __future__ import annotations
 
 import urllib.parse
@@ -61,7 +62,9 @@ class NvdCveClient(CveClient):
             )
 
             refs = cve.get("references", [])
-            url_val = refs[0]["url"] if refs else f"https://nvd.nist.gov/vuln/detail/{cve_id}"
+            url_val = (
+                refs[0]["url"] if refs else f"https://nvd.nist.gov/vuln/detail/{cve_id}"
+            )
 
             entries.append(
                 CveEntry(

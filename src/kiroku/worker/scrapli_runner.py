@@ -14,6 +14,7 @@ Cli(definition_file_or_name=…), then deletes it after open().
 Enable passwords are passed via AuthOptions.lookups; they take effect when
 a platform definition references __lookup::enable in its instructions.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -46,7 +47,9 @@ def _now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str | None]:
+def _build_cli_driver(
+    spec: JobSpec, cred: CredentialMaterial
+) -> tuple[Cli, str | None]:
     """Build a Cli driver for the given spec.
 
     Returns (driver, temp_definition_path). temp_definition_path is non-None
@@ -71,7 +74,9 @@ def _build_cli_driver(spec: JobSpec, cred: CredentialMaterial) -> tuple[Cli, str
     session = SessionOptions(operation_timeout_s=command_timeout)
 
     if spec.transport == "telnet":
-        transport_opts: TransportBinOptions | TransportTelnetOptions = TransportTelnetOptions()
+        transport_opts: TransportBinOptions | TransportTelnetOptions = (
+            TransportTelnetOptions()
+        )
         default_port = 23
     else:
         # Pass ConnectTimeout to the SSH binary via extra_open_args.
@@ -158,8 +163,13 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
             )
         except Exception as exc:
             parse_error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
-            log.error("parser failed", device=spec.device_name,
-                      parser=spec.parser_type, error=str(exc), exc_info=True)
+            log.error(
+                "parser failed",
+                device=spec.device_name,
+                parser=spec.parser_type,
+                error=str(exc),
+                exc_info=True,
+            )
     elif spec.kind == "collect" and not spec.parser_type:
         log.debug("collect: no parser template attached", device=spec.device_name)
 

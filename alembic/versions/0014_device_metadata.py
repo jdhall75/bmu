@@ -4,6 +4,7 @@ Revision ID: 0014_device_metadata
 Revises: 0013_credential_default
 Create Date: 2026-05-12
 """
+
 from alembic import op
 import sqlalchemy as sa
 

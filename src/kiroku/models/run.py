@@ -49,8 +49,12 @@ class Run(Base, TimestampMixin):
         nullable=False,
     )
 
-    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # For backup runs: git commit sha that recorded the config (if changed).
     commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)

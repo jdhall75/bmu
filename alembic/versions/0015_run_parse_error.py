@@ -4,6 +4,7 @@ Revision ID: 0015_run_parse_error
 Revises: 0014_device_metadata
 Create Date: 2026-05-12
 """
+
 from alembic import op
 import sqlalchemy as sa
 

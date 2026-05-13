@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-04-29
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -54,7 +55,9 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("name", sa.String(128), nullable=False, unique=True),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("kind", sa.Enum("cli", "netconf", name="profile_kind"), nullable=False),
+        sa.Column(
+            "kind", sa.Enum("cli", "netconf", name="profile_kind"), nullable=False
+        ),
         sa.Column("platform", sa.String(64), nullable=True),
         sa.Column(
             "transport",

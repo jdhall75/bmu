@@ -80,7 +80,11 @@ async def edit_schedule(schedule_id: int, db: Session) -> Template:
     )
 
 
-@post("/{schedule_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{schedule_id:int}",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def update_schedule(
     schedule_id: int,
     db: Session,
@@ -97,7 +101,11 @@ async def update_schedule(
     return Redirect(path="/schedules")
 
 
-@post("/{schedule_id:int}/delete", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post(
+    "/{schedule_id:int}/delete",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+)
 async def delete_schedule(schedule_id: int, db: Session) -> Redirect:
     schedule = db.get(Schedule, schedule_id)
     if schedule:

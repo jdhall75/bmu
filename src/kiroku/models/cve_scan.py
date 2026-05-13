@@ -21,7 +21,9 @@ class CveScan(Base, TimestampMixin):
     cpe: Mapped[str] = mapped_column(String(256), nullable=False)
     version_found: Mapped[str | None] = mapped_column(String(128), nullable=True)
     raw_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    scanned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     results: Mapped[list["CveResult"]] = relationship(
         "CveResult", back_populates="scan", cascade="all, delete-orphan"
@@ -41,5 +43,7 @@ class CveResult(Base):
     cvss_v3_score: Mapped[float | None] = mapped_column(Numeric(4, 1), nullable=True)
     severity: Mapped[str | None] = mapped_column(String(16), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     url: Mapped[str | None] = mapped_column(String(512), nullable=True)
