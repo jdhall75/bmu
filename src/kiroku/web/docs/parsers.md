@@ -59,6 +59,8 @@ If the result shows an error, the pane turns red and shows the exception message
 
 After a collect run, Kiroku stores the parsed rows and displays them as a plain key/value table by default. If you want a custom layout — grouping fields, hiding columns, adding labels, or formatting values — add a **Jinja2 output template** to the parser.
 
+The template is rendered once per device run and shown on the **Run detail** page and on the **Device detail** page in the "Collected data" section.
+
 ### Variables available inside the template
 
 | Variable | Type | Description |
@@ -67,7 +69,150 @@ After a collect run, Kiroku stores the parsed rows and displays them as a plain 
 | `headers` | `list[str]` | The keys from the first row (column names). |
 | `data` | same as `rows` | Alias for `rows`. Use whichever reads more naturally. |
 
-Each dict in `rows` has the same keys as the `Value` names in a TextFSM template (or group keys for TTP).
+`rows` is always a list. For output that produces a single logical record (e.g. `show version`), it still comes in as a one-element list — use `rows[0]` to access it directly.
+
+**What `rows` looks like for a TextFSM parser:**
+
+```json
+[
+  {"INTERFACE": "GigabitEthernet0/0", "STATUS": "up",   "PROTOCOL": "up"},
+  {"INTERFACE": "GigabitEthernet0/1", "STATUS": "down", "PROTOCOL": "down"},
+  {"INTERFACE": "Loopback0",          "STATUS": "up",   "PROTOCOL": "up"}
+]
+```
+
+**What `rows` looks like for a TTP parser** (group output, single element):
+
+```json
+[
+  {
+    "hostname": "core-sw-01",
+    "version": "16.9.4",
+    "interfaces": [
+      {"name": "Gi0/0", "ip": "10.0.0.1", "mask": "255.255.255.0"},
+      {"name": "Gi0/1", "ip": "10.0.1.1", "mask": "255.255.255.0"}
+    ]
+  }
+]
+```
+
+**What `rows` looks like for an XSLT parser:**
+
+XSLT always produces a single dict with a `transformed` key:
+
+```json
+[{"transformed": "<interfaces><interface>...</interface></interfaces>"}]
+```
+
+### Jinja2 syntax quick reference
+
+Templates use standard Jinja2 syntax:
+
+| Construct | Syntax | Purpose |
+|-----------|--------|---------|
+| Expression | `{{ value }}` | Output a value |
+| Statement | `{% ... %}` | Control flow, assignment |
+| Comment | `{# ... #}` | Not rendered in output |
+| Variable access | `{{ r.FIELD }}` or `{{ r['FIELD'] }}` | Dict field access |
+| Safe default | `{{ r.get('FIELD', '-') }}` | Missing key fallback |
+| Filter | `{{ value \| filter }}` | Transform a value |
+| Chained filters | `{{ value \| filter1 \| filter2 }}` | Apply multiple transforms |
+
+**Control flow:**
+
+```jinja2
+{% for r in rows %}
+  ...
+{% endfor %}
+
+{% if condition %}
+  ...
+{% elif other_condition %}
+  ...
+{% else %}
+  ...
+{% endif %}
+
+{% set my_var = rows | selectattr('STATUS', 'eq', 'up') | list %}
+```
+
+**Loop variables** (`loop.*` inside a `{% for %}` block):
+
+| Variable | Value |
+|----------|-------|
+| `loop.index` | Current iteration (1-based) |
+| `loop.index0` | Current iteration (0-based) |
+| `loop.first` | `True` on the first iteration |
+| `loop.last` | `True` on the last iteration |
+| `loop.length` | Total number of iterations |
+
+### Available Jinja2 filters
+
+The template runs in a **sandboxed Jinja2 environment**. Arbitrary Python execution is blocked, but the following standard filters all work:
+
+**String filters:**
+
+| Filter | Example | Result |
+|--------|---------|--------|
+| `upper` | `{{ r.NAME \| upper }}` | `"CORE-SW-01"` |
+| `lower` | `{{ r.NAME \| lower }}` | `"core-sw-01"` |
+| `title` | `{{ r.NAME \| title }}` | `"Core-Sw-01"` |
+| `trim` | `{{ r.NAME \| trim }}` | Leading/trailing whitespace removed |
+| `replace` | `{{ r.NAME \| replace('-', '_') }}` | `"core_sw_01"` |
+| `truncate` | `{{ r.DESC \| truncate(40) }}` | Truncates at 40 chars with `…` |
+
+**Number filters:**
+
+| Filter | Example | Result |
+|--------|---------|--------|
+| `int` | `{{ r.COUNT \| int }}` | Cast to integer |
+| `float` | `{{ r.RATE \| float }}` | Cast to float |
+| `round` | `{{ r.RATE \| float \| round(2) }}` | Round to 2 decimal places |
+
+**List filters:**
+
+| Filter | Example | Result |
+|--------|---------|--------|
+| `length` | `{{ rows \| length }}` | Count of items |
+| `first` | `{{ rows \| first }}` | First element |
+| `last` | `{{ rows \| last }}` | Last element |
+| `sort` | `{{ rows \| sort(attribute='INTERFACE') }}` | Sort by field |
+| `reverse` | `{{ rows \| reverse \| list }}` | Reverse order |
+| `join` | `{{ items \| join(', ') }}` | Join list into string |
+| `map` | `{{ rows \| map(attribute='NAME') \| list }}` | Extract one field from each row |
+| `unique` | `{{ rows \| map(attribute='VRF') \| unique \| list }}` | Deduplicated values |
+| `selectattr` | `{{ rows \| selectattr('STATUS', 'eq', 'up') \| list }}` | Filter by attribute value |
+| `rejectattr` | `{{ rows \| rejectattr('STATUS', 'eq', 'up') \| list }}` | Exclude by attribute value |
+| `groupby` | `{% for key, group in rows \| groupby('VRF') %}` | Group rows by a field |
+
+**`selectattr` / `rejectattr` operators:**
+
+| Operator | Meaning |
+|----------|---------|
+| `eq` | Equal to |
+| `ne` | Not equal to |
+| `lt` | Less than |
+| `le` | Less than or equal |
+| `gt` | Greater than |
+| `ge` | Greater than or equal |
+| `defined` | Attribute exists |
+| `undefined` | Attribute does not exist |
+
+### Kiroku CSS classes
+
+Use these classes to match the rest of the UI:
+
+| Class | Element | Use |
+|-------|---------|-----|
+| `table-wrap` | `<div>` | Wraps a `<table>` for horizontal scroll on narrow screens |
+| `detail-grid` | `<dl>` | Two-column key/value grid using `<dt>` and `<dd>` |
+| `status` | `<span>` | Base class for status pills — always combine with a variant |
+| `status-success` | `<span>` | Green pill — up / ok / success |
+| `status-failed` | `<span>` | Red pill — down / error / failed |
+| `status-running` | `<span>` | Yellow pill — in progress |
+| `muted` | any | Lighter, de-emphasized text |
+| `error-block` | `<pre>` | Red-bordered error message block |
+| `parsed-output` | `<div>` | Container for custom parsed output (adds consistent spacing) |
 
 ### Examples
 
@@ -93,7 +238,7 @@ Each dict in `rows` has the same keys as the `Value` names in a TextFSM template
 </div>
 ```
 
-**Summary card** — highlight totals or key fields:
+**Summary card** — single-row output like `show version`:
 
 ```jinja2
 {% set r = rows[0] %}
@@ -101,47 +246,236 @@ Each dict in `rows` has the same keys as the `Value` names in a TextFSM template
   <dt>Hostname</dt><dd>{{ r.HOSTNAME }}</dd>
   <dt>Version</dt><dd>{{ r.VERSION }}</dd>
   <dt>Uptime</dt><dd>{{ r.UPTIME }}</dd>
+  <dt>Platform</dt><dd>{{ r.PLATFORM }}</dd>
+  <dt>Serial</dt><dd><code>{{ r.SERIAL }}</code></dd>
 </dl>
 ```
 
 **Conditional formatting** — colour-code a status field:
 
 ```jinja2
-<ul>
-{% for r in rows %}
-  <li>
-    <strong>{{ r.INTERFACE }}</strong>
-    {% if r.STATUS == 'up' %}
-      <span class="status status-success">up</span>
-    {% else %}
-      <span class="status status-failed">{{ r.STATUS }}</span>
-    {% endif %}
-    — {{ r.PROTOCOL }}
-  </li>
-{% endfor %}
-</ul>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Interface</th><th>Status</th><th>Protocol</th><th>IP Address</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.INTERFACE }}</td>
+      <td>
+        {% if r.STATUS == 'up' %}
+          <span class="status status-success">up</span>
+        {% else %}
+          <span class="status status-failed">{{ r.STATUS }}</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if r.PROTOCOL == 'up' %}
+          <span class="status status-success">up</span>
+        {% else %}
+          <span class="status status-failed">{{ r.PROTOCOL }}</span>
+        {% endif %}
+      </td>
+      <td><code>{{ r.IP | default('-') }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
 ```
 
-**Filter rows inside the template** — show only down interfaces:
+**Filter rows** — show only down interfaces, with a summary line:
 
 ```jinja2
-{% set down = rows | selectattr('STATUS', 'ne', 'up') | list %}
+{% set up   = rows | selectattr('STATUS', 'eq', 'up') | list %}
+{% set down = rows | rejectattr('STATUS', 'eq', 'up') | list %}
+
+<p>
+  <span class="status status-success">{{ up | length }} up</span>
+  <span class="status status-failed">{{ down | length }} down</span>
+  of {{ rows | length }} interfaces
+</p>
+
 {% if down %}
-<p><strong>{{ down | length }} interface(s) down:</strong></p>
-<ul>
-  {% for r in down %}<li>{{ r.INTERFACE }}</li>{% endfor %}
-</ul>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Interface</th><th>Status</th><th>Protocol</th></tr></thead>
+  <tbody>
+  {% for r in down %}
+    <tr>
+      <td>{{ r.INTERFACE }}</td>
+      <td><span class="status status-failed">{{ r.STATUS }}</span></td>
+      <td><span class="status status-failed">{{ r.PROTOCOL }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
 {% else %}
 <p class="muted">All interfaces are up.</p>
 {% endif %}
 ```
 
+**Group rows by a field** — BGP neighbors grouped by VRF:
+
+```jinja2
+{% for vrf, neighbors in rows | groupby('VRF') %}
+<h4>VRF: {{ vrf or 'default' }}</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Neighbor</th><th>AS</th><th>State</th><th>Prefixes</th></tr></thead>
+  <tbody>
+  {% for r in neighbors %}
+    <tr>
+      <td><code>{{ r.NEIGHBOR }}</code></td>
+      <td>{{ r.REMOTE_AS }}</td>
+      <td>
+        {% if r.STATE == 'Established' %}
+          <span class="status status-success">{{ r.STATE }}</span>
+        {% else %}
+          <span class="status status-failed">{{ r.STATE }}</span>
+        {% endif %}
+      </td>
+      <td>{{ r.PREFIXES | default('0') }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endfor %}
+```
+
+**Sort a table** — route table sorted by prefix length:
+
+```jinja2
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Network</th><th>Mask</th><th>Next Hop</th><th>Protocol</th></tr></thead>
+  <tbody>
+  {% for r in rows | sort(attribute='NETWORK') %}
+    <tr>
+      <td><code>{{ r.NETWORK }}</code></td>
+      <td><code>{{ r.MASK }}</code></td>
+      <td><code>{{ r.NEXTHOP }}</code></td>
+      <td>{{ r.PROTOCOL }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+```
+
+**Extract a list from rows** — unique VLANs as a compact pill list:
+
+```jinja2
+{% set active = rows | selectattr('STATE', 'eq', 'active') | list %}
+{% set vlans = active | map(attribute='VLAN_ID') | list %}
+<p><strong>{{ vlans | length }} active VLAN(s):</strong></p>
+<p>
+{% for v in vlans | sort %}
+  <code>{{ v }}</code>{% if not loop.last %}, {% endif %}
+{% endfor %}
+</p>
+```
+
+**Two-section layout** — split hardware into chassis vs. line cards:
+
+```jinja2
+{% set chassis = rows | selectattr('TYPE', 'eq', 'Chassis') | list %}
+{% set modules = rows | rejectattr('TYPE', 'eq', 'Chassis') | list %}
+
+{% if chassis %}
+<h4>Chassis</h4>
+<dl class="detail-grid">
+  {% for r in chassis %}
+  <dt>{{ r.NAME }}</dt><dd>{{ r.DESCR }} — <code>{{ r.SN }}</code></dd>
+  {% endfor %}
+</dl>
+{% endif %}
+
+{% if modules %}
+<h4>Modules / Line Cards</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Slot</th><th>Description</th><th>Part</th><th>Serial</th></tr></thead>
+  <tbody>
+  {% for r in modules %}
+    <tr>
+      <td>{{ r.NAME }}</td>
+      <td>{{ r.DESCR }}</td>
+      <td><code>{{ r.PID }}</code></td>
+      <td><code>{{ r.SN }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+```
+
+**TTP nested output** — iterating sub-lists from a TTP group:
+
+TTP parsers can produce nested structures. Access sub-lists the same way — they are just dicts within dicts.
+
+```jinja2
+{# rows[0] is the top-level group; rows[0].interfaces is the nested list #}
+{% set r = rows[0] %}
+<dl class="detail-grid">
+  <dt>Hostname</dt><dd>{{ r.hostname }}</dd>
+  <dt>Version</dt><dd>{{ r.version }}</dd>
+</dl>
+
+<h4>Interfaces</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Interface</th><th>IP Address</th><th>Mask</th></tr></thead>
+  <tbody>
+  {% for iface in r.interfaces | default([]) %}
+    <tr>
+      <td>{{ iface.name }}</td>
+      <td><code>{{ iface.ip }}</code></td>
+      <td><code>{{ iface.mask }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+```
+
+**Guard for empty output** — always handle the case where `rows` is empty:
+
+```jinja2
+{% if not rows %}
+<p class="muted">No data collected for this run.</p>
+{% else %}
+<div class="table-wrap">
+<table>
+  <thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>{% for h in headers %}<td>{{ r.get(h, '') }}</td>{% endfor %}</tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+```
+
+### Debugging tips
+
+- **Use the test bed first.** The test bed at `/parsers/test` shows template errors instantly without running a real job. Paste your device output and iterate there.
+- **Read the error message carefully.** If the template fails, the run detail page shows a red **Template error** block with the Jinja2 exception. The line number in the error refers to the template, not the page.
+- **Common mistake — accessing a missing key directly:** `{{ r.FIELD }}` raises `UndefinedError` if `FIELD` is not present in the dict. Use `{{ r.get('FIELD', '') }}` or `{{ r.FIELD | default('') }}` as a safe fallback.
+- **Common mistake — treating `rows` as a single dict:** TTP and TextFSM both return a list. Even if there is only one record, use `rows[0].FIELD`, not `rows.FIELD`.
+- **Common mistake — forgetting `| list` after a filter:** `selectattr` and `groupby` return iterators. Chain `| list` before passing to `| length` or indexing: `{{ rows | selectattr('STATUS', 'eq', 'up') | list | length }}`.
+- **Blank template:** If you leave the output template empty, Kiroku shows the default auto-generated table. This is a safe fallback while developing.
+- **Check the parser output first:** If the template looks correct but the output is wrong, run the parser in the test bed and inspect the raw `rows` JSON to confirm the field names and structure match your template.
+
 ### Notes
 
-- The template runs in a **sandboxed Jinja2 environment** — standard filters (`| upper`, `| length`, `| join`, `selectattr`, `map`, etc.) all work, but arbitrary Python execution is blocked.
-- If the template raises an error, a red **Template error** block is shown on the run detail page with the exception message. Fix the template and re-run the job to get a clean render.
+- The template runs in a **sandboxed Jinja2 environment** — standard filters work, but arbitrary Python execution (calling functions, importing modules) is blocked.
+- If the template raises an error, a red **Template error** block is shown on the run detail page with the exception message. The default table is not shown as a fallback — fix the template and re-run the job.
 - Leave the field blank to keep the default auto-generated table.
-- You can use Kiroku's existing CSS classes (`detail-grid`, `table-wrap`, `status`, `status-success`, `status-failed`, `muted`) to make the output match the rest of the UI.
+- You can use Kiroku's CSS classes (`detail-grid`, `table-wrap`, `status`, `status-success`, `status-failed`, `status-running`, `muted`) to make the output match the rest of the UI.
 
 ## Aggregate report template (Jinja2)
 
