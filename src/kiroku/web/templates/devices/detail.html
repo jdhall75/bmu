@@ -47,8 +47,9 @@
 {% elif d.type == 'jinja2_error' %}
 <pre class="error-block">Template error: {{ d.error }}</pre>
 {% elif d.type == 'table' %}
+<p style="text-align:right;margin-bottom:4px"><a href="#" style="font-size:12px" onclick="downloadTableCSV(document.getElementById('pinned-table-{{ loop.index }}'),'{{ device.name | replace(' ','_') }}-{{ item.job.name | replace(' ','_') }}.csv');return false">&#8595; Download CSV</a></p>
 <div class="table-wrap">
-<table>
+<table id="pinned-table-{{ loop.index }}">
   <thead><tr>{% for h in d.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
   <tbody>{% for row in d.rows %}<tr>{% for h in d.headers %}<td>{{ row.get(h, '') }}</td>{% endfor %}</tr>{% endfor %}</tbody>
 </table>
