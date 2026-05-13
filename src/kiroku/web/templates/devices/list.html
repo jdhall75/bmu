@@ -105,8 +105,8 @@
           {% endif %}
         </td>
         <td>
-          <a class="secondary" role="button" href="/devices/{{ d.id }}/edit">edit</a>
-          <button formaction="/devices/{{ d.id }}/delete" onclick="return confirm('Delete {{ d.name }}?')">delete</button>
+          <a class="icon-btn" role="button" href="/devices/{{ d.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn icon-btn-delete" formaction="/devices/{{ d.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ d.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
       </tr>
     {% else %}

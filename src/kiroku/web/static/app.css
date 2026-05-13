@@ -80,10 +80,21 @@ a {
   text-decoration: none;
 }
 
-a:hover,
-a:active {
+/* Underline only plain body-text links, not button-links or nav items */
+main a:not([role="button"]):hover,
+main a:not([role="button"]):active {
   text-decoration: underline;
   color: #f48226;
+}
+
+/* Button-links: no underline ever */
+a[role="button"] {
+  text-decoration: none;
+}
+
+a[role="button"]:hover,
+a[role="button"]:active {
+  text-decoration: none;
 }
 
 
@@ -97,6 +108,20 @@ header {
 
 header nav {
   --pico-nav-element-spacing-horizontal: 8px;
+}
+
+/* Active nav item: pill/circle drawn around the label */
+header nav a[aria-current="page"] {
+  box-shadow: 0 0 0 2px var(--pico-primary);
+  border-radius: 20px;
+  color: var(--pico-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+header nav a[aria-current="page"]:hover {
+  text-decoration: none;
+  opacity: 0.85;
 }
 
 /* Round icon buttons in the nav (theme toggle, help) */
@@ -339,6 +364,75 @@ dl.detail-grid dd {
 
 
 /* -----------------------------------------------------------------------------
+   SVG icons
+   -------------------------------------------------------------------------- */
+
+/* Inline SVG icon sizing — inherits currentColor from parent */
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Ghost icon-only buttons for table action columns */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+  vertical-align: middle;
+  font-size: 1rem;
+  margin-bottom: 0;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+
+  /* Reset Pico button defaults */
+  --pico-background-color: transparent;
+  --pico-border-color: transparent;
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+.icon-btn:hover,
+.icon-btn:focus {
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+  color: var(--fg);
+  border-color: transparent;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+.icon-btn-run {
+  color: var(--ok);
+}
+.icon-btn-run:hover,
+.icon-btn-run:focus {
+  background: color-mix(in srgb, var(--ok) 15%, transparent);
+  color: var(--ok);
+  filter: brightness(0.82);
+}
+
+.icon-btn-delete {
+  color: var(--bad);
+}
+.icon-btn-delete:hover,
+.icon-btn-delete:focus {
+  background: color-mix(in srgb, var(--bad) 15%, transparent);
+  color: var(--bad);
+  filter: brightness(0.82);
+}
+
+
+/* -----------------------------------------------------------------------------
    Table layout helpers
    -------------------------------------------------------------------------- */
 
@@ -348,7 +442,11 @@ dl.detail-grid dd {
   width: 100%;
 }
 
-/* Action buttons in table cells: add breathing room when they wrap to new lines */
+/* Action columns: no wrapping, compact spacing */
+table td .icon-btn {
+  margin-bottom: 0;
+}
+
 table td [role="button"],
 table td button {
   margin-bottom: 4px;

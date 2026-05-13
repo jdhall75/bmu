@@ -29,8 +29,8 @@
         <td>{{ 'yes' if s.enabled else 'no' }}</td>
         <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
         <td>
-          <a class="secondary" role="button" href="/schedules/{{ s.id }}/edit">edit</a>
-          <button formaction="/schedules/{{ s.id }}/delete" onclick="return confirm('Delete {{ s.name }}?')">delete</button>
+          <a class="icon-btn" role="button" href="/schedules/{{ s.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn icon-btn-delete" formaction="/schedules/{{ s.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ s.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
       </tr>
     {% else %}

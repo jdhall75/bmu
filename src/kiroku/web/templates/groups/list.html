@@ -26,8 +26,8 @@
         <td>{{ g.default_credential.name if g.default_credential else '-' }}</td>
         <td>{{ g.max_parallel }}</td>
         <td>
-          <a class="secondary" role="button" href="/groups/{{ g.id }}/edit">edit</a>
-          <button formaction="/groups/{{ g.id }}/delete" onclick="return confirm('Delete {{ g.name }}?')">delete</button>
+          <a class="icon-btn" role="button" href="/groups/{{ g.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn icon-btn-delete" formaction="/groups/{{ g.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ g.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
       </tr>
     {% else %}

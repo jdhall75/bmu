@@ -26,9 +26,9 @@
         <td><code>{{ p.type.value }}</code></td>
         <td>{{ p.description or '' }}</td>
         <td>
-          <a class="secondary" role="button" href="/parsers/{{ p.id }}/edit">edit</a>
-          <a class="secondary" role="button" href="/parsers/test?load={{ p.id }}">test</a>
-          <button formaction="/parsers/{{ p.id }}/delete" onclick="return confirm('Delete {{ p.name }}?')">delete</button>
+          <a class="icon-btn" role="button" href="/parsers/{{ p.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <a class="secondary" role="button" href="/parsers/test?load={{ p.id }}" title="Test in test bed" style="font-size:11px;padding:3px 8px">test</a>
+          <button class="icon-btn icon-btn-delete" formaction="/parsers/{{ p.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ p.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
       </tr>
     {% else %}

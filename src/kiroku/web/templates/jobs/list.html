@@ -30,9 +30,9 @@
         </td>
         <td>{{ j.parser_template.name if j.parser_template else '-' }}</td>
         <td>
-          <button formaction="/jobs/{{ j.id }}/run" title="Run now" onclick="return confirm('Run {{ j.name }} now?')">&#9654;</button>
-          <a class="secondary" role="button" href="/jobs/{{ j.id }}/edit">edit</a>
-          <button formaction="/jobs/{{ j.id }}/delete" onclick="return confirm('Delete {{ j.name }}?')">delete</button>
+          <button class="icon-btn icon-btn-run" formaction="/jobs/{{ j.id }}/run" title="Run now" aria-label="Run now" onclick="return confirm('Run {{ j.name }} now?')"><svg class="icon" aria-hidden="true"><use href="#icon-run"></use></svg></button>
+          <a class="icon-btn" role="button" href="/jobs/{{ j.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn icon-btn-delete" formaction="/jobs/{{ j.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ j.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
       </tr>
     {% else %}
