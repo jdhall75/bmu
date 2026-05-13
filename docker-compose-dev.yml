@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: bmu
+      POSTGRES_PASSWORD: bmu
+      POSTGRES_DB: bmu
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bmu"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: runtime-base
+    command: ["migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
+    volumes:
+      - backups:/var/lib/kiroku/backups:ro
+
+  scheduler:
+    build:
+      context: .
+      target: runtime-base
+    command: ["scheduler"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+
+  worker:
+    build:
+      context: .
+      target: worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_WORKER_CONCURRENCY: "8"
+    deploy:
+      replicas: 1
+
+  recorder:
+    build:
+      context: .
+      target: runtime-base
+    command: ["recorder"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
+      KIROKU_REDIS_URL: redis://redis:6379/0
+      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
+      KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
+    volumes:
+      - backups:/var/lib/kiroku/backups
+
+volumes:
+  pg_data:
+  backups:
