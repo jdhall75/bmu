@@ -87,7 +87,7 @@ def _fire_due(db: Session, now: datetime) -> int:
             sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
             continue
 
-        batch = fire_job(job, db, schedule_id=sched.id, schedule_name=sched.name)
+        batch = fire_job(job, db, schedule_id=sched.id, schedule_name=sched.name, commit=False)
         fired = batch.total - batch.failed
 
         log.info(

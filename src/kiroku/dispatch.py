@@ -71,6 +71,7 @@ def fire_job(
     *,
     schedule_id: int | None = None,
     schedule_name: str | None = None,
+    commit: bool = True,
 ) -> RunBatch:
     """Create a RunBatch, queue specs for all enabled devices, and return the batch."""
     now = datetime.now(tz=timezone.utc)
@@ -129,5 +130,6 @@ def fire_job(
             continue
         publish_job(spec)
 
-    db.commit()
+    if commit:
+        db.commit()
     return batch
