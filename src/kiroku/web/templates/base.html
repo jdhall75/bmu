@@ -89,6 +89,24 @@
   function openHelp(page) {
     window.open('/help/' + page, 'kiroku-help', 'width=860,height=720,resizable=yes,scrollbars=yes');
   }
+
+  // Tab inserts 2 spaces in code textareas; ESC toggles it off/on per textarea.
+  document.querySelectorAll('textarea[data-code]').forEach(function (ta) {
+    var tabEnabled = true;
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        tabEnabled = !tabEnabled;
+        return;
+      }
+      if (e.key === 'Tab' && tabEnabled) {
+        e.preventDefault();
+        var start = ta.selectionStart;
+        var end   = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + 2;
+      }
+    });
+  });
   </script>
 </body>
 </html>
