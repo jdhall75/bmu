@@ -13,13 +13,26 @@
   </div>
   <div class="search-options">
     <label>
-      <input type="radio" name="mode" value="fts" {% if mode != 'exact' %}checked{% endif %}>
+      <input type="radio" name="mode" value="fts" {% if mode == 'fts' %}checked{% endif %}
+             onchange="document.getElementById('regex-opts').style.display='none'">
       Full-text (keywords)
     </label>
     <label>
-      <input type="radio" name="mode" value="exact" {% if mode == 'exact' %}checked{% endif %}>
-      Exact match (IPs, interface names)
+      <input type="radio" name="mode" value="exact" {% if mode == 'exact' %}checked{% endif %}
+             onchange="document.getElementById('regex-opts').style.display='none'">
+      Exact match
     </label>
+    <label>
+      <input type="radio" name="mode" value="regex" {% if mode == 'regex' %}checked{% endif %}
+             onchange="document.getElementById('regex-opts').style.display='inline-flex'">
+      Regex (POSIX ERE)
+    </label>
+    <span id="regex-opts" style="display:{% if mode == 'regex' %}inline-flex{% else %}none{% endif %};align-items:center;gap:6px">
+      <label style="margin:0;font-weight:normal">
+        <input type="checkbox" name="case_sensitive" value="1" {% if case_sensitive %}checked{% endif %}>
+        Case-sensitive
+      </label>
+    </span>
     <label>Group:
       <select name="group_id">
         <option value="">All groups</option>
@@ -34,7 +47,11 @@
   </div>
 </form>
 
-{% if q %}
+{% if error %}
+  <pre class="error-block">{{ error }}</pre>
+{% endif %}
+
+{% if q and not error %}
   {% if results %}
     <p class="muted">{{ results|length }} device(s) matched{% if results|length == 50 %} (showing first 50){% endif %}.</p>
     {% for r in results %}
