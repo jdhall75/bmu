@@ -1,3 +1,5 @@
+from jinja2.sandbox import SandboxedEnvironment
+
 from litestar import Router, get, post
 from litestar.params import Body
 from litestar.enums import RequestEncodingType
@@ -7,8 +9,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.dispatch import fire_job
-from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate
+from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate, Run, RunStatus
 from kiroku.web.deps import provide_db
+
+_sandbox = SandboxedEnvironment(autoescape=False)
 
 
 def _parse_ids(data: dict) -> list[int]:
@@ -152,6 +156,103 @@ async def run_job_adhoc(job_id: int, db: Session) -> Redirect:
     return Redirect(path=f"/runs/batches/{batch.id}")
 
 
+@get("/{job_id:int}/data", dependencies={"db": provide_db})
+async def job_data(job_id: int, db: Session) -> Template:
+    job = db.get(Job, job_id)
+    if job is None:
+        return Redirect(path="/jobs")
+
+    # Union of explicitly selected devices + all devices from assigned groups
+    device_map: dict[int, Device] = {d.id: d for d in job.devices}
+    for group in job.device_groups:
+        for d in group.devices:
+            device_map.setdefault(d.id, d)
+    devices_in_scope = sorted(device_map.values(), key=lambda d: d.name)
+
+    # All successful runs for this job that produced parsed_data, newest first
+    all_runs = db.scalars(
+        select(Run)
+        .where(
+            Run.job_id == job_id,
+            Run.status == RunStatus.SUCCESS,
+            Run.parsed_data.is_not(None),
+        )
+        .order_by(Run.device_id, Run.finished_at.desc())
+    ).all()
+
+    # Keep only the latest run per device
+    latest_by_device: dict[int, Run] = {}
+    for run in all_runs:
+        if run.device_id not in latest_by_device:
+            latest_by_device[run.device_id] = run
+
+    # Ordered column headers: union of all dict keys in first-seen order
+    headers: list[str] = []
+    seen_keys: set[str] = set()
+    for device in devices_in_scope:
+        run = latest_by_device.get(device.id)
+        if run and isinstance(run.parsed_data, list):
+            for row in run.parsed_data:
+                if isinstance(row, dict):
+                    for key in row.keys():
+                        if key not in seen_keys:
+                            headers.append(key)
+                            seen_keys.add(key)
+
+    # Per-device row data for the default table
+    device_rows = []
+    for device in devices_in_scope:
+        run = latest_by_device.get(device.id)
+        data_rows = []
+        if run and isinstance(run.parsed_data, list):
+            data_rows = [r for r in run.parsed_data if isinstance(r, dict)]
+        device_rows.append({"device": device, "run": run, "rows": data_rows})
+
+    # Context for aggregate_template: flat rows + structured devices list
+    flat_rows = []
+    for item in device_rows:
+        for row in item["rows"]:
+            flat_rows.append({"device": item["device"].name, **row})
+
+    agg_devices = [
+        {
+            "name": item["device"].name,
+            "id": item["device"].id,
+            "collected_at": item["run"].finished_at if item["run"] else None,
+            "rows": item["rows"],
+        }
+        for item in device_rows
+    ]
+
+    # Render aggregate_template if the parser has one
+    aggregate_tmpl = (
+        job.parser_template.aggregate_template if job.parser_template else None
+    )
+    aggregate_html = None
+    aggregate_error = None
+    if aggregate_tmpl:
+        try:
+            aggregate_html = _sandbox.from_string(aggregate_tmpl).render(
+                rows=flat_rows,
+                headers=headers,
+                devices=agg_devices,
+                job=job,
+            )
+        except Exception as exc:
+            aggregate_error = f"{type(exc).__name__}: {exc}"
+
+    return Template(
+        template_name="jobs/data.html",
+        context={
+            "job": job,
+            "device_rows": device_rows,
+            "headers": headers,
+            "aggregate_html": aggregate_html,
+            "aggregate_error": aggregate_error,
+        },
+    )
+
+
 router = Router(
     path="/jobs",
     route_handlers=[
@@ -163,5 +264,6 @@ router = Router(
         update_job,
         delete_job,
         run_job_adhoc,
+        job_data,
     ],
 )

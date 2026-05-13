@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ job.name }} — Collected Data - Kiroku{% endblock %}
+{% block content %}
+<div class="toolbar" style="margin-bottom:16px">
+  <h2 style="margin:0">{{ job.name }} — Collected Data</h2>
+  <a class="secondary" role="button" href="/jobs">Back to Jobs</a>
+</div>
+
+{% if not device_rows %}
+  <p class="muted">No devices are assigned to this job.</p>
+
+{% elif aggregate_error %}
+  <pre class="error-block">Aggregate template error: {{ aggregate_error }}</pre>
+  {# Fall through to default table so data is still visible #}
+  {% include "jobs/_data_table.html" %}
+
+{% elif aggregate_html %}
+  <div class="parsed-output">{{ aggregate_html | safe }}</div>
+
+{% else %}
+  {% include "jobs/_data_table.html" %}
+{% endif %}
+
+{% endblock %}

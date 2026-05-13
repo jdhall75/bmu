@@ -143,6 +143,124 @@ Each dict in `rows` has the same keys as the `Value` names in a TextFSM template
 - Leave the field blank to keep the default auto-generated table.
 - You can use Kiroku's existing CSS classes (`detail-grid`, `table-wrap`, `status`, `status-success`, `status-failed`, `muted`) to make the output match the rest of the UI.
 
+## Aggregate report template (Jinja2)
+
+The **aggregate report template** renders the collected data from **all devices** for a job in a single view, accessible via the file-multiple icon on the Jobs list. Where the output template (above) renders one device's run result, the aggregate template receives every device's data together.
+
+If no aggregate template is set, Kiroku shows a plain fill-down table with the device name in the first column and one row per parsed row per device.
+
+### Variables available inside the template
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `rows` | `list[dict]` | Flat list of all parsed rows across all devices. Each dict has a `"device"` key (the device name) prepended, followed by the parser's field keys. |
+| `headers` | `list[str]` | Ordered list of parser field names (excludes `"device"`). Built from the union of all field keys seen across all devices. |
+| `devices` | `list[dict]` | One entry per device in job scope. Each dict has `name` (str), `id` (int), `collected_at` (datetime or None), and `rows` (list of field dicts, same as parsed_data but without the `"device"` key). |
+| `job` | `Job` | The job ORM object. Useful for `job.name`, `job.description`, etc. |
+
+Devices with no collected data appear in `devices` with `rows = []` and `collected_at = None`. They also appear in `rows` with no entries (so they are effectively skipped in a flat iteration over `rows`).
+
+### Examples
+
+**Flat table with all devices** — replicates the default view with custom column selection:
+
+```jinja2
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Device</th>
+      {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.device }}</td>
+      {% for h in headers %}<td>{{ r.get(h, '') }}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+```
+
+**Per-device summary cards** — one card per device showing selected fields:
+
+```jinja2
+{% for d in devices %}
+<h3>{{ d.name }}</h3>
+{% if d.rows %}
+  <dl class="detail-grid">
+    <dt>Version</dt><dd>{{ d.rows[0].get('VERSION', '-') }}</dd>
+    <dt>Uptime</dt><dd>{{ d.rows[0].get('UPTIME', '-') }}</dd>
+    <dt>Collected</dt><dd>{{ d.collected_at.strftime('%Y-%m-%d %H:%M') if d.collected_at else '-' }}</dd>
+  </dl>
+{% else %}
+  <p class="muted">No data collected.</p>
+{% endif %}
+{% endfor %}
+```
+
+**Cross-device status overview** — show all devices with a field grouped by status value:
+
+```jinja2
+{% set up_rows   = rows | selectattr('STATUS', 'eq', 'up')   | list %}
+{% set down_rows = rows | selectattr('STATUS', 'ne', 'up')   | list %}
+
+<p>
+  <span class="status status-success">{{ up_rows | length }} up</span>
+  <span class="status status-failed">{{ down_rows | length }} down</span>
+  across {{ devices | length }} device(s)
+</p>
+
+{% if down_rows %}
+<h3>Down interfaces</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Device</th><th>Interface</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for r in down_rows %}
+    <tr>
+      <td>{{ r.device }}</td>
+      <td>{{ r.INTERFACE }}</td>
+      <td><span class="status status-failed">{{ r.STATUS }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+```
+
+**Device × field pivot** — compare one field across all devices:
+
+```jinja2
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Device</th><th>Version</th><th>Platform</th></tr></thead>
+  <tbody>
+    {% for d in devices %}
+    <tr>
+      <td>{{ d.name }}</td>
+      <td>{{ d.rows[0].get('VERSION', '-') if d.rows else '-' }}</td>
+      <td>{{ d.rows[0].get('PLATFORM', '-') if d.rows else '-' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+```
+
+### Notes
+
+- The aggregate template uses the same **sandboxed Jinja2 environment** as the output template — standard filters work, arbitrary Python execution is blocked.
+- If the template raises an error, a red error block is shown at the top of the page and the default fill-down table is rendered below it, so data remains visible while you debug the template.
+- Leave the field blank to keep the default cross-device table.
+- Use the same Kiroku CSS classes (`detail-grid`, `table-wrap`, `status`, `status-success`, `status-failed`, `muted`) to match the UI.
+- The `rows` list only contains rows from devices that produced data. Devices with no data do not appear in `rows` — check `devices` and test `d.rows` to handle them explicitly.
+- Data comes from the **latest successful run** per device for this job. Older runs are not included.
+
 ## Saving and using a template
 
 1. Click **New parser template** or open an existing one via **Edit**.

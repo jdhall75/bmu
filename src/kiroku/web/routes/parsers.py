@@ -54,6 +54,7 @@ async def create_parser(
         type=ParserType(data["type"]),
         body=data["body"],
         jinja2_template=data.get("jinja2_template") or None,
+        aggregate_template=data.get("aggregate_template") or None,
     )
     db.add(p)
     db.commit()
@@ -95,6 +96,7 @@ async def update_parser(
     parser.type = ParserType(data["type"])
     parser.body = data["body"]
     parser.jinja2_template = data.get("jinja2_template") or None
+    parser.aggregate_template = data.get("aggregate_template") or None
     db.commit()
     return Redirect(path="/parsers")
 

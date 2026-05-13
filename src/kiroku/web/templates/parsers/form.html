@@ -22,6 +22,9 @@
   <label>Output template <span class="muted" style="font-size:12px;font-weight:normal">(optional Jinja2 — variables: <code>rows</code>, <code>headers</code>, <code>data</code>)</span></label>
   <textarea name="jinja2_template" rows="12" style="min-height:200px;font-family:monospace" placeholder="Leave blank to use the default table view.">{{ parser.jinja2_template or '' }}</textarea>
 
+  <label>Aggregate report template <span class="muted" style="font-size:12px;font-weight:normal">(optional Jinja2 — <code>rows</code>, <code>headers</code>, <code>devices</code>, <code>job</code> — <a href="#" onclick="openHelp('parsers');return false">see docs</a>)</span></label>
+  <textarea name="aggregate_template" rows="12" style="min-height:200px;font-family:monospace" placeholder="Leave blank to use the default cross-device table.&#10;&#10;Variables:&#10;  rows    — flat list of dicts, each with &quot;device&quot; key + parser fields&#10;  headers — ordered list of parser field names&#10;  devices — [{name, id, collected_at, rows}, ...] one per device&#10;  job     — the Job object">{{ parser.aggregate_template or '' }}</textarea>
+
   <div class="actions">
     <button type="submit">{% if parser %}Save{% else %}Create{% endif %}</button>
     {% if parser %}
