@@ -112,6 +112,24 @@
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
+  // Auto-inject a "↓ Download CSV" link above every table[data-csv] on the page.
+  document.querySelectorAll('table[data-csv]').forEach(function (table) {
+    var filename = table.getAttribute('data-csv');
+    var p = document.createElement('p');
+    p.style.cssText = 'text-align:right;margin-bottom:4px';
+    var a = document.createElement('a');
+    a.href = '#';
+    a.style.fontSize = '12px';
+    a.textContent = '↓ Download CSV';
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      downloadTableCSV(table, filename);
+    });
+    p.appendChild(a);
+    var anchor = table.closest('.table-wrap') || table;
+    anchor.parentNode.insertBefore(p, anchor);
+  });
+
   // Tab inserts 2 spaces in code textareas; ESC toggles it off/on per textarea.
   document.querySelectorAll('textarea[data-code]').forEach(function (ta) {
     var tabEnabled = true;

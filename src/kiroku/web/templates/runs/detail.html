@@ -29,9 +29,8 @@
 {% elif parsed_display.type == 'jinja2_error' %}
 <pre class="error-block">Template error: {{ parsed_display.error }}</pre>
 {% elif parsed_display.type == 'table' %}
-<p style="text-align:right;margin-bottom:4px"><a href="#" style="font-size:12px" onclick="downloadTableCSV(document.getElementById('parsed-table'),'run-{{ run.id }}-{{ (run.device.name if run.device else 'data') | replace(' ','_') }}.csv');return false">&#8595; Download CSV</a></p>
 <div class="table-wrap">
-<table id="parsed-table">
+<table data-csv="run-{{ run.id }}-{{ (run.device.name if run.device else 'data') | replace(' ','_') }}.csv">
   <thead>
     <tr>{% for h in parsed_display.headers %}<th>{{ h }}</th>{% endfor %}</tr>
   </thead>
