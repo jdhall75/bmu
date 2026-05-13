@@ -24,10 +24,10 @@ from sqlalchemy.orm import Session
 
 from kiroku.config import get_settings
 from kiroku.db import session_scope
-from kiroku.dispatch import _spec_for
+from kiroku.dispatch import fire_job
 from kiroku.logging import configure_logging, get_logger
-from kiroku.models import Device, Job, Run, RunBatch, RunStatus, Schedule
-from kiroku.queue import ensure_consumer_group, publish_job
+from kiroku.models import Job, Schedule
+from kiroku.queue import ensure_consumer_group
 
 log = get_logger(__name__)
 
@@ -87,68 +87,22 @@ def _fire_due(db: Session, now: datetime) -> int:
             sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
             continue
 
-        # Collect devices: expand device_groups + direct devices, deduplicate.
-        seen: set[int] = set()
-        enabled_devices: list[Device] = []
-        for group in job.device_groups:
-            for d in group.devices:
-                if d.enabled and d.id not in seen:
-                    seen.add(d.id)
-                    enabled_devices.append(d)
-        for d in job.devices:
-            if d.enabled and d.id not in seen:
-                seen.add(d.id)
-                enabled_devices.append(d)
+        batch = fire_job(job, db, schedule_id=sched.id, schedule_name=sched.name)
+        fired = batch.total - batch.failed
 
         log.info(
             "schedule due",
             schedule=sched.name,
             job=job.name,
             kind=job.kind.value,
-            devices=len(enabled_devices),
+            devices=batch.total,
+            queued=fired,
         )
 
-        if not enabled_devices:
-            sched.last_run_at = now
-            sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
-            continue
-
-        batch = RunBatch(
-            schedule_id=sched.id,
-            schedule_name=sched.name,
-            kind=job.kind.value,
-            total=len(enabled_devices),
-            started_at=now,
-        )
-        db.add(batch)
-        db.flush()  # populate batch.id
-
-        pairs: list[tuple[Device, Run]] = []
-        for device in enabled_devices:
-            run = Run(
-                schedule_id=sched.id,
-                batch_id=batch.id,
-                device_id=device.id,
-                kind=job.kind.value,
-                status=RunStatus.PENDING,
-            )
-            db.add(run)
-            pairs.append((device, run))
-        db.flush()  # single round-trip populates all run.id values
-
-        for device, run in pairs:
-            spec = _spec_for(device, job, run, sched.id)
-            if spec is None:
-                run.status = RunStatus.FAILED
-                run.error = "no credential available"
-                run.finished_at = now
-                batch.failed += 1
-                continue
-            publish_job(spec)
-            queued += 1
-
+        queued += fired
         sched.last_run_at = now
         sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
+
     return queued
 
 
