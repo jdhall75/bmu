@@ -6,7 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="KIROKU_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="KIROKU_", env_file=".env", extra="ignore"
+    )
 
     database_url: str = "postgresql+psycopg://bmu:bmu@postgres:5432/bmu"
     database_url_sync: str = "postgresql+psycopg://bmu:bmu@postgres:5432/bmu"
@@ -33,9 +35,13 @@ class Settings(BaseSettings):
 
     web_host: str = "0.0.0.0"
     web_port: int = 8000
+    web_workers: int = 5
 
-    log_level: str = "INFO"
+    log_level: str = "DEBUG"
     log_json: bool = False
+
+    # UI dev locally, override with environment variable
+    reload: bool = False
 
     # CVE scanning (optional). Without a key, NVD allows 1 req/s; with a key, 5/s.
     nvd_api_key: str | None = None

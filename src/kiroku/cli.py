@@ -4,7 +4,9 @@ import sys
 import click
 
 from kiroku.config import get_settings
-from kiroku.logging import configure_logging
+from kiroku.logging import configure_logging, get_logger
+
+logger = get_logger(__name__)
 
 
 @click.group()
@@ -15,11 +17,18 @@ def main() -> None:
 @main.command()
 def serve() -> None:
     """Run the Litestar web app via uvicorn."""
-    configure_logging()
     s = get_settings()
+    logger.info("this is a test")
     import uvicorn
 
-    uvicorn.run("kiroku.web.app:app", host=s.web_host, port=s.web_port, log_level=s.log_level.lower())
+    uvicorn.run(
+        "kiroku.web.app:app",
+        host=s.web_host,
+        port=s.web_port,
+        log_config=None,
+        reload=s.reload,
+        workers=s.web_workers,
+    )
 
 
 @main.command()
