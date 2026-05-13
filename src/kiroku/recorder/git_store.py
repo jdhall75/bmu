@@ -83,6 +83,16 @@ class GitStore:
         log.info("git batch commit", sha=commit.hexsha[:8], files=len(rel_paths))
         return commit.hexsha
 
+    def changed_files(self, sha: str) -> list[str]:
+        """Return repo-relative paths of files changed in a commit."""
+        try:
+            commit = self._repo.commit(sha)
+            if not commit.parents:
+                return [item.path for item in commit.tree.traverse() if item.type == "blob"]
+            return [d.b_path or d.a_path for d in commit.diff(commit.parents[0])]
+        except Exception:
+            return []
+
     def history(self, rel_path: str, max_count: int = 50) -> list[dict]:
         """Return git log entries for a specific file."""
         return [

@@ -7,9 +7,34 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import Run, RunBatch
+from kiroku.recorder.git_store import GitStore
 from kiroku.web.deps import provide_db
 
 _sandbox = SandboxedEnvironment(autoescape=False)
+
+
+def _changed_run_ids(runs: list[Run], commit_sha: str) -> set[int]:
+    """Return run IDs whose device config was part of the given git commit."""
+    try:
+        store = GitStore()
+        changed_paths = set(store.changed_files(commit_sha))
+    except Exception:
+        return set()
+    if not changed_paths:
+        return set()
+    result: set[int] = set()
+    for run in runs:
+        if not run.device:
+            continue
+        groups = run.device.groups or []
+        group_name = groups[0].name if groups else "ungrouped"
+        try:
+            rel = store.file_path(group=group_name, device=run.device.name)
+            if rel in changed_paths:
+                result.add(run.id)
+        except Exception:
+            pass
+    return result
 
 
 @get("/", dependencies={"db": provide_db})
@@ -26,8 +51,12 @@ async def view_batch(batch_id: int, db: Session) -> Template:
     runs = db.scalars(
         select(Run).where(Run.batch_id == batch_id).order_by(Run.device_id)
     ).all()
+    changed_run_ids: set[int] = set()
+    if batch and batch.commit_sha and batch.kind == "backup":
+        changed_run_ids = _changed_run_ids(list(runs), batch.commit_sha)
     return Template(
-        template_name="runs/batch_detail.html", context={"batch": batch, "runs": runs}
+        template_name="runs/batch_detail.html",
+        context={"batch": batch, "runs": runs, "changed_run_ids": changed_run_ids},
     )
 
 
@@ -37,8 +66,12 @@ async def batch_live_fragment(batch_id: int, db: Session) -> Template:
     runs = db.scalars(
         select(Run).where(Run.batch_id == batch_id).order_by(Run.device_id)
     ).all()
+    changed_run_ids: set[int] = set()
+    if batch and batch.commit_sha and batch.kind == "backup":
+        changed_run_ids = _changed_run_ids(list(runs), batch.commit_sha)
     return Template(
-        template_name="runs/_batch_live.html", context={"batch": batch, "runs": runs}
+        template_name="runs/_batch_live.html",
+        context={"batch": batch, "runs": runs, "changed_run_ids": changed_run_ids},
     )
 
 

@@ -1,4 +1,5 @@
 {% set done = batch.finished_at is not none or (batch.succeeded + batch.failed) >= batch.total %}
+{% set changed_run_ids = changed_run_ids if changed_run_ids is defined else [] %}
 <div id="batch-live"
   {% if not done %}
   hx-get="/runs/batches/{{ batch.id }}/live"
@@ -11,7 +12,14 @@
   <dt>Finished</dt><dd>{{ batch.finished_at.strftime('%Y-%m-%d %H:%M:%S UTC') if batch.finished_at else 'in progress' }}</dd>
   <dt>Devices</dt><dd>{{ batch.total }} total &bull; {{ batch.succeeded }} succeeded &bull; {{ batch.failed }} failed</dd>
   {% if batch.commit_sha %}
-  <dt>Git commit</dt><dd><code>{{ batch.commit_sha[:12] }}</code></dd>
+  <dt>Git commit</dt><dd>
+    <code>{{ batch.commit_sha[:12] }}</code>
+    {% if changed_run_ids %}
+      &nbsp;<span class="status status-running">{{ changed_run_ids | length }} changed</span>
+    {% else %}
+      &nbsp;<span class="muted" style="font-size:0.85em">no changes</span>
+    {% endif %}
+  </dd>
   {% endif %}
 </dl>
 
@@ -25,6 +33,7 @@
       <th>Started</th>
       <th>Finished</th>
       <th>Bytes</th>
+      {% if batch.kind == 'backup' %}<th>Config</th>{% endif %}
       <th>Parsed</th>
       <th>Error</th>
     </tr>
@@ -43,6 +52,15 @@
       <td>{{ r.started_at.strftime('%H:%M:%S') if r.started_at else '-' }}</td>
       <td>{{ r.finished_at.strftime('%H:%M:%S') if r.finished_at else '-' }}</td>
       <td>{{ r.bytes_captured or '' }}</td>
+      {% if batch.kind == 'backup' %}
+      <td>
+        {% if r.id in changed_run_ids %}
+          <a href="/devices/{{ r.device_id }}/config" title="View config">&#x2713; changed</a>
+        {% elif r.status.value == 'success' %}
+          <span class="muted">unchanged</span>
+        {% endif %}
+      </td>
+      {% endif %}
       <td>
         {% if r.parsed_data is not none %}
           <a href="/runs/{{ r.id }}" title="View parsed output">&#10003;</a>
@@ -55,7 +73,7 @@
       </td>
     </tr>
   {% else %}
-    <tr><td colspan="6">No runs found for this batch.</td></tr>
+    <tr><td colspan="{{ 7 if batch.kind == 'backup' else 6 }}">No runs found for this batch.</td></tr>
   {% endfor %}
   </tbody>
 </table>
