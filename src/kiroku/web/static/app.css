@@ -443,12 +443,8 @@ dl.detail-grid dd {
 }
 
 /* Action columns: no wrapping, compact spacing */
-table td .icon-btn {
-  margin-bottom: 0;
-}
-
-table td [role="button"],
-table td button {
+table td [role="button"]:not(.icon-btn),
+table td button:not(.icon-btn) {
   margin-bottom: 4px;
 }
 
