@@ -3,12 +3,21 @@
 {% block content %}
 <h2>{{ device.name }} &mdash; config history search</h2>
 
-<form method="get" action="/devices/{{ device.id }}/config/search" class="search-row" style="margin-bottom:16px">
-  <input type="search" name="q" value="{{ q }}" placeholder="Search across all backups…" autofocus>
-  <button type="submit">Search</button>
+<form class="search-form" method="GET" action="/devices/{{ device.id }}/config/search">
+  <div class="filter-row">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search across all backups…" autofocus>
+    <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:14px;margin:0">
+      <input type="checkbox" name="regex" value="1"{{ ' checked' if regex == '1' }} style="margin:0">
+      Regex
+    </label>
+    <button type="submit">Search</button>
+    {% if has_filters %}<a href="/devices/{{ device.id }}/config/search">Clear</a>{% endif %}
+  </div>
 </form>
 
-{% if q %}
+{% if error %}
+<p class="status status-failed">{{ error }}</p>
+{% elif q %}
   {% if results %}
   <p class="muted">{{ results | length }} match{{ 'es' if results | length != 1 else '' }} for <strong>{{ q }}</strong> across {{ results | map(attribute='sha') | unique | list | length }} commit(s)</p>
   <div class="table-wrap">

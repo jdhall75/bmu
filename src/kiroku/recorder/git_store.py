@@ -105,14 +105,24 @@ class GitStore:
             for c in self._repo.iter_commits(paths=rel_path, max_count=max_count)
         ]
 
-    def search_history(self, rel_path: str, query: str, max_count: int = 200) -> list[dict]:
+    def search_history(
+        self, rel_path: str, query: str, max_count: int = 200, use_regex: bool = False
+    ) -> list[dict]:
         """Search for query across all commits of a file.
 
         Returns list of match dicts: sha, sha_full, date, message, line_no, line.
-        Case-insensitive substring match.
+        Raises re.error if use_regex=True and query is an invalid pattern.
         """
+        import re
+
+        if use_regex:
+            pattern = re.compile(query, re.IGNORECASE)
+            match_fn = lambda line: bool(pattern.search(line))  # noqa: E731
+        else:
+            q = query.lower()
+            match_fn = lambda line: q in line.lower()  # noqa: E731
+
         results = []
-        q = query.lower()
         for commit in self._repo.iter_commits(paths=rel_path, max_count=max_count):
             try:
                 blob = commit.tree[rel_path]
@@ -120,7 +130,7 @@ class GitStore:
             except Exception:
                 continue
             for line_no, line in enumerate(content.splitlines(), 1):
-                if q in line.lower():
+                if match_fn(line):
                     results.append({
                         "sha": commit.hexsha[:8],
                         "sha_full": commit.hexsha,

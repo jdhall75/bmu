@@ -17,6 +17,16 @@
 {% endif %}
 
 {% if content %}
+<form class="search-form" method="GET" action="/devices/{{ device.id }}/config/search">
+  <div class="filter-row">
+    <input type="text" name="q" placeholder="Search config history…">
+    <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:14px;margin:0">
+      <input type="checkbox" name="regex" value="1" style="margin:0">
+      Regex
+    </label>
+    <button type="submit">Search</button>
+  </div>
+</form>
 <pre class="config-viewer">{{ content }}</pre>
 {% else %}
 <p>No config available{% if sha %} at this commit{% else %} — this device has not been backed up yet{% endif %}.</p>
