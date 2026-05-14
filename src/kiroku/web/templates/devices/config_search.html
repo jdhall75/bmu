@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Config search: {{ device.name }} - Kiroku{% endblock %}
+{% block content %}
+<h2>{{ device.name }} &mdash; config history search</h2>
+
+<form method="get" action="/devices/{{ device.id }}/config/search" class="search-row" style="margin-bottom:16px">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search across all backups…" autofocus>
+  <button type="submit">Search</button>
+</form>
+
+{% if q %}
+  {% if results %}
+  <p class="muted">{{ results | length }} match{{ 'es' if results | length != 1 else '' }} for <strong>{{ q }}</strong> across {{ results | map(attribute='sha') | unique | list | length }} commit(s)</p>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Commit</th>
+        <th>Line</th>
+        <th>Content</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for hit in results %}
+      <tr>
+        <td class="muted" style="white-space:nowrap;font-size:0.85em">{{ hit.date[:19].replace('T', ' ') }}</td>
+        <td><code>{{ hit.sha }}</code></td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">{{ hit.line_no }}</td>
+        <td><pre style="margin:0;white-space:pre-wrap;font-size:0.85em">{{ hit.line }}</pre></td>
+        <td style="white-space:nowrap">
+          <a class="secondary" role="button" href="/devices/{{ device.id }}/config?sha={{ hit.sha_full }}" style="font-size:12px;padding:3px 8px">View</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">No matches for <strong>{{ q }}</strong> in any backup.</p>
+  {% endif %}
+{% endif %}
+
+<p>
+  <a href="/devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="/devices/{{ device.id }}/config">Current config</a>
+  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+</p>
+{% endblock %}

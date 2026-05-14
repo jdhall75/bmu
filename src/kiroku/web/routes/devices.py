@@ -549,6 +549,22 @@ async def view_config_history(device_id: int, db: Session) -> Template:
     )
 
 
+@get("/{device_id:int}/config/search", dependencies={"db": provide_db})
+async def search_config_history(
+    device_id: int, db: Session, q: str = ""
+) -> Template:
+    from kiroku.recorder.git_store import GitStore
+
+    device = db.get(Device, device_id)
+    results: list[dict] = []
+    if device and device.latest_backup_path and q.strip():
+        results = GitStore().search_history(device.latest_backup_path, q.strip())
+    return Template(
+        template_name="devices/config_search.html",
+        context={"device": device, "q": q, "results": results},
+    )
+
+
 router = Router(
     path="/devices",
     route_handlers=[
@@ -567,5 +583,6 @@ router = Router(
         view_config,
         view_config_diff,
         view_config_history,
+        search_config_history,
     ],
 )

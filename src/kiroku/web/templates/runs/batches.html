@@ -5,6 +5,26 @@
   <h2 style="margin:0">Runs</h2>
   <button class="help-btn" onclick="openHelp('runs')">? Help</button>
 </div>
+
+<form method="get" action="/runs" class="search-row" style="margin-bottom:16px">
+  <input type="search" name="q" value="{{ q }}" placeholder="Filter by schedule name…">
+  <select name="kind">
+    <option value="">All kinds</option>
+    {% for k in kinds %}
+    <option value="{{ k }}"{{ ' selected' if kind == k }}>{{ k }}</option>
+    {% endfor %}
+  </select>
+  <select name="status">
+    <option value="">All statuses</option>
+    <option value="running"{{ ' selected' if status == 'running' }}>Running</option>
+    <option value="complete"{{ ' selected' if status == 'complete' }}>Complete</option>
+    <option value="success"{{ ' selected' if status == 'success' }}>All succeeded</option>
+    <option value="failed"{{ ' selected' if status == 'failed' }}>Any failures</option>
+  </select>
+  <button type="submit">Filter</button>
+  {% if q or kind or status %}<a href="/runs" role="button" class="secondary">Clear</a>{% endif %}
+</form>
+
 <div class="table-wrap">
 <table>
   <thead>
@@ -24,7 +44,7 @@
   {% for b in batches %}
     {% include "runs/_batch_row.html" %}
   {% else %}
-    <tr><td colspan="9">No runs yet.</td></tr>
+    <tr><td colspan="9">No runs{% if q or kind or status %} matching filters{% endif %}.</td></tr>
   {% endfor %}
   </tbody>
 </table>

@@ -105,6 +105,32 @@ class GitStore:
             for c in self._repo.iter_commits(paths=rel_path, max_count=max_count)
         ]
 
+    def search_history(self, rel_path: str, query: str, max_count: int = 200) -> list[dict]:
+        """Search for query across all commits of a file.
+
+        Returns list of match dicts: sha, sha_full, date, message, line_no, line.
+        Case-insensitive substring match.
+        """
+        results = []
+        q = query.lower()
+        for commit in self._repo.iter_commits(paths=rel_path, max_count=max_count):
+            try:
+                blob = commit.tree[rel_path]
+                content = blob.data_stream.read().decode("utf-8", errors="replace")
+            except Exception:
+                continue
+            for line_no, line in enumerate(content.splitlines(), 1):
+                if q in line.lower():
+                    results.append({
+                        "sha": commit.hexsha[:8],
+                        "sha_full": commit.hexsha,
+                        "date": commit.committed_datetime.isoformat(),
+                        "message": commit.message.strip().split("\n")[0],
+                        "line_no": line_no,
+                        "line": line,
+                    })
+        return results
+
     def read_at(self, rel_path: str, sha: str) -> str | None:
         """Return file content at a specific commit SHA (full or short)."""
         try:

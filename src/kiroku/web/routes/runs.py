@@ -35,12 +35,40 @@ def _changed_run_ids(runs: list[Run], commit_sha: str) -> set[int]:
     return result
 
 
+_KINDS = ("backup", "collect", "cve_scan")
+
+
 @get("/", dependencies={"db": provide_db})
-async def list_batches(db: Session) -> Template:
-    batches = db.scalars(
-        select(RunBatch).order_by(RunBatch.started_at.desc()).limit(100)
-    ).all()
-    return Template(template_name="runs/batches.html", context={"batches": batches})
+async def list_batches(
+    db: Session,
+    q: str = "",
+    kind: str = "",
+    status: str = "",
+) -> Template:
+    stmt = select(RunBatch).order_by(RunBatch.started_at.desc())
+    if q:
+        stmt = stmt.where(RunBatch.schedule_name.ilike(f"%{q}%"))
+    if kind:
+        stmt = stmt.where(RunBatch.kind == kind)
+    if status == "running":
+        stmt = stmt.where((RunBatch.succeeded + RunBatch.failed) < RunBatch.total)
+    elif status == "failed":
+        stmt = stmt.where(RunBatch.failed > 0)
+    elif status == "success":
+        stmt = stmt.where(RunBatch.succeeded == RunBatch.total, RunBatch.failed == 0)
+    elif status == "complete":
+        stmt = stmt.where((RunBatch.succeeded + RunBatch.failed) >= RunBatch.total)
+    batches = db.scalars(stmt.limit(200)).all()
+    return Template(
+        template_name="runs/batches.html",
+        context={
+            "batches": batches,
+            "q": q,
+            "kind": kind,
+            "status": status,
+            "kinds": _KINDS,
+        },
+    )
 
 
 @get("/batches/{batch_id:int}", dependencies={"db": provide_db})
