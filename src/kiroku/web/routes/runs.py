@@ -67,6 +67,7 @@ async def list_batches(
             "kind": kind,
             "status": status,
             "kinds": _KINDS,
+            "has_filters": bool(q or kind or status),
         },
     )
 
