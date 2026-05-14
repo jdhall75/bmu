@@ -42,7 +42,7 @@ services:
   web:
     build:
       context: .
-      target: web
+      target: web-dev
     ports:
       - "8000:8000"
     depends_on:
@@ -55,8 +55,17 @@ services:
       KIROKU_REDIS_URL: redis://redis:6379/0
       KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
       KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
+      KIROKU_RELOAD: "true"
+      WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - backups:/var/lib/kiroku/backups:ro
+      - ./src:/build/src
+    develop:
+      watch:
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: Dockerfile
 
   scheduler:
     build:

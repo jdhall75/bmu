@@ -46,6 +46,29 @@ EXPOSE 8000
 ENTRYPOINT ["kiroku"]
 CMD ["serve"]
 
+# ─── builder-dev: editable web install so /build/src can be bind-mounted ──────
+FROM python:3.12-slim AS builder-dev
+COPY --from=uv /uv /usr/local/bin/uv
+ENV VIRTUAL_ENV=/opt/venv PATH="/opt/venv/bin:$PATH"
+WORKDIR /build
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+RUN uv venv $VIRTUAL_ENV && uv pip install --no-cache -e ".[web]"
+
+# ─── web-dev: live-reload server for local development ────────────────────────
+FROM python:3.12-slim AS web-dev
+ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+COPY --from=builder-dev /opt/venv /opt/venv
+WORKDIR /app
+COPY alembic.ini .
+COPY alembic/ ./alembic/
+EXPOSE 8000
+ENTRYPOINT ["kiroku"]
+CMD ["serve"]
+
 # ─── worker ───────────────────────────────────────────────────────────────────
 # Workers are intentionally database-free: no alembic, no DB client config.
 # Only Redis reachability and SSH/NETCONF network access to devices are needed.

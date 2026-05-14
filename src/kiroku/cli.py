@@ -17,9 +17,18 @@ def main() -> None:
 @main.command()
 def serve() -> None:
     """Run the Litestar web app via uvicorn."""
-    s = get_settings()
-    logger.info("this is a test")
+    import os
+
+    import kiroku
     import uvicorn
+
+    s = get_settings()
+
+    reload_dirs = None
+    if s.reload:
+        # When running from an editable install, __file__ is in the source tree.
+        # Watch that directory so uvicorn reloads on any source change.
+        reload_dirs = [os.path.dirname(os.path.dirname(kiroku.__file__))]
 
     uvicorn.run(
         "kiroku.web.app:app",
@@ -27,6 +36,7 @@ def serve() -> None:
         port=s.web_port,
         log_config=None,
         reload=s.reload,
+        reload_dirs=reload_dirs,
         workers=s.web_workers,
     )
 

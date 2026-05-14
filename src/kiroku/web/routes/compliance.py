@@ -164,7 +164,11 @@ async def create_policy(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    policy = CompliancePolicy()
+    policy = CompliancePolicy(
+        name=data["name"],
+        parser_type=data["parser_type"],
+        parser_body=data["parser_body"],
+    )
     db.add(policy)
     db.flush()
     _apply_policy_data(policy, data, db)
