@@ -6,9 +6,13 @@ each ComplianceCheck. All evaluation is offline — no device connections.
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from kiroku import parsers as _parsers
 from kiroku.logging import get_logger
@@ -134,6 +138,38 @@ def evaluate_policy(policy: CompliancePolicy, content: str) -> tuple[str, list[d
     overall = "fail" if (failed_critical or failed_any) else "pass"
 
     return overall, outcomes
+
+
+def scoped_device_ids(policy: CompliancePolicy) -> list[int]:
+    """Return deduplicated device IDs in scope for a policy (groups first, then direct)."""
+    seen: set[int] = set()
+    result: list[int] = []
+    for g in policy.device_groups:
+        for d in g.devices:
+            if d.id not in seen:
+                seen.add(d.id)
+                result.append(d.id)
+    for d in policy.devices:
+        if d.id not in seen:
+            seen.add(d.id)
+            result.append(d.id)
+    return result
+
+
+def upsert_compliance_results(db: Session, results: list[dict]) -> None:
+    """Insert or update compliance_results rows (one per policy×device)."""
+    for r in results:
+        db.execute(
+            text("""
+                INSERT INTO compliance_results (policy_id, device_id, evaluated_at, status, detail)
+                VALUES (:policy_id, :device_id, :evaluated_at, :status, :detail::jsonb)
+                ON CONFLICT (policy_id, device_id) DO UPDATE SET
+                    evaluated_at = EXCLUDED.evaluated_at,
+                    status       = EXCLUDED.status,
+                    detail       = EXCLUDED.detail
+            """),
+            {**r, "detail": json.dumps(r["detail"])},
+        )
 
 
 def run_policy_for_devices(policy: CompliancePolicy, device_configs: list[tuple]) -> list[dict]:

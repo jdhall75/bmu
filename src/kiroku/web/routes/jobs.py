@@ -1,5 +1,3 @@
-from jinja2.sandbox import SandboxedEnvironment
-
 from litestar import Router, get, post
 from litestar.params import Body
 from litestar.enums import RequestEncodingType
@@ -11,22 +9,7 @@ from sqlalchemy.orm import Session
 from kiroku.dispatch import fire_job
 from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate, Run, RunStatus
 from kiroku.web.deps import provide_db
-
-_sandbox = SandboxedEnvironment(autoescape=False)
-
-
-def _parse_ids(data: dict) -> list[int]:
-    raw = data.get("ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
-
-
-def _parse_multi(data: dict, key: str) -> list[int]:
-    raw = data.get(key, [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
+from kiroku.web.helpers import parse_ids, sandbox as _sandbox
 
 
 def _job_form_context(db: Session, job=None) -> dict:
@@ -56,8 +39,8 @@ def _apply_job_data(job: Job, data: dict, db: Session) -> None:
     job.cve_product = data.get("cve_product") or None
     job.show_on_device = data.get("show_on_device") == "1"
 
-    group_ids = _parse_multi(data, "device_group_ids")
-    device_ids = _parse_multi(data, "device_ids")
+    group_ids = parse_ids(data, "device_group_ids")
+    device_ids = parse_ids(data, "device_ids")
 
     job.device_groups = (
         db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()
@@ -103,7 +86,7 @@ async def bulk_jobs(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    ids = _parse_ids(data)
+    ids = parse_ids(data)
     if ids and data.get("action") == "delete":
         for job in db.scalars(select(Job).where(Job.id.in_(ids))).all():
             db.delete(job)

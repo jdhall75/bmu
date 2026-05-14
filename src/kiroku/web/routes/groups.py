@@ -6,24 +6,9 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from sqlalchemy import union
-
-from kiroku.models import Credential, Device, DeviceGroup
+from kiroku.models import Credential, DeviceGroup
 from kiroku.web.deps import provide_db
-
-
-def _parse_ids(data: dict) -> list[int]:
-    raw = data.get("ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
-
-
-def _worker_pools(db: Session) -> list[str]:
-    device_pools = select(Device.worker_pool).where(Device.worker_pool.is_not(None))
-    group_pools = select(DeviceGroup.worker_pool).where(DeviceGroup.worker_pool.is_not(None))
-    rows = db.execute(union(device_pools, group_pools)).scalars().all()
-    return sorted(set(rows))
+from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 
 
 def _group_form_context(db: Session, group=None) -> dict:
@@ -72,7 +57,7 @@ async def bulk_groups(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    ids = _parse_ids(data)
+    ids = parse_ids(data)
     if ids and data.get("action") == "delete":
         for group in db.scalars(
             select(DeviceGroup).where(DeviceGroup.id.in_(ids))

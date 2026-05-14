@@ -8,13 +8,7 @@ from sqlalchemy.orm import Session
 
 from kiroku.models import Job, Schedule
 from kiroku.web.deps import provide_db
-
-
-def _parse_ids(data: dict) -> list[int]:
-    raw = data.get("ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
+from kiroku.web.helpers import parse_ids
 
 
 def _schedule_form_context(db: Session, schedule=None) -> dict:
@@ -63,7 +57,7 @@ async def bulk_schedules(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    ids = _parse_ids(data)
+    ids = parse_ids(data)
     if ids and data.get("action") == "delete":
         for schedule in db.scalars(select(Schedule).where(Schedule.id.in_(ids))).all():
             db.delete(schedule)

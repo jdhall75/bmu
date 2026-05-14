@@ -21,6 +21,7 @@ from kiroku.models import (
     TransportProtocol,
 )
 from kiroku.web.deps import provide_db
+from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 from kiroku.web.import_devices import import_csv
 from kiroku.web.routes.runs import _parsed_display
 
@@ -70,17 +71,6 @@ def _platform_value(device) -> str:
     return ""
 
 
-def _worker_pools(db: Session) -> list[str]:
-    """Distinct non-null worker_pool values from both devices and groups."""
-    from sqlalchemy import union
-    from kiroku.models.group import DeviceGroup as _DG
-
-    device_pools = select(Device.worker_pool).where(Device.worker_pool.is_not(None))
-    group_pools = select(_DG.worker_pool).where(_DG.worker_pool.is_not(None))
-    rows = db.execute(union(device_pools, group_pools).order_by()).scalars().all()
-    return sorted(set(rows))
-
-
 def _device_form_options(db: Session) -> dict:
     return {
         "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
@@ -102,20 +92,6 @@ def _device_form_context(db: Session, device=None) -> dict:
         "default_command_timeout": settings.worker_command_timeout,
         **_device_form_options(db),
     }
-
-
-def _parse_ids(data: dict) -> list[int]:
-    raw = data.get("ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
-
-
-def _parse_group_ids(data: dict) -> list[int]:
-    raw = data.get("group_ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
 
 
 def _apply_platform(device: Device, data: dict) -> None:
@@ -249,7 +225,7 @@ async def create_device(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    group_ids = _parse_group_ids(data)
+    group_ids = parse_ids(data, "group_ids")
     d = Device(
         name=data["name"],
         hostname=data["hostname"],
@@ -289,7 +265,7 @@ async def bulk_devices(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    ids = _parse_ids(data)
+    ids = parse_ids(data)
     action = data.get("action")
 
     if not ids:
@@ -378,7 +354,7 @@ async def update_device(
     device.worker_pool = data.get("worker_pool") or None
     _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
-    group_ids = _parse_group_ids(data)
+    group_ids = parse_ids(data, "group_ids")
     device.groups = (
         list(db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all())
         if group_ids

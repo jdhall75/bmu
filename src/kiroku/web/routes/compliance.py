@@ -5,23 +5,24 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.compliance import OPERATORS, PARSER_TYPES, SEVERITIES, run_policy_for_devices
+from kiroku.compliance import (
+    OPERATORS,
+    PARSER_TYPES,
+    SEVERITIES,
+    run_policy_for_devices,
+    scoped_device_ids,
+    upsert_compliance_results,
+)
 from kiroku.models import Device, DeviceGroup
 from kiroku.models.compliance import ComplianceCheck, CompliancePolicy, ComplianceResult
 from kiroku.web.deps import provide_db
+from kiroku.web.helpers import parse_ids
 
 _MODES = ("any", "all", "none")
 _SEVERITY_ORDER = {"critical": 0, "major": 1, "minor": 2, "info": 3}
-
-
-def _parse_multi(data: dict, key: str) -> list[int]:
-    raw = data.get(key, [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
 
 
 def _form_context(db: Session, policy=None) -> dict:
@@ -44,8 +45,8 @@ def _apply_policy_data(policy: CompliancePolicy, data: dict, db: Session) -> Non
     policy.enabled = data.get("enabled") == "1"
     policy.auto_evaluate = data.get("auto_evaluate") == "1"
 
-    group_ids = _parse_multi(data, "device_group_ids")
-    device_ids = _parse_multi(data, "device_ids")
+    group_ids = parse_ids(data, "device_group_ids")
+    device_ids = parse_ids(data, "device_ids")
     policy.device_groups = (
         db.scalars(select(DeviceGroup).where(DeviceGroup.id.in_(group_ids))).all()
         if group_ids else []
@@ -107,52 +108,31 @@ def _as_list(val) -> list[str]:
 
 
 def _scoped_devices(policy: CompliancePolicy, db: Session) -> list[Device]:
-    """Expand group + direct device scope, deduplicated."""
-    seen: set[int] = set()
-    result: list[Device] = []
+    """Expand group + direct device scope, deduplicated and sorted by name."""
+    ids = scoped_device_ids(policy)
+    id_set = set(ids)
+    all_devs: dict[int, Device] = {}
     for g in policy.device_groups:
         for d in g.devices:
-            if d.id not in seen:
-                seen.add(d.id)
-                result.append(d)
+            if d.id in id_set:
+                all_devs[d.id] = d
     for d in policy.devices:
-        if d.id not in seen:
-            seen.add(d.id)
-            result.append(d)
-    return sorted(result, key=lambda d: d.name)
+        if d.id in id_set:
+            all_devs[d.id] = d
+    return sorted(all_devs.values(), key=lambda d: d.name)
 
 
 def _run_policy(policy: CompliancePolicy, db: Session) -> None:
     """Evaluate policy against all scoped devices and upsert results."""
-    devices = _scoped_devices(policy, db)
-    device_ids = [d.id for d in devices]
-
+    device_ids = scoped_device_ids(policy)
     rows = db.execute(
         text("SELECT device_id, content FROM device_configs WHERE device_id = ANY(:ids)"),
         {"ids": device_ids},
     ).mappings().all()
     content_map = {r["device_id"]: r["content"] for r in rows}
-
-    pairs = [(d.id, content_map.get(d.id)) for d in devices]
+    pairs = [(did, content_map.get(did)) for did in device_ids]
     results = run_policy_for_devices(policy, pairs)
-
-    for r in results:
-        db.execute(
-            text("""
-                INSERT INTO compliance_results (policy_id, device_id, evaluated_at, status, detail)
-                VALUES (:policy_id, :device_id, :evaluated_at, :status, :detail::jsonb)
-                ON CONFLICT (policy_id, device_id) DO UPDATE SET
-                    evaluated_at = EXCLUDED.evaluated_at,
-                    status       = EXCLUDED.status,
-                    detail       = EXCLUDED.detail
-            """),
-            {**r, "detail": _json(r["detail"])},
-        )
-
-
-def _json(val) -> str:
-    import json
-    return json.dumps(val)
+    upsert_compliance_results(db, results)
 
 
 def _last_results(policy: CompliancePolicy) -> dict:

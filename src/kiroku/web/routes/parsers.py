@@ -14,15 +14,9 @@ from sqlalchemy.orm import Session
 from kiroku.models import ParserTemplate, ParserType
 from kiroku.web.deps import provide_db
 from kiroku.logging import get_logger
+from kiroku.web.helpers import parse_ids
 
 logger = get_logger(__name__)
-
-
-def _parse_ids(data: dict) -> list[int]:
-    raw = data.get("ids", [])
-    if isinstance(raw, str):
-        raw = [raw]
-    return [int(i) for i in raw if i]
 
 
 def _form_context(db: Session, parser=None) -> dict:
@@ -66,7 +60,7 @@ async def bulk_parsers(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
-    ids = _parse_ids(data)
+    ids = parse_ids(data)
     if ids and data.get("action") == "delete":
         for p in db.scalars(
             select(ParserTemplate).where(ParserTemplate.id.in_(ids))

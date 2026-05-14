@@ -1,6 +1,5 @@
 import json
 
-from jinja2.sandbox import SandboxedEnvironment
 from litestar import Router, get
 from litestar.response import Template
 from sqlalchemy import select
@@ -9,8 +8,7 @@ from sqlalchemy.orm import Session
 from kiroku.models import Run, RunBatch
 from kiroku.recorder.git_store import GitStore
 from kiroku.web.deps import provide_db
-
-_sandbox = SandboxedEnvironment(autoescape=False)
+from kiroku.web.helpers import sandbox as _sandbox
 
 
 def _changed_run_ids(runs: list[Run], commit_sha: str) -> set[int]:
