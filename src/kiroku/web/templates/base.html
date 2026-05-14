@@ -144,6 +144,9 @@
   });
 
   // Tab inserts 2 spaces in code textareas; ESC toggles it off/on per textarea.
+  // Help buttons inside forms must not submit — enforce type=button globally.
+  document.querySelectorAll('button.help-btn').forEach(function (btn) { btn.type = 'button'; });
+
   document.querySelectorAll('textarea[data-code]').forEach(function (ta) {
     var tabEnabled = true;
     ta.addEventListener('keydown', function (e) {
