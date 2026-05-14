@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}{{ policy.name }} - Compliance - Kiroku{% endblock %}
+{% block content %}
+<div class="toolbar" style="margin-bottom:16px">
+  <h2 style="margin:0">{{ policy.name }}</h2>
+  <form method="post" action="/compliance/{{ policy.id }}/run" style="display:inline">
+    <button type="submit">Run now</button>
+  </form>
+  <a class="secondary" role="button" href="/compliance/{{ policy.id }}/edit">Edit</a>
+  <a class="secondary" role="button" href="/compliance">Back</a>
+  <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
+</div>
+
+{% if policy.description %}
+<p class="muted">{{ policy.description }}</p>
+{% endif %}
+
+<dl class="detail-grid">
+  <dt>Parser</dt><dd><code>{{ policy.parser_type }}</code></dd>
+  <dt>Checks</dt><dd>{{ policy.checks | length }}</dd>
+  <dt>Auto-evaluate</dt><dd>{{ 'yes (post-backup)' if policy.auto_evaluate else 'no' }}</dd>
+  <dt>Results</dt>
+  <dd>
+    {% if summary.total %}
+      <span class="status status-success">{{ summary.pass }} pass</span>
+      {% if summary.fail %}<span class="status status-failed">{{ summary.fail }} fail</span>{% endif %}
+      {% if summary.skip or summary.error %}<span class="status status-running">{{ summary.skip + summary.error }} skip/error</span>{% endif %}
+      of {{ summary.total }} device(s)
+    {% else %}
+      <span class="muted">Not run yet</span>
+    {% endif %}
+  </dd>
+</dl>
+
+{% if not devices %}
+<p class="muted">No devices in scope. Add device groups or individual devices via <a href="/compliance/{{ policy.id }}/edit">Edit</a>.</p>
+{% elif not policy.checks %}
+<p class="muted">No checks defined. <a href="/compliance/{{ policy.id }}/edit">Add checks</a> to start evaluating.</p>
+{% else %}
+
+{# Build check id→name index for column headers #}
+{% set checks = policy.checks %}
+
+<h3>Results matrix</h3>
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Device</th>
+      <th>Overall</th>
+      {% for c in checks %}
+      <th title="{{ c.description or '' }}">
+        {{ c.name }}
+        <br><span class="muted" style="font-size:0.75em;font-weight:normal">{{ c.severity }}</span>
+      </th>
+      {% endfor %}
+      <th>Evaluated</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for device in devices %}
+    {% set result = result_map.get(device.id) %}
+    {% set detail_index = {} %}
+    {% if result and result.detail %}
+      {% for outcome in result.detail %}
+        {% if outcome.check_id is defined %}
+          {% set _ = detail_index.update({outcome.check_id: outcome}) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    <tr>
+      <td><a href="/devices/{{ device.id }}">{{ device.name }}</a></td>
+      <td>
+        {% if not result %}
+          <span class="muted">—</span>
+        {% elif result.status == 'pass' %}
+          <span class="status status-success">pass</span>
+        {% elif result.status == 'fail' %}
+          <span class="status status-failed">fail</span>
+        {% elif result.status == 'skip' %}
+          <span class="status status-running">skip</span>
+        {% else %}
+          <span class="status status-failed">error</span>
+        {% endif %}
+      </td>
+      {% for c in checks %}
+        {% set outcome = detail_index.get(c.id) %}
+        <td style="text-align:center">
+          {% if not result %}
+            <span class="muted">—</span>
+          {% elif result.status in ('skip', 'error') %}
+            <span class="muted">—</span>
+          {% elif outcome %}
+            {% if outcome.status == 'pass' %}
+              <span class="status status-success" title="pass">&#10003;</span>
+            {% else %}
+              <span class="status status-failed" title="{{ outcome.description or 'fail' }}">&#10007;</span>
+            {% endif %}
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </td>
+      {% endfor %}
+      <td class="muted" style="font-size:0.85em;white-space:nowrap">
+        {{ result.evaluated_at.strftime('%Y-%m-%d %H:%M') if result else '' }}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if result_map %}
+<h3>Failure details</h3>
+{% set ns = namespace(any_fail=false) %}
+{% for device in devices %}
+  {% set result = result_map.get(device.id) %}
+  {% if result and result.status == 'fail' and result.detail %}
+    {% set ns.any_fail = true %}
+    <h4><a href="/devices/{{ device.id }}">{{ device.name }}</a></h4>
+    {% for outcome in result.detail %}
+      {% if outcome.status is defined and outcome.status == 'fail' %}
+      <details style="margin-bottom:8px">
+        <summary>
+          <span class="status status-failed">{{ outcome.severity }}</span>
+          <strong>{{ outcome.name }}</strong>
+          — {{ outcome.description or (outcome.field ~ ' ' ~ outcome.operator ~ ' ' ~ (outcome.expected or '')) }}
+        </summary>
+        {% if outcome.failing_rows %}
+        <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr>{% for k in outcome.failing_rows[0].keys() %}<th>{{ k }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {% for row in outcome.failing_rows %}
+            <tr>{% for v in row.values() %}<td>{{ v }}</td>{% endfor %}</tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p class="muted" style="margin:8px 0 0">No matching rows found.</p>
+        {% endif %}
+      </details>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+{% if not ns.any_fail %}
+<p class="muted">No failures to display.</p>
+{% endif %}
+{% endif %}
+
+{% endif %}
+{% endblock %}

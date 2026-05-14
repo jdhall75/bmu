@@ -140,7 +140,6 @@ header nav a[aria-current="page"]:hover {
   font-size: 12px;
 }
 
-
 /* -----------------------------------------------------------------------------
    Forms — 2-column label / field grid
    Pico defaults forms to block layout; this restores the label-left,

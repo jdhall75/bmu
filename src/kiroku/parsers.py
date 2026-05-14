@@ -27,6 +27,8 @@ def parse(
         return _ttp(body, payload)
     if parser_type == "xslt":
         return _xslt(body, payload)
+    if parser_type == "parse":
+        return _parse_lib(body, payload)
     raise ValueError(f"unknown parser type: {parser_type!r}")
 
 
@@ -48,6 +50,30 @@ def _ttp(template: str, payload: str) -> list[dict] | dict:
     if isinstance(raw, list) and len(raw) == 1 and isinstance(raw[0], list):
         return raw[0]
     return raw
+
+
+def _parse_lib(template: str, payload: str) -> list[dict]:
+    """Line-by-line parse library matcher.
+
+    Tries parse.parse (full-line, anchored) first so that a trailing {FIELD}
+    captures the rest of the line rather than a single character. Falls back
+    to parse.search for partial-line patterns.
+    """
+    import parse as parse_mod
+
+    compiled = parse_mod.compile(template.strip())
+    results = []
+    for line in payload.splitlines():
+        line = line.rstrip()
+        if not line:
+            continue
+        match = compiled.parse(line) or compiled.search(line)
+        if match:
+            if match.named:
+                results.append(dict(match.named))
+            elif match.fixed:
+                results.append({f"_{i}": v for i, v in enumerate(match.fixed)})
+    return results
 
 
 def _xslt(stylesheet: str, payload: str) -> dict:

@@ -55,6 +55,7 @@
         <li><a href="/runs" {% if request.url.path.startswith('/runs') %}aria-current="page"{% endif %}>Runs</a></li>
         <li><a href="/cve" {% if request.url.path.startswith('/cve') %}aria-current="page"{% endif %}>CVE Scans</a></li>
         <li><a href="/search" {% if request.url.path.startswith('/search') %}aria-current="page"{% endif %}>Search</a></li>
+        <li><a href="/compliance" {% if request.url.path.startswith('/compliance') %}aria-current="page"{% endif %}>Compliance</a></li>
       </ul>
       <ul>
         <li><button id="theme-toggle" class="help-nav-btn" onclick="toggleTheme()" title="Toggle light/dark theme">&#9790;</button></li>

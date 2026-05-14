@@ -1,3 +1,12 @@
+from kiroku.models.compliance import (
+    ComplianceCheck,
+    CompliancePolicy,
+    ComplianceResult,
+    ComplianceSeverity,
+    ComplianceStatus,
+    compliance_policy_devices,
+    compliance_policy_groups,
+)
 from kiroku.models.credential import Credential, CredentialProvider
 from kiroku.models.cve_scan import CveResult, CveScan
 from kiroku.models.device import Device, DriverKind, TransportProtocol
@@ -12,6 +21,13 @@ from kiroku.models.run_batch import RunBatch
 from kiroku.models.schedule import Schedule
 
 __all__ = [
+    "ComplianceCheck",
+    "CompliancePolicy",
+    "ComplianceResult",
+    "ComplianceSeverity",
+    "ComplianceStatus",
+    "compliance_policy_devices",
+    "compliance_policy_groups",
     "Credential",
     "CredentialProvider",
     "CveResult",

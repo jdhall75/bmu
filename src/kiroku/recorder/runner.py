@@ -22,7 +22,9 @@ from kiroku.config import get_settings
 from kiroku.db import session_scope
 from kiroku.jobs import JobResult
 from kiroku.logging import configure_logging, get_logger
+from kiroku.compliance import run_policy_for_devices
 from kiroku.models import CveResult, CveScan, Device, Run, RunBatch, RunStatus
+from kiroku.models.compliance import CompliancePolicy
 from kiroku.queue import ack_result, read_results
 from kiroku.recorder.git_store import GitStore
 
@@ -226,6 +228,69 @@ def _persist(
                     succeeded=batch.succeeded,
                     failed=batch.failed,
                 )
+
+                if batch.kind == "backup":
+                    _auto_evaluate_compliance(db, batch)
+
+
+def _auto_evaluate_compliance(db, batch: RunBatch) -> None:
+    """Re-evaluate any auto_evaluate policies that cover devices in this batch."""
+    batch_device_ids = {
+        r.device_id for r in db.scalars(select(Run).where(Run.batch_id == batch.id)).all()
+    }
+    if not batch_device_ids:
+        return
+
+    policies = db.scalars(
+        select(CompliancePolicy).where(CompliancePolicy.auto_evaluate.is_(True), CompliancePolicy.enabled.is_(True))
+    ).all()
+
+    import json as _json
+    from datetime import timezone
+
+    for policy in policies:
+        # Collect device IDs in scope for this policy.
+        seen: set[int] = set()
+        scoped_ids: list[int] = []
+        for g in policy.device_groups:
+            for d in g.devices:
+                if d.id not in seen:
+                    seen.add(d.id)
+                    scoped_ids.append(d.id)
+        for d in policy.devices:
+            if d.id not in seen:
+                seen.add(d.id)
+                scoped_ids.append(d.id)
+
+        affected = [did for did in scoped_ids if did in batch_device_ids]
+        if not affected:
+            continue
+
+        rows = db.execute(
+            text("SELECT device_id, content FROM device_configs WHERE device_id = ANY(:ids)"),
+            {"ids": affected},
+        ).mappings().all()
+        content_map = {r["device_id"]: r["content"] for r in rows}
+        pairs = [(did, content_map.get(did)) for did in affected]
+
+        results = run_policy_for_devices(policy, pairs)
+        for r in results:
+            db.execute(
+                text("""
+                    INSERT INTO compliance_results (policy_id, device_id, evaluated_at, status, detail)
+                    VALUES (:policy_id, :device_id, :evaluated_at, :status, :detail::jsonb)
+                    ON CONFLICT (policy_id, device_id) DO UPDATE SET
+                        evaluated_at = EXCLUDED.evaluated_at,
+                        status       = EXCLUDED.status,
+                        detail       = EXCLUDED.detail
+                """),
+                {**r, "detail": _json.dumps(r["detail"])},
+            )
+        log.info(
+            "compliance auto-evaluated",
+            policy=policy.name,
+            devices=len(affected),
+        )
 
 
 def _reap_stale_batches(

@@ -8,6 +8,7 @@ from litestar.template.config import TemplateConfig
 
 from kiroku.logging import configure_logging
 from kiroku.web.routes import (
+    compliance,
     credentials,
     cve,
     dashboard,
@@ -58,6 +59,7 @@ def create_app() -> Litestar:
             runs.router,
             cve.router,
             search.router,
+            compliance.router,
             create_static_files_router(path="/static", directories=[STATIC_DIR]),
         ],
         before_request=_stamp_start,

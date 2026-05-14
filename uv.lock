@@ -711,27 +711,34 @@ source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
-    { name = "bitwarden-sdk", marker = "python_full_version < '4'" },
     { name = "click" },
     { name = "croniter" },
     { name = "cryptography" },
     { name = "gitpython" },
     { name = "httpx" },
-    { name = "hvac" },
-    { name = "litestar", extra = ["jinja", "standard"] },
-    { name = "lxml" },
-    { name = "markdown" },
+    { name = "parse" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "python-multipart" },
     { name = "redis" },
-    { name = "scrapli2" },
     { name = "sqlalchemy" },
     { name = "structlog" },
     { name = "textfsm" },
-    { name = "ttp" },
+]
+
+[package.optional-dependencies]
+web = [
+    { name = "litestar", extra = ["jinja", "standard"] },
+    { name = "markdown" },
+    { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
+]
+worker = [
+    { name = "bitwarden-sdk", marker = "python_full_version < '4'" },
+    { name = "hvac" },
+    { name = "lxml" },
+    { name = "scrapli2" },
+    { name = "ttp" },
 ]
 
 [package.dev-dependencies]
@@ -745,28 +752,30 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "asyncpg", specifier = ">=0.29" },
-    { name = "bitwarden-sdk", marker = "python_full_version < '4'", specifier = ">=1.0" },
+    { name = "bitwarden-sdk", marker = "python_full_version < '4' and extra == 'worker'", specifier = ">=1.0" },
     { name = "click", specifier = ">=8.1" },
     { name = "croniter", specifier = ">=2.0" },
     { name = "cryptography", specifier = ">=43.0" },
     { name = "gitpython", specifier = ">=3.1" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "hvac", specifier = ">=2.3" },
-    { name = "litestar", extras = ["jinja", "standard"], specifier = ">=2.12" },
-    { name = "lxml", specifier = ">=5.2" },
-    { name = "markdown", specifier = ">=3.6" },
+    { name = "hvac", marker = "extra == 'worker'", specifier = ">=2.3" },
+    { name = "litestar", extras = ["jinja", "standard"], marker = "extra == 'web'", specifier = ">=2.12" },
+    { name = "lxml", marker = "extra == 'worker'", specifier = ">=5.2" },
+    { name = "markdown", marker = "extra == 'web'", specifier = ">=3.6" },
+    { name = "parse", specifier = ">=1.20" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.4" },
-    { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "python-multipart", marker = "extra == 'web'", specifier = ">=0.0.9" },
     { name = "redis", specifier = ">=5.0" },
-    { name = "scrapli2", specifier = ">=2.0.0rc7" },
+    { name = "scrapli2", marker = "extra == 'worker'", specifier = ">=2.0.0rc7" },
     { name = "sqlalchemy", specifier = ">=2.0" },
     { name = "structlog", specifier = ">=24.1" },
     { name = "textfsm", specifier = ">=1.1" },
-    { name = "ttp", specifier = ">=0.9" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+    { name = "ttp", marker = "extra == 'worker'", specifier = ">=0.9" },
+    { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30" },
 ]
+provides-extras = ["web", "worker"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1217,6 +1226,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/f1/e7a6dd94a8d4a5626c03e4e99c87f241ba9e350cd9e6d75123f992427270/packaging-26.2.tar.gz", hash = "sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661", size = 228134, upload-time = "2026-04-24T20:15:23.917Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/b2/87e62e8c3e2f4b32e5fe99e0b86d576da1312593b39f47d8ceef365e95ed/packaging-26.2-py3-none-any.whl", hash = "sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e", size = 100195, upload-time = "2026-04-24T20:15:22.081Z" },
+]
+
+[[package]]
+name = "parse"
+version = "1.22.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/a2/dd269daedd5ac3a244ca7855b4878d8655393fd4554d5c24a56bc31e302a/parse-1.22.0.tar.gz", hash = "sha256:d4987d68ccf08b6ba3bf80b5004ff7de61c4337cba2d8350ae5c9925794979d9", size = 36767, upload-time = "2026-05-02T01:36:25.575Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/3a/0c2cf5922c6133b74c1cebe4b66f6949818e2cf8121aa59e3ebcd64ac6ac/parse-1.22.0-py2.py3-none-any.whl", hash = "sha256:eea8ed34e2614cea65d9c1d4af9cb68cce26aea13d44bdcaf83c1b40884fe945", size = 20839, upload-time = "2026-05-02T01:36:24.403Z" },
 ]
 
 [[package]]

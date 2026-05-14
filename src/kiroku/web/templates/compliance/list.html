@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Compliance - Kiroku{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <h2 style="margin:0">Compliance</h2>
+  <a role="button" href="/compliance/new">New policy</a>
+  <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
+</div>
+
+{% if policies %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Policy</th>
+      <th>Parser</th>
+      <th>Checks</th>
+      <th>Pass</th>
+      <th>Fail</th>
+      <th>Skip / Error</th>
+      <th>Auto</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in policies %}
+    {% set s = summaries[p.id] %}
+    <tr>
+      <td><a href="/compliance/{{ p.id }}"><strong>{{ p.name }}</strong></a>
+        {% if not p.enabled %}<span class="muted" style="font-size:0.8em"> (disabled)</span>{% endif %}
+      </td>
+      <td><code>{{ p.parser_type }}</code></td>
+      <td>{{ p.checks | length }}</td>
+      <td>{% if s.pass %}<span class="status status-success">{{ s.pass }}</span>{% else %}-{% endif %}</td>
+      <td>{% if s.fail %}<span class="status status-failed">{{ s.fail }}</span>{% else %}-{% endif %}</td>
+      <td>{% if s.skip or s.error %}<span class="status status-running">{{ s.skip + s.error }}</span>{% else %}-{% endif %}</td>
+      <td>{% if p.auto_evaluate %}&#10003;{% else %}-{% endif %}</td>
+      <td style="white-space:nowrap">
+        <form method="post" action="/compliance/{{ p.id }}/run" style="display:inline">
+          <button class="icon-btn icon-btn-run" title="Run now">
+            <svg class="icon"><use href="#icon-run"/></svg>
+          </button>
+        </form>
+        <a class="icon-btn" role="button" href="/compliance/{{ p.id }}/edit" title="Edit">
+          <svg class="icon"><use href="#icon-edit"/></svg>
+        </a>
+        <form method="post" action="/compliance/{{ p.id }}/delete" style="display:inline"
+              onsubmit="return confirm('Delete policy {{ p.name }}?')">
+          <button class="icon-btn icon-btn-delete" title="Delete">
+            <svg class="icon"><use href="#icon-delete"/></svg>
+          </button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">No compliance policies yet. <a href="/compliance/new">Create one.</a></p>
+{% endif %}
+{% endblock %}
