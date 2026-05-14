@@ -61,7 +61,7 @@ def _auth_exception_handler(request: Request, exc: NotAuthorizedException) -> Re
 def _build_middleware(settings) -> list:
     if settings.auth_provider == "none":
         return []
-    from litestar.middleware.session.cookie_backend import CookieBackendConfig
+    from litestar.middleware.session.client_side import CookieBackendConfig
 
     secret = hashlib.sha256(settings.secret_key.encode()).digest()[:32]
     session_config = CookieBackendConfig(
