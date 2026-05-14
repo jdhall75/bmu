@@ -162,7 +162,7 @@ def upsert_compliance_results(db: Session, results: list[dict]) -> None:
         db.execute(
             text("""
                 INSERT INTO compliance_results (policy_id, device_id, evaluated_at, status, detail)
-                VALUES (:policy_id, :device_id, :evaluated_at, :status, :detail::jsonb)
+                VALUES (:policy_id, :device_id, :evaluated_at, :status, cast(:detail as jsonb))
                 ON CONFLICT (policy_id, device_id) DO UPDATE SET
                     evaluated_at = EXCLUDED.evaluated_at,
                     status       = EXCLUDED.status,
