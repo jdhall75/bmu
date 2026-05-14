@@ -5,7 +5,7 @@ from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from kiroku.compliance import (
