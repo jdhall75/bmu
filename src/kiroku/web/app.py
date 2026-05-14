@@ -66,7 +66,7 @@ def _build_middleware(settings) -> list:
     secret = hashlib.sha256(settings.secret_key.encode()).digest()[:32]
     session_config = CookieBackendConfig(
         secret=secret,
-        session_cookie_name="kiroku_session",
+        key="kiroku_session",
         max_age=28800,  # 8 hours
         samesite="lax",
         secure=False,
