@@ -74,14 +74,10 @@ services:
       context: .
       target: worker
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
     environment:
-      KIROKU_DATABASE_URL_SYNC: postgresql+psycopg://bmu:bmu@postgres:5432/bmu
       KIROKU_REDIS_URL: redis://redis:6379/0
-      KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
       KIROKU_WORKER_CONCURRENCY: "8"
     deploy:
       replicas: 1

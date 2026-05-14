@@ -47,6 +47,8 @@ ENTRYPOINT ["kiroku"]
 CMD ["serve"]
 
 # ─── worker ───────────────────────────────────────────────────────────────────
+# Workers are intentionally database-free: no alembic, no DB client config.
+# Only Redis reachability and SSH/NETCONF network access to devices are needed.
 FROM python:3.12-slim AS worker
 ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN apt-get update \
@@ -54,7 +56,5 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=builder-worker /opt/venv /opt/venv
 WORKDIR /app
-COPY alembic.ini .
-COPY alembic/ ./alembic/
 ENTRYPOINT ["kiroku"]
 CMD ["worker"]

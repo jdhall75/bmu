@@ -1,7 +1,10 @@
 """Worker process.
 
-Pulls JobSpecs off the Redis stream, resolves credentials, talks to the
-device with scrapli, publishes a JobResult back, and acks the job.
+Pulls JobSpecs off the Redis stream, executes them against the device via
+scrapli, and publishes a JobResult back.  The worker is intentionally
+database-free: credentials are resolved by the dispatcher and embedded in
+the JobSpec so this process only needs Redis reachability and network access
+to the managed devices.
 """
 
 from __future__ import annotations
@@ -13,11 +16,9 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 
 from kiroku.config import get_settings
-from kiroku.credentials.registry import resolve_credential
-from kiroku.db import session_scope
+from kiroku.credentials.base import CredentialMaterial
 from kiroku.jobs import JobResult, JobSpec
 from kiroku.logging import configure_logging, get_logger
-from kiroku.models import Credential, Run, RunStatus
 from kiroku.queue import ack_job, publish_result, read_jobs
 from kiroku.worker.scrapli_runner import execute
 
@@ -36,37 +37,35 @@ def _install_signals() -> None:
     signal.signal(signal.SIGTERM, _handler)
 
 
-def _mark_running(run_id: int) -> None:
-    with session_scope() as db:
-        run = db.get(Run, run_id)
-        if run:
-            run.status = RunStatus.RUNNING
-            run.started_at = datetime.now(tz=timezone.utc)
-
-
 def _handle(msg_id: str, spec: JobSpec) -> None:
     log.info(
         "job received", run_id=spec.run_id, device=spec.device_name, kind=spec.kind
     )
-    _mark_running(spec.run_id)
 
-    with session_scope() as db:
-        cred_row = db.get(Credential, spec.credential.credential_id)
-        if cred_row is None:
-            result = JobResult(
-                run_id=spec.run_id,
-                device_id=spec.device_id,
-                device_name=spec.device_name,
-                kind=spec.kind,
-                success=False,
-                error=f"credential id {spec.credential.credential_id} not found",
-                started_at="",
-                finished_at="",
-            )
-            publish_result(result)
-            ack_job(msg_id)
-            return
-        material = resolve_credential(cred_row)
+    now = datetime.now(tz=timezone.utc).isoformat()
+
+    if spec.credential_material is None:
+        result = JobResult(
+            run_id=spec.run_id,
+            device_id=spec.device_id,
+            device_name=spec.device_name,
+            kind=spec.kind,
+            success=False,
+            error="job spec has no embedded credential_material; re-dispatch from an updated server",
+            started_at=now,
+            finished_at=now,
+        )
+        publish_result(result)
+        ack_job(msg_id)
+        return
+
+    material = CredentialMaterial(
+        username=spec.credential_material.username,
+        password=spec.credential_material.password,
+        enable_password=spec.credential_material.enable_password,
+        private_key=spec.credential_material.private_key,
+        private_key_passphrase=spec.credential_material.private_key_passphrase,
+    )
 
     try:
         result = execute(spec, material)

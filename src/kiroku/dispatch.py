@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.jobs import CredentialRef, JobSpec
+from kiroku.credentials.registry import resolve_credential
+from kiroku.jobs import CredentialRef, EmbeddedCredential, JobSpec
 from kiroku.models import Credential, Device, DeviceGroup, Job, Run, RunBatch, RunStatus
 from kiroku.queue import publish_job
 
@@ -28,6 +29,8 @@ def _spec_for(
     )
     if cred is None:
         return None
+
+    material = resolve_credential(cred)
 
     parser = job.parser_template
     custom_yaml = (
@@ -61,6 +64,13 @@ def _spec_for(
             provider=cred.provider.value,
             credential_id=cred.id,
             ref=cred.ref,
+        ),
+        credential_material=EmbeddedCredential(
+            username=material.username,
+            password=material.password,
+            enable_password=material.enable_password,
+            private_key=material.private_key,
+            private_key_passphrase=material.private_key_passphrase,
         ),
     )
 

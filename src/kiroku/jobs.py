@@ -1,7 +1,10 @@
 """Job spec / result schemas exchanged through Redis streams.
 
 The contents are JSON-serialized into the stream entry's ``data`` field.
-Workers must never receive resolved secrets here; only references.
+
+Credentials are resolved by the dispatcher and embedded in the spec so that
+workers need no database connection.  The resolved secrets travel inside the
+Redis stream — secure Redis with TLS (rediss://) and AUTH.
 """
 
 from __future__ import annotations
@@ -16,6 +19,21 @@ class CredentialRef(BaseModel):
     credential_id: int
     # Optional, redundant pointer (helps Vault/Bitwarden resolvers).
     ref: str | None = None
+
+
+class EmbeddedCredential(BaseModel):
+    """Resolved credential material embedded in the JobSpec.
+
+    Populated by the dispatcher so the worker requires no database access.
+    Secrets are serialised into the Redis stream — protect the stream with
+    TLS (``rediss://``) and Redis AUTH.
+    """
+
+    username: str
+    password: str | None = None
+    enable_password: str | None = None
+    private_key: str | None = None
+    private_key_passphrase: str | None = None
 
 
 class JobSpec(BaseModel):
@@ -55,6 +73,8 @@ class JobSpec(BaseModel):
     command_timeout: int | None = None
 
     credential: CredentialRef
+    # Resolved material embedded at dispatch time — workers use this directly.
+    credential_material: EmbeddedCredential | None = None
 
 
 class CommandResult(BaseModel):

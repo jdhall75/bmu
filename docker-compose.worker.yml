@@ -1,0 +1,40 @@
+# Kiroku — standalone remote worker
+#
+# Deploy this file on any host that needs SSH/NETCONF access to a network
+# segment.  The worker only requires outbound connectivity to:
+#   1. The central Redis instance (job stream + result stream)
+#   2. The managed network devices in the local segment
+#
+# No database connection, no shared filesystem, no secret key needed.
+#
+# Usage:
+#   KIROKU_REDIS_URL=rediss://:password@redis.central.example.com:6380/0 \
+#     docker compose -f docker-compose.worker.yml up -d
+
+services:
+  worker:
+    image: ${KIROKU_IMAGE:-your-registry/kiroku-worker:latest}
+    restart: unless-stopped
+    environment:
+      # TLS Redis URL.  Format: rediss://:PASSWORD@HOST:PORT/DB
+      KIROKU_REDIS_URL: ${KIROKU_REDIS_URL:?KIROKU_REDIS_URL must be set}
+
+      # Number of concurrent device jobs (tune to network segment size).
+      KIROKU_WORKER_CONCURRENCY: ${KIROKU_WORKER_CONCURRENCY:-8}
+
+      # Per-device timeouts in seconds (optional — defaults shown).
+      KIROKU_WORKER_CONNECT_TIMEOUT: ${KIROKU_WORKER_CONNECT_TIMEOUT:-30}
+      KIROKU_WORKER_COMMAND_TIMEOUT: ${KIROKU_WORKER_COMMAND_TIMEOUT:-60}
+
+      # TLS CA bundle for Redis TLS verification.
+      # Mount the cert below and point this var at the mounted path.
+      SSL_CERT_FILE: ${SSL_CERT_FILE:-/certs/ca.crt}
+
+    volumes:
+      # Mount the CA certificate used to verify the Redis TLS connection.
+      # Generate with: see docs/deploying-workers.md
+      - ${KIROKU_CERT_DIR:-./certs}:/certs:ro
+
+    # SSH host-key verification is disabled by scrapli (enable_strict_key=False).
+    # If your environment requires strict SSH key checking, add the known_hosts
+    # volume and set enable_strict_key=True in the platform definition.
