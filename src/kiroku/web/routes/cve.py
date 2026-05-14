@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import CveScan
+from kiroku.web.auth import require_authenticated
 from kiroku.web.deps import provide_db
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
@@ -42,4 +43,4 @@ async def list_cve_scans(db: Session) -> Template:
     return Template(template_name="cve/list.html", context={"rows": rows})
 
 
-router = Router(path="/cve", route_handlers=[list_cve_scans])
+router = Router(path="/cve", guards=[require_authenticated], route_handlers=[list_cve_scans])

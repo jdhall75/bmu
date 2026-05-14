@@ -3,7 +3,7 @@
 {% block content %}
 <div class="toolbar">
   <h2 style="margin:0">Compliance</h2>
-  <a role="button" href="/compliance/new">New policy</a>
+  {% if cu and cu.is_admin %}<a role="button" href="/compliance/new">New policy</a>{% endif %}
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>
 
@@ -41,6 +41,7 @@
             <svg class="icon"><use href="#icon-run"/></svg>
           </button>
         </form>
+        {% if cu and cu.is_admin %}
         <a class="icon-btn" role="button" href="/compliance/{{ p.id }}/edit" title="Edit">
           <svg class="icon"><use href="#icon-edit"/></svg>
         </a>
@@ -50,6 +51,7 @@
             <svg class="icon"><use href="#icon-delete"/></svg>
           </button>
         </form>
+        {% endif %}
       </td>
     </tr>
   {% endfor %}
@@ -57,6 +59,6 @@
 </table>
 </div>
 {% else %}
-<p class="muted">No compliance policies yet. <a href="/compliance/new">Create one.</a></p>
+<p class="muted">No compliance policies yet.{% if cu and cu.is_admin %} <a href="/compliance/new">Create one.</a>{% endif %}</p>
 {% endif %}
 {% endblock %}

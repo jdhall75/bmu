@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in - Kiroku{% endblock %}
+{% block content %}
+<div style="max-width:360px;margin:80px auto">
+  <h2 style="margin-bottom:4px">Sign in</h2>
+  <p class="muted" style="margin-bottom:24px;font-size:13px">Dev mode — choose a role to continue</p>
+  <form method="post" action="/auth/dev-login">
+    <fieldset>
+      <label>
+        <input type="radio" name="role" value="admin" checked>
+        <strong>Admin</strong> &mdash; full create / edit / delete access
+      </label>
+      <label>
+        <input type="radio" name="role" value="operator">
+        <strong>Operator</strong> &mdash; view and run jobs only
+      </label>
+    </fieldset>
+    <button type="submit">Sign in</button>
+  </form>
+</div>
+{% endblock %}

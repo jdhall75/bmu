@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from kiroku.dispatch import fire_job
 from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate, Run, RunStatus
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, sandbox as _sandbox
 
@@ -69,7 +70,7 @@ async def new_job(db: Session) -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_job(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -81,7 +82,7 @@ async def create_job(
     return Redirect(path="/jobs")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_jobs(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -103,7 +104,7 @@ async def edit_job(job_id: int, db: Session) -> Template:
     )
 
 
-@post("/{job_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/{job_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def update_job(
     job_id: int,
     db: Session,
@@ -119,6 +120,7 @@ async def update_job(
     "/{job_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_job(job_id: int, db: Session) -> Redirect:
     job = db.get(Job, job_id)
@@ -238,6 +240,7 @@ async def job_data(job_id: int, db: Session) -> Template:
 
 router = Router(
     path="/jobs",
+    guards=[require_authenticated],
     route_handlers=[
         list_jobs,
         new_job,

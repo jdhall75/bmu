@@ -3,24 +3,26 @@
 {% block content %}
 <form class="table-form" method="POST" action="/jobs/bulk">
   <div class="toolbar">
-    <a role="button" href="/jobs/new">New job</a>
+    {% if cu and cu.is_admin %}<a role="button" href="/jobs/new">New job</a>{% endif %}
     <button class="help-btn" onclick="openHelp('jobs')">? Help</button>
+    {% if cu and cu.is_admin %}
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected jobs?')">Delete selected</button>
     </span>
+    {% endif %}
   </div>
   <div class="table-wrap">
   <table>
     <thead>
       <tr>
-        <th><input type="checkbox" id="select-all" title="Select all"></th>
+        {% if cu and cu.is_admin %}<th><input type="checkbox" id="select-all" title="Select all"></th>{% endif %}
         <th>Name</th><th>Kind</th><th>Groups</th><th>Devices</th><th>Commands / RPC</th><th>Parser</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
     {% for j in jobs %}
       <tr>
-        <td><input type="checkbox" name="ids" value="{{ j.id }}"></td>
+        {% if cu and cu.is_admin %}<td><input type="checkbox" name="ids" value="{{ j.id }}"></td>{% endif %}
         <td>{{ j.name }}</td>
         <td>{{ j.kind.value }}</td>
         <td>{{ j.device_groups | map(attribute='name') | join(', ') or '-' }}</td>
@@ -32,17 +34,20 @@
         <td>
           <button class="icon-btn icon-btn-run" formaction="/jobs/{{ j.id }}/run" title="Run now" aria-label="Run now" onclick="return confirm('Run {{ j.name }} now?')"><svg class="icon" aria-hidden="true"><use href="#icon-run"></use></svg></button>
           {% if j.parser_template %}<a class="icon-btn" role="button" href="/jobs/{{ j.id }}/data" title="View collected data" aria-label="View collected data"><svg class="icon" aria-hidden="true"><use href="#icon-data"></use></svg></a>{% endif %}
+          {% if cu and cu.is_admin %}
           <a class="icon-btn" role="button" href="/jobs/{{ j.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
           <button class="icon-btn icon-btn-delete" formaction="/jobs/{{ j.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ j.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
+          {% endif %}
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="8">No jobs.</td></tr>
+      <tr><td colspan="{{ 8 if cu and cu.is_admin else 7 }}">No jobs.</td></tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
 </form>
+{% if cu and cu.is_admin %}
 <script>
 (function () {
   var sa = document.getElementById('select-all');
@@ -55,4 +60,5 @@
   document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
 })();
 </script>
+{% endif %}
 {% endblock %}

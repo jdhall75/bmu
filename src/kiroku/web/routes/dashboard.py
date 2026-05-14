@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from kiroku.models import Device, DeviceGroup, Job, RunBatch, Schedule
+from kiroku.web.auth import require_authenticated
 from kiroku.web.deps import provide_db
 
 
@@ -39,4 +40,4 @@ async def index(db: Session) -> Template:
     )
 
 
-router = Router(path="/", route_handlers=[index])
+router = Router(path="/", guards=[require_authenticated], route_handlers=[index])

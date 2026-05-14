@@ -57,6 +57,25 @@ class Settings(BaseSettings):
     # CVE scanning (optional). Without a key, NVD allows 1 req/s; with a key, 5/s.
     nvd_api_key: str | None = None
 
+    # Auth / RBAC
+    # "none"  – no auth enforced (internal/trusted networks, current default)
+    # "dev"   – fake login form; pick operator or admin role locally
+    # "oidc"  – full Keycloak OIDC flow (production)
+    auth_provider: str = "none"
+    # Public base URL of this app (used to build the OIDC redirect_uri).
+    base_url: str = "http://localhost:8000"
+    # Keycloak realm URL, e.g. https://keycloak.example.com/realms/myrealm
+    oidc_issuer_url: str = ""
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    # Role names configured in Keycloak for this app.
+    oidc_admin_role: str = "kiroku-admin"
+    oidc_operator_role: str = "kiroku-operator"
+    # Dot-path into the JWT claims where the roles list lives.
+    # Default is Keycloak realm_access.roles; use e.g. "resource_access.kiroku.roles"
+    # for client-scoped roles.
+    oidc_role_claim: str = "realm_access.roles"
+
     @property
     def fernet_key(self) -> bytes:
         # Derive a 32-byte urlsafe key from the configured secret_key.

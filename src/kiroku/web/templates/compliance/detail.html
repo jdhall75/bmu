@@ -6,7 +6,7 @@
   <form method="post" action="/compliance/{{ policy.id }}/run" style="display:contents">
     <button type="submit">Run now</button>
   </form>
-  <a class="secondary" role="button" href="/compliance/{{ policy.id }}/edit">Edit</a>
+  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="/compliance/{{ policy.id }}/edit">Edit</a>{% endif %}
   <a class="secondary" role="button" href="/compliance">Back</a>
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>

@@ -2,10 +2,12 @@
 {% block title %}{{ group.name }} - Kiroku{% endblock %}
 {% block content %}
 <div class="toolbar">
+  {% if cu and cu.is_admin %}
   <a class="secondary" role="button" href="/groups/{{ group.id }}/edit">Edit group</a>
   <form method="POST" action="/groups/{{ group.id }}/delete" style="display:contents">
     <button onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
   </form>
+  {% endif %}
   <button class="help-btn" onclick="openHelp('groups')">? Help</button>
 </div>
 <h2>{{ group.name }}</h2>

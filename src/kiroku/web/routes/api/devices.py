@@ -41,11 +41,12 @@ from litestar import Router, post
 from litestar.connection import Request
 from sqlalchemy.orm import Session
 
+from kiroku.web.auth import require_admin
 from kiroku.web.deps import provide_db
 from kiroku.web.import_devices import import_csv
 
 
-@post("/import", dependencies={"db": provide_db})
+@post("/import", dependencies={"db": provide_db}, guards=[require_admin])
 async def import_devices(request: Request, db: Session) -> dict:
     content_type = request.headers.get("content-type", "")
     raw = ""

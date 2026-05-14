@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import Job, Schedule
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
 
@@ -34,7 +35,7 @@ async def new_schedule(db: Session) -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_schedule(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -52,7 +53,7 @@ async def create_schedule(
     return Redirect(path="/schedules")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_schedules(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -78,6 +79,7 @@ async def edit_schedule(schedule_id: int, db: Session) -> Template:
     "/{schedule_id:int}",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def update_schedule(
     schedule_id: int,
@@ -99,6 +101,7 @@ async def update_schedule(
     "/{schedule_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_schedule(schedule_id: int, db: Session) -> Redirect:
     schedule = db.get(Schedule, schedule_id)
@@ -110,6 +113,7 @@ async def delete_schedule(schedule_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/schedules",
+    guards=[require_authenticated],
     route_handlers=[
         list_schedules,
         new_schedule,

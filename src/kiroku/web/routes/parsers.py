@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import ParserTemplate, ParserType
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.logging import get_logger
 from kiroku.web.helpers import parse_ids
@@ -37,7 +38,7 @@ async def new_parser(db: Session) -> Template:
     return Template("parsers/form.html", context=_form_context(db))
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_parser(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -55,7 +56,7 @@ async def create_parser(
     return Redirect(path="/parsers")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_parsers(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -77,7 +78,7 @@ async def edit_parser(parser_id: int, db: Session) -> Template:
 
 
 @post(
-    "/{parser_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+    "/{parser_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin]
 )
 async def update_parser(
     parser_id: int,
@@ -99,6 +100,7 @@ async def update_parser(
     "/{parser_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_parser(parser_id: int, db: Session) -> Redirect:
     parser = db.get(ParserTemplate, parser_id)
@@ -120,7 +122,7 @@ async def test_bed(db: Session) -> Template:
     return Template("parsers/test.html", context={"parsers": parsers})
 
 
-@post("/test/run", status_code=200)
+@post("/test/run", status_code=200, guards=[require_admin])
 async def run_test(request: Request) -> Response:
     logger.info("Entered handler")
     from kiroku.parsers import parse
@@ -142,6 +144,7 @@ async def run_test(request: Request) -> Response:
 
 router = Router(
     path="/parsers",
+    guards=[require_authenticated],
     route_handlers=[
         list_parsers,
         new_parser,

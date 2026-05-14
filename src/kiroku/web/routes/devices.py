@@ -20,6 +20,7 @@ from kiroku.models import (
     RunStatus,
     TransportProtocol,
 )
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 from kiroku.web.import_devices import import_csv
@@ -220,7 +221,7 @@ async def new_device(db: Session) -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_device(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -260,7 +261,7 @@ async def create_device(
     return Redirect(path="/devices")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_devices(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -321,7 +322,7 @@ async def edit_device(device_id: int, db: Session) -> Template:
 
 
 @post(
-    "/{device_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+    "/{device_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin]
 )
 async def update_device(
     device_id: int,
@@ -368,6 +369,7 @@ async def update_device(
     "/{device_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_device(device_id: int, db: Session) -> Redirect:
     device = db.get(Device, device_id)
@@ -393,7 +395,7 @@ async def import_template() -> Response:
     )
 
 
-@post("/import", dependencies={"db": provide_db})
+@post("/import", dependencies={"db": provide_db}, guards=[require_admin])
 async def import_submit(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.MULTI_PART),
@@ -583,6 +585,7 @@ async def search_config_history(
 
 router = Router(
     path="/devices",
+    guards=[require_authenticated],
     route_handlers=[
         list_devices,
         new_device,

@@ -3,8 +3,8 @@
 {% block content %}
 
 <div class="toolbar">
-  <a role="button" href="/devices/new">New device</a>
-  <a class="secondary" role="button" href="/devices/import">Bulk import</a>
+  {% if cu and cu.is_admin %}<a role="button" href="/devices/new">New device</a>{% endif %}
+  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="/devices/import">Bulk import</a>{% endif %}
   <a class="secondary" role="button" href="/devices/report">Report</a>
   <button class="help-btn" onclick="openHelp('devices')">? Help</button>
 </div>
@@ -29,6 +29,7 @@
 </form>
 
 <form class="table-form" method="POST" action="/devices/bulk">
+  {% if cu and cu.is_admin %}
   <div class="toolbar" style="margin-top:8px">
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected devices?')">Delete selected</button>
@@ -67,6 +68,7 @@
       <button type="button" onclick="toggleBulkEdit()">Cancel</button>
     </div>
   </div>
+  {% endif %}
 
   <div class="table-wrap">
   <table>
@@ -105,8 +107,10 @@
           {% endif %}
         </td>
         <td>
+          {% if cu and cu.is_admin %}
           <a class="icon-btn" role="button" href="/devices/{{ d.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
           <button class="icon-btn icon-btn-delete" formaction="/devices/{{ d.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ d.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
+          {% endif %}
         </td>
       </tr>
     {% else %}

@@ -3,24 +3,27 @@
 {% block content %}
 <form class="table-form" method="POST" action="/schedules/bulk">
   <div class="toolbar">
-    <a role="button" href="/schedules/new">New schedule</a>
+    {% if cu and cu.is_admin %}<a role="button" href="/schedules/new">New schedule</a>{% endif %}
     <button class="help-btn" onclick="openHelp('schedules')">? Help</button>
+    {% if cu and cu.is_admin %}
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected schedules?')">Delete selected</button>
     </span>
+    {% endif %}
   </div>
   <div class="table-wrap">
   <table>
     <thead>
       <tr>
-        <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Job</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th><th>Actions</th>
+        {% if cu and cu.is_admin %}<th><input type="checkbox" id="select-all" title="Select all"></th>{% endif %}
+        <th>Name</th><th>Job</th><th>Kind</th><th>Cron</th><th>TZ</th><th>Enabled</th><th>Next run</th>
+        {% if cu and cu.is_admin %}<th>Actions</th>{% endif %}
       </tr>
     </thead>
     <tbody>
     {% for s in schedules %}
       <tr>
-        <td><input type="checkbox" name="ids" value="{{ s.id }}"></td>
+        {% if cu and cu.is_admin %}<td><input type="checkbox" name="ids" value="{{ s.id }}"></td>{% endif %}
         <td>{{ s.name }}</td>
         <td>{{ s.job.name if s.job else '-' }}</td>
         <td>{{ s.job.kind.value if s.job else '-' }}</td>
@@ -28,18 +31,21 @@
         <td>{{ s.timezone }}</td>
         <td>{{ 'yes' if s.enabled else 'no' }}</td>
         <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
+        {% if cu and cu.is_admin %}
         <td>
           <a class="icon-btn" role="button" href="/schedules/{{ s.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
           <button class="icon-btn icon-btn-delete" formaction="/schedules/{{ s.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ s.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
+        {% endif %}
       </tr>
     {% else %}
-      <tr><td colspan="9">No schedules.</td></tr>
+      <tr><td colspan="{{ 9 if cu and cu.is_admin else 7 }}">No schedules.</td></tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
 </form>
+{% if cu and cu.is_admin %}
 <script>
 (function () {
   var sa = document.getElementById('select-all');
@@ -52,4 +58,5 @@
   document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
 })();
 </script>
+{% endif %}
 {% endblock %}

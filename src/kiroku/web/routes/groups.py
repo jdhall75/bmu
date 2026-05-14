@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import Credential, DeviceGroup
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 
@@ -33,7 +34,7 @@ async def new_group(db: Session) -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_group(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -52,7 +53,7 @@ async def create_group(
     return Redirect(path="/groups")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_groups(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -77,7 +78,7 @@ async def edit_group(group_id: int, db: Session) -> Template:
 
 
 @post(
-    "/{group_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+    "/{group_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin]
 )
 async def update_group(
     group_id: int,
@@ -102,6 +103,7 @@ async def update_group(
     "/{group_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_group(group_id: int, db: Session) -> Redirect:
     group = db.get(DeviceGroup, group_id)
@@ -119,6 +121,7 @@ async def view_group(db: Session, group_id: int) -> Template:
 
 router = Router(
     path="/groups",
+    guards=[require_authenticated],
     route_handlers=[
         list_groups,
         new_group,

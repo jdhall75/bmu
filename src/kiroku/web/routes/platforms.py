@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kiroku.models import Platform
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 
 # Shown in the form as a reference when the operator creates a new platform.
@@ -74,7 +75,7 @@ async def new_platform() -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_platform(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -102,6 +103,7 @@ async def edit_platform(platform_id: int, db: Session) -> Template:
     "/{platform_id:int}",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def update_platform(
     platform_id: int,
@@ -120,6 +122,7 @@ async def update_platform(
     "/{platform_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_platform(platform_id: int, db: Session) -> Redirect:
     platform = db.get(Platform, platform_id)
@@ -131,6 +134,7 @@ async def delete_platform(platform_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/platforms",
+    guards=[require_authenticated],
     route_handlers=[
         list_platforms,
         new_platform,

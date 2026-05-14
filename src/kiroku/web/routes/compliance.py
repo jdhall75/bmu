@@ -19,6 +19,7 @@ from kiroku.compliance import (
 )
 from kiroku.models import Device, DeviceGroup
 from kiroku.models.compliance import ComplianceCheck, CompliancePolicy
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
 
@@ -162,7 +163,7 @@ async def new_policy_form(db: Session) -> Template:
     return Template(template_name="compliance/form.html", context=_form_context(db))
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_policy(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -206,7 +207,7 @@ async def edit_policy_form(policy_id: int, db: Session) -> Template:
     return Template(template_name="compliance/form.html", context=ctx)
 
 
-@post("/{policy_id:int}", dependencies={"db": provide_db})
+@post("/{policy_id:int}", dependencies={"db": provide_db}, guards=[require_admin])
 async def update_policy(
     policy_id: int,
     db: Session,
@@ -230,7 +231,7 @@ async def run_policy(policy_id: int, db: Session) -> Redirect:
     return Redirect(f"/compliance/{policy_id}", status_code=HTTP_303_SEE_OTHER)
 
 
-@post("/{policy_id:int}/delete", dependencies={"db": provide_db})
+@post("/{policy_id:int}/delete", dependencies={"db": provide_db}, guards=[require_admin])
 async def delete_policy(policy_id: int, db: Session) -> Redirect:
     policy = db.get(CompliancePolicy, policy_id)
     if policy is None:
@@ -242,6 +243,7 @@ async def delete_policy(policy_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/compliance",
+    guards=[require_authenticated],
     route_handlers=[
         list_policies,
         new_policy_form,

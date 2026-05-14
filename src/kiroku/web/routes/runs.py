@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from kiroku.models import Run, RunBatch
 from kiroku.recorder.git_store import GitStore
+from kiroku.web.auth import require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import sandbox as _sandbox
 
@@ -143,6 +144,7 @@ def _parsed_display(
 
 router = Router(
     path="/runs",
+    guards=[require_authenticated],
     route_handlers=[
         list_batches,
         view_batch,

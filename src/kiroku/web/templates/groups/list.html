@@ -3,31 +3,35 @@
 {% block content %}
 <form class="table-form" method="POST" action="/groups/bulk">
   <div class="toolbar">
-    <a role="button" href="/groups/new">New group</a>
+    {% if cu and cu.is_admin %}<a role="button" href="/groups/new">New group</a>{% endif %}
     <button class="help-btn" onclick="openHelp('groups')">? Help</button>
+    {% if cu and cu.is_admin %}
     <span class="bulk-actions" id="bulk-actions" style="display:none">
       <button name="action" value="delete" onclick="return confirm('Delete selected groups?')">Delete selected</button>
     </span>
+    {% endif %}
   </div>
   <div class="table-wrap">
   <table>
     <thead>
       <tr>
-        <th><input type="checkbox" id="select-all" title="Select all"></th>
+        {% if cu and cu.is_admin %}<th><input type="checkbox" id="select-all" title="Select all"></th>{% endif %}
         <th>Name</th><th>Devices</th><th>Default credential</th><th>Max parallel</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
     {% for g in groups %}
       <tr>
-        <td><input type="checkbox" name="ids" value="{{ g.id }}"></td>
+        {% if cu and cu.is_admin %}<td><input type="checkbox" name="ids" value="{{ g.id }}"></td>{% endif %}
         <td><a href="/groups/{{ g.id }}">{{ g.name }}</a></td>
         <td>{{ g.devices|length }}</td>
         <td>{{ g.default_credential.name if g.default_credential else '-' }}</td>
         <td>{{ g.max_parallel }}</td>
         <td>
+          {% if cu and cu.is_admin %}
           <a class="icon-btn" role="button" href="/groups/{{ g.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
           <button class="icon-btn icon-btn-delete" formaction="/groups/{{ g.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ g.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
+          {% endif %}
         </td>
       </tr>
     {% else %}
@@ -37,6 +41,7 @@
   </table>
   </div>
 </form>
+{% if cu and cu.is_admin %}
 <script>
 (function () {
   var sa = document.getElementById('select-all');
@@ -49,4 +54,5 @@
   document.querySelectorAll('input[name="ids"]').forEach(function (c) { c.addEventListener('change', update); });
 })();
 </script>
+{% endif %}
 {% endblock %}

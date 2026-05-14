@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from kiroku.credentials.local import LocalCredentialResolver
 from kiroku.models import Credential, CredentialProvider
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
 
@@ -47,7 +48,7 @@ async def list_creds(db: Session) -> Template:
     )
 
 
-@get("/new")
+@get("/new", guards=[require_admin])
 async def new_cred() -> Template:
     return Template(
         template_name="credentials/form.html",
@@ -55,7 +56,7 @@ async def new_cred() -> Template:
     )
 
 
-@post("/", dependencies={"db": provide_db})
+@post("/", dependencies={"db": provide_db}, guards=[require_admin])
 async def create_cred(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -76,7 +77,7 @@ async def create_cred(
     return Redirect(path="/credentials")
 
 
-@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def bulk_creds(
     db: Session,
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
@@ -89,7 +90,7 @@ async def bulk_creds(
     return Redirect(path="/credentials")
 
 
-@get("/{cred_id:int}/edit", dependencies={"db": provide_db})
+@get("/{cred_id:int}/edit", dependencies={"db": provide_db}, guards=[require_admin])
 async def edit_cred(cred_id: int, db: Session) -> Template:
     cred = db.get(Credential, cred_id)
     return Template(
@@ -98,7 +99,7 @@ async def edit_cred(cred_id: int, db: Session) -> Template:
     )
 
 
-@post("/{cred_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER)
+@post("/{cred_id:int}", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
 async def update_cred(
     cred_id: int,
     db: Session,
@@ -122,6 +123,7 @@ async def update_cred(
     "/{cred_id:int}/delete",
     dependencies={"db": provide_db},
     status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def delete_cred(cred_id: int, db: Session) -> Redirect:
     cred = db.get(Credential, cred_id)
@@ -133,6 +135,7 @@ async def delete_cred(cred_id: int, db: Session) -> Redirect:
 
 router = Router(
     path="/credentials",
+    guards=[require_authenticated],
     route_handlers=[
         list_creds,
         new_cred,

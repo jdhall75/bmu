@@ -9,6 +9,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from kiroku.models import DeviceGroup
+from kiroku.web.auth import require_authenticated
 from kiroku.web.deps import provide_db
 
 PAGE_SIZE = 50
@@ -238,4 +239,4 @@ async def search_configs(
     )
 
 
-router = Router(path="/search", route_handlers=[search_configs])
+router = Router(path="/search", guards=[require_authenticated], route_handlers=[search_configs])

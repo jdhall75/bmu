@@ -41,6 +41,7 @@
   </symbol>
 </svg>
 
+{% set cu = current_user() %}
   <header>
     <nav>
       <ul>
@@ -58,6 +59,17 @@
         <li><a href="/compliance" {% if request.url.path.startswith('/compliance') %}aria-current="page"{% endif %}>Compliance</a></li>
       </ul>
       <ul>
+        {% if cu %}
+        <li style="display:flex;align-items:center;gap:6px;font-size:13px">
+          <span class="muted">{{ cu.username }}</span>
+          <span class="status {{ 'status-success' if cu.is_admin else 'status-running' }}" style="font-size:11px;padding:1px 6px">{{ cu.role }}</span>
+        </li>
+        <li>
+          <form method="post" action="/auth/logout" style="display:contents">
+            <button type="submit" class="help-nav-btn" title="Sign out" style="font-size:12px">⏻</button>
+          </form>
+        </li>
+        {% endif %}
         <li><button id="theme-toggle" class="help-nav-btn" onclick="toggleTheme()" title="Toggle light/dark theme">&#9790;</button></li>
         <li><button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button></li>
       </ul>

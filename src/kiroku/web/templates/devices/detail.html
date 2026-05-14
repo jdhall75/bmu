@@ -21,7 +21,7 @@
 </dl>
 
 <div class="actions">
-  <a role="button" href="/devices/{{ device.id }}/edit">Edit</a>
+  {% if cu and cu.is_admin %}<a role="button" href="/devices/{{ device.id }}/edit">Edit</a>{% endif %}
   {% if device.latest_backup_path %}
     <a role="button" href="/devices/{{ device.id }}/config">View Config</a>
     <a class="secondary" role="button" href="/devices/{{ device.id }}/config/history">Git History</a>
