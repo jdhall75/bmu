@@ -3,9 +3,10 @@
 {% block content %}
 <div class="toolbar" style="margin-bottom:16px">
   <h2 style="margin:0">{{ policy.name }}</h2>
-  <form method="post" action="/compliance/{{ policy.id }}/run" style="display:inline">
-    <button type="submit">Run now</button>
-  </form>
+  <!-- <form method="post" action="/compliance/{{ policy.id }}/run" style="display:inline"> -->
+  <!--   <button type="submit">Run now</button> -->
+  <!-- </form> -->
+  <button type="submit" formaction="/compliance/{{ policy.id }}/run">Run Now</button>
   <a class="secondary" role="button" href="/compliance/{{ policy.id }}/edit">Edit</a>
   <a class="secondary" role="button" href="/compliance">Back</a>
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
