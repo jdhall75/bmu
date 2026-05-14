@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from litestar import Router, get, post
 from litestar.enums import RequestEncodingType
+from litestar.exceptions import NotFoundException
 from litestar.params import Body
 from litestar.response import Redirect, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
@@ -17,7 +18,7 @@ from kiroku.compliance import (
     upsert_compliance_results,
 )
 from kiroku.models import Device, DeviceGroup
-from kiroku.models.compliance import ComplianceCheck, CompliancePolicy, ComplianceResult
+from kiroku.models.compliance import ComplianceCheck, CompliancePolicy
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
 
@@ -125,6 +126,8 @@ def _scoped_devices(policy: CompliancePolicy, db: Session) -> list[Device]:
 def _run_policy(policy: CompliancePolicy, db: Session) -> None:
     """Evaluate policy against all scoped devices and upsert results."""
     device_ids = scoped_device_ids(policy)
+    if not device_ids:
+        return
     rows = db.execute(
         text("SELECT device_id, content FROM device_configs WHERE device_id = ANY(:ids)"),
         {"ids": device_ids},
@@ -179,6 +182,8 @@ async def create_policy(
 @get("/{policy_id:int}", dependencies={"db": provide_db})
 async def view_policy(policy_id: int, db: Session) -> Template:
     policy = db.get(CompliancePolicy, policy_id)
+    if policy is None:
+        raise NotFoundException(detail=f"Policy {policy_id} not found")
     devices = _scoped_devices(policy, db)
     result_map = {r.device_id: r for r in policy.results}
     return Template(
@@ -195,6 +200,8 @@ async def view_policy(policy_id: int, db: Session) -> Template:
 @get("/{policy_id:int}/edit", dependencies={"db": provide_db})
 async def edit_policy_form(policy_id: int, db: Session) -> Template:
     policy = db.get(CompliancePolicy, policy_id)
+    if policy is None:
+        raise NotFoundException(detail=f"Policy {policy_id} not found")
     ctx = _form_context(db, policy)
     return Template(template_name="compliance/form.html", context=ctx)
 
@@ -206,6 +213,8 @@ async def update_policy(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     policy = db.get(CompliancePolicy, policy_id)
+    if policy is None:
+        raise NotFoundException(detail=f"Policy {policy_id} not found")
     _apply_policy_data(policy, data, db)
     db.commit()
     return Redirect(f"/compliance/{policy_id}", status_code=HTTP_303_SEE_OTHER)
@@ -214,6 +223,8 @@ async def update_policy(
 @post("/{policy_id:int}/run", dependencies={"db": provide_db})
 async def run_policy(policy_id: int, db: Session) -> Redirect:
     policy = db.get(CompliancePolicy, policy_id)
+    if policy is None:
+        raise NotFoundException(detail=f"Policy {policy_id} not found")
     _run_policy(policy, db)
     db.commit()
     return Redirect(f"/compliance/{policy_id}", status_code=HTTP_303_SEE_OTHER)
@@ -222,6 +233,8 @@ async def run_policy(policy_id: int, db: Session) -> Redirect:
 @post("/{policy_id:int}/delete", dependencies={"db": provide_db})
 async def delete_policy(policy_id: int, db: Session) -> Redirect:
     policy = db.get(CompliancePolicy, policy_id)
+    if policy is None:
+        raise NotFoundException(detail=f"Policy {policy_id} not found")
     db.delete(policy)
     db.commit()
     return Redirect("/compliance", status_code=HTTP_303_SEE_OTHER)

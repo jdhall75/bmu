@@ -43,9 +43,9 @@ def _satisfies(row: dict, check: ComplianceCheck) -> bool:
     expected = check.expected or ""
 
     if op == "exists":
-        return bool(row.get(field))
+        return field in row and row[field] is not None and row[field] != ""
     if op == "not_exists":
-        return not row.get(field)
+        return field not in row or row[field] is None or row[field] == ""
 
     value = row.get(field, "")
 
