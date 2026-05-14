@@ -27,12 +27,25 @@ def ensure_consumer_group(stream: str, group: str) -> None:
             raise
 
 
-def publish_job(spec: JobSpec) -> str:
+def _job_stream_for(spec: JobSpec) -> str:
     settings = get_settings()
+    if spec.worker_pool:
+        return f"{settings.job_stream}:{spec.worker_pool}"
+    return settings.job_stream
+
+
+def publish_job(spec: JobSpec) -> str:
     r = _client()
+    stream = _job_stream_for(spec)
     payload = spec.model_dump_json()
-    msg_id = r.xadd(settings.job_stream, {"data": payload})
-    log.debug("queued job", run_id=spec.run_id, device=spec.device_name, msg_id=msg_id)
+    msg_id = r.xadd(stream, {"data": payload})
+    log.debug(
+        "queued job",
+        run_id=spec.run_id,
+        device=spec.device_name,
+        stream=stream,
+        msg_id=msg_id,
+    )
     return msg_id
 
 
@@ -48,11 +61,12 @@ def read_jobs(
 ) -> list[tuple[str, JobSpec]]:
     settings = get_settings()
     r = _client()
-    ensure_consumer_group(settings.job_stream, settings.job_consumer_group)
+    stream = settings.effective_job_stream
+    ensure_consumer_group(stream, settings.job_consumer_group)
     entries = r.xreadgroup(
         groupname=settings.job_consumer_group,
         consumername=consumer,
-        streams={settings.job_stream: ">"},
+        streams={stream: ">"},
         count=count,
         block=block_ms,
     )
@@ -77,7 +91,7 @@ def read_results(
 
 def ack_job(msg_id: str) -> None:
     settings = get_settings()
-    _client().xack(settings.job_stream, settings.job_consumer_group, msg_id)
+    _client().xack(settings.effective_job_stream, settings.job_consumer_group, msg_id)
 
 
 def ack_result(msg_id: str) -> None:

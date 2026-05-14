@@ -56,8 +56,8 @@ def _cve_badges(db: Session) -> dict[int, dict]:
 
 
 CSV_TEMPLATE = (
-    "name,hostname,port,description,make,model,role,group,platform,transport,driver_kind,credentials,enabled\n"
-    "edge-rtr-01,10.0.0.1,22,Core edge router,Cisco,ASR-9000,edge,core,cisco_iosxe,ssh,cli,core-admin,1\n"
+    "name,hostname,port,description,make,model,role,group,platform,transport,driver_kind,credentials,enabled,worker_pool\n"
+    "edge-rtr-01,10.0.0.1,22,Core edge router,Cisco,ASR-9000,edge,core,cisco_iosxe,ssh,cli,core-admin,1,\n"
 )
 
 
@@ -70,6 +70,17 @@ def _platform_value(device) -> str:
     return ""
 
 
+def _worker_pools(db: Session) -> list[str]:
+    """Distinct non-null worker_pool values from both devices and groups."""
+    from sqlalchemy import union
+    from kiroku.models.group import DeviceGroup as _DG
+
+    device_pools = select(Device.worker_pool).where(Device.worker_pool.is_not(None))
+    group_pools = select(_DG.worker_pool).where(_DG.worker_pool.is_not(None))
+    rows = db.execute(union(device_pools, group_pools).order_by()).scalars().all()
+    return sorted(set(rows))
+
+
 def _device_form_options(db: Session) -> dict:
     return {
         "groups": db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all(),
@@ -78,6 +89,7 @@ def _device_form_options(db: Session) -> dict:
         "custom_platforms": db.scalars(select(Platform).order_by(Platform.name)).all(),
         "transports": [t.value for t in TransportProtocol],
         "driver_kinds": [k.value for k in DriverKind],
+        "worker_pools": _worker_pools(db),
     }
 
 
@@ -259,6 +271,7 @@ async def create_device(
         command_timeout=int(data["command_timeout"])
         if data.get("command_timeout")
         else None,
+        worker_pool=data.get("worker_pool") or None,
         enabled=bool(data.get("enabled")),
     )
     _apply_platform(d, data)
@@ -315,6 +328,8 @@ async def bulk_devices(
                 device.model = data["bulk_model"] or None
             if data.get("bulk_role"):
                 device.role = data["bulk_role"] or None
+            if "bulk_worker_pool" in data:
+                device.worker_pool = data["bulk_worker_pool"] or None
         db.commit()
 
     return Redirect(path="/devices")
@@ -360,6 +375,7 @@ async def update_device(
     device.command_timeout = (
         int(data["command_timeout"]) if data.get("command_timeout") else None
     )
+    device.worker_pool = data.get("worker_pool") or None
     _apply_platform(device, data)
     device.enabled = bool(data.get("enabled"))
     group_ids = _parse_group_ids(data)

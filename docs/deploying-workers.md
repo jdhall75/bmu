@@ -297,11 +297,60 @@ multiple containers — the worker already fans out jobs to a `ProcessPoolExecut
 
 ---
 
+## Worker Pools — Pinning Devices to Specific Workers
+
+By default all workers share a single job stream (`kiroku:jobs`) and any
+worker can execute any job. **Worker pools** let you pin specific devices or
+groups to workers at a particular network location.
+
+### How it works
+
+Each job carries a `worker_pool` label derived at dispatch time:
+
+```
+device.worker_pool  →  group.worker_pool  →  None (default pool)
+```
+
+The dispatcher publishes to `kiroku:jobs:<pool>` instead of `kiroku:jobs`.
+Workers set `KIROKU_WORKER_POOL=<pool>` to subscribe to only that stream.
+A worker with no pool set reads from `kiroku:jobs` (the default stream).
+
+### Configuring pools
+
+In the UI:
+- **Devices → Edit device** — set *Worker pool* on the device to override its group.
+- **Groups → Edit group** — set *Worker pool* on the group; all member devices
+  inherit it unless they have their own override.
+
+In CSV import — add a `worker_pool` column:
+```csv
+name,hostname,...,worker_pool
+edge-rtr-01,10.0.0.1,...,site-a
+dmz-fw-01,192.168.1.1,...,dmz
+core-sw-01,10.10.0.1,...,
+```
+A blank cell leaves an existing device's pool unchanged (new devices get no pool = default).
+
+### Example — three-site deployment
+
+```
+Central:  KIROKU_WORKER_POOL unset   → reads kiroku:jobs        (HQ devices)
+Site A:   KIROKU_WORKER_POOL=site-a  → reads kiroku:jobs:site-a
+DMZ:      KIROKU_WORKER_POOL=dmz     → reads kiroku:jobs:dmz
+```
+
+Redis streams for each pool are created automatically on first use
+(`XGROUP CREATE ... MKSTREAM`). You can add a pool at any time — just start
+a worker with the new pool name and assign devices to it in the UI.
+
+---
+
 ## Environment Variable Reference (worker only)
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `KIROKU_REDIS_URL` | Yes | — | Redis connection URL (`rediss://` for TLS) |
+| `KIROKU_WORKER_POOL` | No | — | Pool name this worker handles (e.g. `site-a`). Unset = default pool |
 | `KIROKU_WORKER_CONCURRENCY` | No | `8` | Max concurrent device jobs |
 | `KIROKU_WORKER_CONNECT_TIMEOUT` | No | `30` | SSH/NETCONF connect timeout (seconds) |
 | `KIROKU_WORKER_COMMAND_TIMEOUT` | No | `60` | Per-command timeout (seconds) |

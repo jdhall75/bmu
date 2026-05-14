@@ -24,6 +24,10 @@ class DeviceGroup(Base, TimestampMixin):
     # concurrency setting.
     max_parallel: Mapped[int] = mapped_column(Integer, default=8, nullable=False)
 
+    # Worker pool that devices in this group are routed to by default.
+    # Overridden by device-level worker_pool when set.
+    worker_pool: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     devices: Mapped[list["Device"]] = relationship(
         "Device", secondary=device_group_memberships, back_populates="groups"
     )

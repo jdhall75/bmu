@@ -19,6 +19,17 @@ class Settings(BaseSettings):
     job_consumer_group: str = "workers"
     result_consumer_group: str = "recorders"
 
+    # When set, the worker subscribes to kiroku:jobs:<worker_pool> and only
+    # processes jobs routed to that pool.  Unset = default pool.
+    worker_pool: str | None = None
+
+    @property
+    def effective_job_stream(self) -> str:
+        """The Redis stream this worker reads from (pool-specific or default)."""
+        if self.worker_pool:
+            return f"{self.job_stream}:{self.worker_pool}"
+        return self.job_stream
+
     secret_key: str = "change-me-32-bytes-min-change-me-32-bytes"
     backup_repo_path: Path = Path("/var/lib/kiroku/backups")
 

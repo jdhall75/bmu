@@ -72,6 +72,10 @@ class JobSpec(BaseModel):
     connect_timeout: int | None = None
     command_timeout: int | None = None
 
+    # Worker pool this job is routed to.  None = default pool (kiroku:jobs).
+    # Set by the dispatcher based on device.worker_pool > group.worker_pool > None.
+    worker_pool: str | None = None
+
     credential: CredentialRef
     # Resolved material embedded at dispatch time — workers use this directly.
     credential_material: EmbeddedCredential | None = None

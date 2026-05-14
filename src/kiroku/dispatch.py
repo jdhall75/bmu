@@ -31,6 +31,7 @@ def _spec_for(
         return None
 
     material = resolve_credential(cred)
+    pool = device.worker_pool or (group.worker_pool if group else None) or None
 
     parser = job.parser_template
     custom_yaml = (
@@ -60,6 +61,7 @@ def _spec_for(
         cve_product=job.cve_product,
         connect_timeout=device.connect_timeout,
         command_timeout=device.command_timeout,
+        worker_pool=pool,
         credential=CredentialRef(
             provider=cred.provider.value,
             credential_id=cred.id,

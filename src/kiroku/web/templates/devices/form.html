@@ -80,6 +80,16 @@
       <option value="{{ c.id }}"{% if device and device.credential_id == c.id %} selected{% endif %}>{{ c.name }}</option>
     {% endfor %}
   </select>
+
+  <label>Worker pool
+    <span class="muted" style="font-size:0.8em;font-weight:normal">— overrides group pool; blank = default pool</span>
+  </label>
+  <input type="text" name="worker_pool" value="{{ device.worker_pool or '' }}"
+         list="pool-suggestions" placeholder="e.g. site-a, dmz (blank = default)">
+  <datalist id="pool-suggestions">
+    {% for p in worker_pools %}<option value="{{ p }}">{% endfor %}
+  </datalist>
+
   <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not device or device.enabled %} checked{% endif %}>
   <div class="actions">
     <button type="submit">{% if device %}Save{% else %}Create{% endif %}</button>

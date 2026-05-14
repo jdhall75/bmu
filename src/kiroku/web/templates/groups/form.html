@@ -13,6 +13,16 @@
     {% endfor %}
   </select>
   <label>Max parallel</label><input type="number" name="max_parallel" value="{{ group.max_parallel if group else 8 }}" min="1">
+
+  <label>Worker pool
+    <span class="muted" style="font-size:0.8em;font-weight:normal">— route all devices in this group to a specific worker; blank = default pool</span>
+  </label>
+  <input type="text" name="worker_pool" value="{{ group.worker_pool or '' }}"
+         list="pool-suggestions" placeholder="e.g. site-a, dmz (blank = default)">
+  <datalist id="pool-suggestions">
+    {% for p in worker_pools %}<option value="{{ p }}">{% endfor %}
+  </datalist>
+
   <div class="actions">
     <button type="submit">{% if group %}Save{% else %}Create{% endif %}</button>
     <a class="secondary" role="button" href="/groups">Cancel</a>

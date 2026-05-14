@@ -4,11 +4,11 @@ Accepts either a file upload or a pasted blob. Headers (case-insensitive,
 order doesn't matter):
 
     name, hostname, port, description, make, model, role, group, platform,
-    transport, driver_kind, credentials, enabled
+    transport, driver_kind, credentials, enabled, worker_pool
 
 Required: name, hostname, group.
 Optional: make, model, role, platform, transport, driver_kind, port,
-          description, credentials, enabled.
+          description, credentials, enabled, worker_pool.
 
 Upsert behaviour
 ----------------
@@ -20,6 +20,8 @@ Upsert behaviour
     - ``enabled``: blank = leave unchanged (new devices default to True).
     - ``group``: listed groups are **added** to existing group membership;
       no groups are removed.
+    - ``worker_pool``: blank = leave unchanged; set to a pool name to pin the
+      device to a specific worker pool.
 
 The whole import runs in a single transaction. If any row fails to
 validate, nothing is committed and the results page lists per-row errors.
@@ -173,6 +175,8 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
                     device.credential_id = credential.id
                 if enabled_val is not None:
                     device.enabled = enabled_val
+                if get("worker_pool"):
+                    device.worker_pool = get("worker_pool")
                 # Add new groups without removing existing ones.
                 existing_group_ids = {g.id for g in device.groups}
                 for g in matched_groups:
@@ -202,6 +206,7 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
                     driver_kind=driver_kind,
                     credential_id=credential.id if credential else None,
                     enabled=enabled_val if enabled_val is not None else True,
+                    worker_pool=get("worker_pool") or None,
                 )
                 device.groups = matched_groups
                 pending_add.append(device)
@@ -244,5 +249,5 @@ def import_csv(db: Session, raw: str) -> tuple[list[RowResult], int, int]:
 
 CSV_TEMPLATE = (
     "name,hostname,port,description,make,model,role,"
-    "group,platform,transport,driver_kind,credentials,enabled\r\n"
+    "group,platform,transport,driver_kind,credentials,enabled,worker_pool\r\n"
 )

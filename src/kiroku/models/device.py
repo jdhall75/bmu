@@ -75,6 +75,10 @@ class Device(Base, TimestampMixin):
 
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
 
+    # Worker pool this device's jobs are routed to.  None = default pool.
+    # Overrides the group-level pool when set.
+    worker_pool: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+
     latest_backup_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
     latest_backup_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

@@ -5,7 +5,7 @@
 <p>
   Upload a CSV or paste rows below. Required columns:
   <code>name, hostname, group</code>.
-  Optional: <code>port, description, make, model, role, platform, transport, driver_kind, credentials, enabled</code>.
+  Optional: <code>port, description, make, model, role, platform, transport, driver_kind, credentials, enabled, worker_pool</code>.
   Lookups for <code>group</code> and <code>credentials</code> are by name &mdash; create those first.
 </p>
 <p>
@@ -13,6 +13,7 @@
   Only non-blank cells overwrite existing values &mdash; leave a cell blank to keep the current value.
   Groups in the CSV are added to the device's existing group membership; no groups are removed.
   A blank <code>enabled</code> cell leaves the current state unchanged (new devices default to enabled).
+  Set <code>worker_pool</code> to pin a device to a specific remote worker pool (e.g. <code>site-a</code>); blank = default pool.
 </p>
 <p><a href="/devices/import/template">Download CSV template</a></p>
 
