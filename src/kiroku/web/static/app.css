@@ -569,7 +569,10 @@ pre {
   margin-bottom: 0;
 }
 
-/* Pico sets width:100% on button[type=submit] — override for inline search rows */
+/* Pico sets width:100% on button[type=submit], input, select, textarea — override for inline contexts */
+.toolbar button[type="submit"],
+.toolbar input:not([type="checkbox"],[type="radio"]),
+.toolbar select,
 .search-row [type="submit"] {
   width: auto;
   margin-bottom: 0;
