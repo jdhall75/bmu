@@ -2,7 +2,6 @@
 {% block title %}Compliance - Kiroku{% endblock %}
 {% block content %}
 <div class="toolbar">
-  <h2 style="margin:0">Compliance</h2>
   {% if cu and cu.is_admin %}<a role="button" href="/compliance/new">New policy</a>{% endif %}
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>
