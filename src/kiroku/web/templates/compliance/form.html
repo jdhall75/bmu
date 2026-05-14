@@ -71,56 +71,61 @@
       <button type="button" onclick="addCheck()" style="margin-left:12px;font-size:0.8em;padding:2px 10px">+ Add check</button>
     </legend>
 
-    <div class="table-wrap">
-    <table id="checks-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Field</th>
-          <th>Operator</th>
-          <th>Expected</th>
-          <th>Mode</th>
-          <th>Severity</th>
-          <th>Description</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="checks-body">
+    <div id="checks-body">
       {% for c in (policy.checks if policy else []) %}
-        <tr>
-          <input type="hidden" name="check_id" value="{{ c.id }}">
-          <td><input type="text" name="check_name" value="{{ c.name }}" required style="min-width:120px"></td>
-          <td><input type="text" name="check_field" value="{{ c.field }}" required placeholder="FIELD" style="min-width:100px"></td>
-          <td>
+      <div class="check-card">
+        <input type="hidden" name="check_id" value="{{ c.id }}">
+        <div class="check-card-row">
+          <div>
+            <label>Name</label>
+            <input type="text" name="check_name" value="{{ c.name }}" required placeholder="Check name">
+          </div>
+          <div>
+            <label>Field</label>
+            <input type="text" name="check_field" value="{{ c.field }}" required placeholder="FIELD">
+          </div>
+          <div>
+            <label>Operator</label>
             <select name="check_operator">
               {% for op in operators %}
                 <option value="{{ op }}" {% if c.operator == op %}selected{% endif %}>{{ op }}</option>
               {% endfor %}
             </select>
-          </td>
-          <td><input type="text" name="check_expected" value="{{ c.expected or '' }}" style="min-width:100px"></td>
-          <td>
+          </div>
+          <div>
+            <label>Expected</label>
+            <input type="text" name="check_expected" value="{{ c.expected or '' }}" placeholder="value">
+          </div>
+          <div class="check-del">
+            <button type="button" onclick="this.closest('.check-card').remove()" class="icon-btn icon-btn-delete" title="Remove">
+              <svg class="icon"><use href="#icon-delete"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="check-card-row2">
+          <div>
+            <label>Mode</label>
             <select name="check_mode">
               {% for m in modes %}
                 <option value="{{ m }}" {% if c.mode == m %}selected{% endif %}>{{ m }}</option>
               {% endfor %}
             </select>
-          </td>
-          <td>
+          </div>
+          <div>
+            <label>Severity</label>
             <select name="check_severity">
               {% for sv in severities %}
                 <option value="{{ sv }}" {% if c.severity == sv %}selected{% endif %}>{{ sv }}</option>
               {% endfor %}
             </select>
-          </td>
-          <td><input type="text" name="check_description" value="{{ c.description or '' }}" placeholder="Failure message" style="min-width:160px"></td>
-          <td><button type="button" onclick="this.closest('tr').remove()" class="icon-btn icon-btn-delete" title="Remove">
-            <svg class="icon"><use href="#icon-delete"/></svg>
-          </button></td>
-        </tr>
+          </div>
+          <div>
+            <label>Description <span style="font-weight:normal;text-transform:none">(failure message)</span></label>
+            <input type="text" name="check_description" value="{{ c.description or '' }}" placeholder="Failure message">
+          </div>
+        </div>
+      </div>
       {% endfor %}
-      </tbody>
-    </table>
     </div>
   </fieldset>
 
@@ -131,11 +136,11 @@
 </form>
 
 <script>
-var OPERATORS = {{ operators | tojson }};
-var MODES     = {{ modes | tojson }};
+var OPERATORS  = {{ operators | tojson }};
+var MODES      = {{ modes | tojson }};
 var SEVERITIES = {{ severities | tojson }};
 
-function sel(name, options, selected) {
+function makeSelect(name, options, selected) {
   var s = document.createElement('select');
   s.name = name;
   options.forEach(function(o) {
@@ -147,41 +152,74 @@ function sel(name, options, selected) {
   return s;
 }
 
-function inp(name, placeholder, style) {
+function makeInput(name, placeholder) {
   var i = document.createElement('input');
   i.type = 'text'; i.name = name;
   if (placeholder) i.placeholder = placeholder;
-  if (style) i.style.cssText = style;
   return i;
 }
 
-function addCheck() {
-  var tbody = document.getElementById('checks-body');
-  var tr = document.createElement('tr');
+function labeledField(labelText, el, note) {
+  var d = document.createElement('div');
+  var lbl = document.createElement('label');
+  lbl.textContent = labelText;
+  if (note) {
+    var sp = document.createElement('span');
+    sp.style.cssText = 'font-weight:normal;text-transform:none';
+    sp.textContent = ' ' + note;
+    lbl.appendChild(sp);
+  }
+  d.appendChild(lbl);
+  d.appendChild(el);
+  return d;
+}
 
-  function td(el) { var d = document.createElement('td'); d.appendChild(el); return d; }
+function addCheck() {
+  var body = document.getElementById('checks-body');
+
+  var card = document.createElement('div');
+  card.className = 'check-card';
 
   var hidId = document.createElement('input');
   hidId.type = 'hidden'; hidId.name = 'check_id'; hidId.value = '';
-  tr.appendChild(hidId);
+  card.appendChild(hidId);
 
-  tr.appendChild(td(inp('check_name', 'Check name', 'min-width:120px')));
-  tr.appendChild(td(inp('check_field', 'FIELD', 'min-width:100px')));
-  tr.appendChild(td(sel('check_operator', OPERATORS, 'eq')));
-  tr.appendChild(td(inp('check_expected', '', 'min-width:100px')));
-  tr.appendChild(td(sel('check_mode', MODES, 'any')));
-  tr.appendChild(td(sel('check_severity', SEVERITIES, 'major')));
-  tr.appendChild(td(inp('check_description', 'Failure message', 'min-width:160px')));
+  // Row 1: Name, Field, Operator, Expected, Delete
+  var row1 = document.createElement('div');
+  row1.className = 'check-card-row';
 
+  var nameInp = makeInput('check_name', 'Check name');
+  nameInp.required = true;
+  row1.appendChild(labeledField('Name', nameInp));
+
+  var fieldInp = makeInput('check_field', 'FIELD');
+  fieldInp.required = true;
+  row1.appendChild(labeledField('Field', fieldInp));
+
+  row1.appendChild(labeledField('Operator', makeSelect('check_operator', OPERATORS, 'eq')));
+  row1.appendChild(labeledField('Expected', makeInput('check_expected', 'value')));
+
+  var delWrap = document.createElement('div');
+  delWrap.className = 'check-del';
   var delBtn = document.createElement('button');
   delBtn.type = 'button';
   delBtn.className = 'icon-btn icon-btn-delete';
   delBtn.title = 'Remove';
   delBtn.innerHTML = '<svg class="icon"><use href="#icon-delete"/></svg>';
-  delBtn.addEventListener('click', function() { tr.remove(); });
-  tr.appendChild(td(delBtn));
+  delBtn.addEventListener('click', function() { card.remove(); });
+  delWrap.appendChild(delBtn);
+  row1.appendChild(delWrap);
+  card.appendChild(row1);
 
-  tbody.appendChild(tr);
+  // Row 2: Mode, Severity, Description
+  var row2 = document.createElement('div');
+  row2.className = 'check-card-row2';
+  row2.appendChild(labeledField('Mode', makeSelect('check_mode', MODES, 'any')));
+  row2.appendChild(labeledField('Severity', makeSelect('check_severity', SEVERITIES, 'major')));
+  row2.appendChild(labeledField('Description', makeInput('check_description', 'Failure message'), '(failure message)'));
+  card.appendChild(row2);
+
+  body.appendChild(card);
 }
 </script>
 {% endblock %}
