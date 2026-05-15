@@ -94,7 +94,7 @@ a[role="button"] {
 }
 
 a[role="button"].icon-btn {
-  margin-bottom: 0px;
+  margin-bottom: 0 !important
 }
 
 a[role="button"]:hover,
