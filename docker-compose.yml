@@ -40,7 +40,7 @@ services:
       context: .
       target: web
     ports:
-      - "8000:8000"
+      - "8101:8000"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -51,6 +51,7 @@ services:
       KIROKU_REDIS_URL: redis://redis:6379/0
       KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
       KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
+      KIROKU_AUTH_PROVIDER: dev
     volumes:
       - backups:/var/lib/kiroku/backups:ro
 
