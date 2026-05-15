@@ -138,6 +138,19 @@ header nav a[aria-current="page"]:hover {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  margin-bottom: 0;
+}
+
+/* Plain text "Sign out" link in the nav */
+.nav-signout-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
 }
 
 /* Small inline help buttons inside toolbars */
