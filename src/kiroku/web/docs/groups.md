@@ -14,6 +14,7 @@ A group is a named collection of devices. Groups serve three purposes:
 | **Description** | Optional free text. |
 | **Default credential** | The credential all member devices inherit if they don't have their own override. Leave blank only if every device in the group will have its own credential. |
 | **Max parallel** | Maximum number of concurrent device connections during a job run. Defaults to 8. Lower this on production networks where opening many SSH sessions simultaneously could trigger rate-limits or CPU spikes on core devices. |
+| **Worker pool** | Routes all devices in this group to a specific worker process pool. Leave blank to use the default pool. A device-level worker pool override takes precedence over the group setting. Only relevant in multi-pool deployments where different pools connect to different network segments. |
 
 ## Many-to-many membership
 

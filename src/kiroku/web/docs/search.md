@@ -16,7 +16,7 @@ Full-text search does not preserve word boundaries for short tokens — searchin
 
 ### Exact match
 
-Uses `LIKE '%term%'` pattern matching. Best for:
+Uses `ILIKE '%term%'` pattern matching. Best for:
 
 - IP addresses: `192.168.1.254`
 - Interface names: `GigabitEthernet0/0/1`
@@ -24,12 +24,25 @@ Uses `LIKE '%term%'` pattern matching. Best for:
 
 Exact match is case-insensitive but otherwise literal — it won't match partial words or stemmed forms.
 
+### Regex
+
+Uses PostgreSQL POSIX regular expressions (`~*` for case-insensitive, `~` for case-sensitive). Best for:
+
+- Complex patterns that can't be expressed as a fixed string
+- Matching multiple variants at once (e.g. `^router (ospf|bgp|isis)`)
+- Anchored or bounded searches
+
+The pattern is validated by Python before being sent to PostgreSQL, so syntax errors are caught immediately with a readable message.
+
+Enable **Case sensitive** to switch from case-insensitive (`~*`) to case-sensitive (`~`) matching. Regex mode ignores the case-sensitive toggle in the other modes.
+
 ## Filters
 
 | Filter | Notes |
 |--------|-------|
 | **Group** | Limit results to devices in a specific group. Useful when you manage multiple sites and want to scope the search. |
-| **Context lines** | How many lines of surrounding config to show above and below each match. Default is 2. Set to 0 for match-only display; raise to 5–10 for more context when investigating complex configurations. |
+| **Context lines** | How many lines of surrounding config to show above and below each match. Default is 3. Set to 0 for match-only display; raise to 5–10 for more context when investigating complex configurations. |
+| **Case sensitive** | Available in **Regex** mode. When checked, the regex is matched case-sensitively. Ignored in full-text and exact modes (exact is always case-insensitive; full-text is dictionary-normalised). |
 
 ## Reading results
 
@@ -50,6 +63,7 @@ Only configurations stored by `backup` jobs are searchable. The full-text index 
 ## Tips
 
 - Use **Exact** mode for IP addresses — full-text search strips punctuation and would not find `10.0.0.1` reliably.
+- Use **Regex** mode for structural patterns, e.g. `^interface (GigabitEthernet|TenGigE)` to find all devices with a specific interface type at the start of a line.
 - Use the **Group** filter when you have many devices and expect the term to appear in many places. For example, searching `ntp server` across a large fleet is more useful when scoped to a site.
 - If a device does not appear in search results even though it should have a backup, check its **Device detail → Recent runs** to confirm the last backup run succeeded. Configs are only indexed on successful runs.
 - The result list is capped at 50 devices. If you get exactly 50 results, your query is too broad — add more terms or apply a group filter to narrow it.

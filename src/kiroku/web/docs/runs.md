@@ -4,7 +4,7 @@ A **run** is one execution of a job against one device. Runs are grouped into **
 
 ## Batch list (`/runs`)
 
-Shows all batches, newest first. Each row represents one job firing:
+Shows all batches, newest first, capped at 200 entries. Each row represents one job firing:
 
 | Column | Notes |
 |--------|-------|
@@ -14,6 +14,18 @@ Shows all batches, newest first. Each row represents one job firing:
 | **Total / OK / Failed** | Device counts. A batch is considered partially failed if any device fails. |
 | **Status** | Live badge showing the batch state. Updates automatically while the batch is running (HTMx polling). |
 | **Commit** | For `backup` batches, the first 8 characters of the Git commit created when any config changed. |
+
+### Filters
+
+The batch list supports three filter controls:
+
+| Filter | Notes |
+|--------|-------|
+| **Search** | Filters by schedule/job name (case-insensitive substring). |
+| **Kind** | Limit to `backup`, `collect`, or `cve_scan` batches. |
+| **Status** | `running` — batches still in progress; `failed` — at least one device failed; `success` — all devices succeeded; `complete` — finished (any outcome). |
+
+Filters combine — you can search for a name and filter by kind and status simultaneously.
 
 ## Batch detail
 

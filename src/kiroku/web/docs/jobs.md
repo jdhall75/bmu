@@ -24,6 +24,7 @@ A job defines *what* to do when it runs: which kind of operation, which commands
 | **CVE product** | `cve_scan` only. The product component (e.g. `ios_xe`, `nxos`). |
 | **Device groups** | The groups this job runs against. Every enabled device in every selected group is included. Hold Ctrl/Cmd to select multiple. |
 | **Individual devices** | Specific devices to include regardless of their group membership. |
+| **Show on device page** | `collect` jobs only. When checked, the latest successful parsed result for this job is shown on each device's detail page as a pinned panel. Useful for jobs that collect summary data like `show version` or interface status. |
 
 ## Targeting
 
@@ -39,6 +40,12 @@ The device's own credential override (if set) always takes precedence regardless
 ## Running a job immediately
 
 Every row in the jobs list has a **Run now** button. This fires the job immediately without waiting for a schedule, creating a new batch. The batch appears on the dashboard and under **Runs** — click it to watch device results update in real time.
+
+## Aggregate data view
+
+The file-stack icon next to each `collect` or `cve_scan` job opens the **Aggregate data view** (`/jobs/{id}/data`). It shows the latest parsed result from every device in the job's scope in a single cross-device table, with one row per parsed row per device.
+
+If the parser template has an **Aggregate report template** defined, that custom Jinja2 view is rendered instead of the plain table. See [Parsers](parsers) for template variables and examples.
 
 ## Tips
 
