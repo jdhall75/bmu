@@ -93,6 +93,10 @@ a[role="button"] {
   margin-bottom: 14px
 }
 
+a[role="button"].icon-btn {
+  margin-bottom: 0px
+}
+
 a[role="button"]:hover,
 a[role="button"]:active {
   text-decoration: none;
