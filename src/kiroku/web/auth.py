@@ -85,4 +85,4 @@ def current_user() -> User | None:
     connection = _request_ctx.get(None)
     if connection is None:
         return None
-    return getattr(connection, "user", None)
+    return connection.scope.get("user")

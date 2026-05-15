@@ -35,7 +35,7 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
 
 
-def _stamp_start(request: Request) -> None:
+async def _stamp_start(request: Request) -> None:
     request.state.start_time = time.perf_counter()
     _request_ctx.set(request)
 
