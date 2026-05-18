@@ -1,5 +1,7 @@
+import anyio
+
 from litestar import Router, get, post
-from litestar.datastructures import UploadFile
+from litestar.connection import Request
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Response, Template
@@ -396,24 +398,18 @@ async def import_template() -> Response:
 
 
 @post("/import", dependencies={"db": provide_db}, guards=[require_admin])
-async def import_submit(
-    db: Session,
-    data: dict = Body(media_type=RequestEncodingType.MULTI_PART),
-) -> Template:
-    upload = data.get("file")
-    pasted = (
-        (data.get("pasted") or "").strip()
-        if isinstance(data.get("pasted"), str)
-        else ""
-    )
+async def import_submit(request: Request, db: Session) -> Template:
+    form = await request.form()
+    upload = form.get("file")
+    pasted = (form.get("pasted") or "").strip()
 
     raw = ""
-    if isinstance(upload, UploadFile):
+    if hasattr(upload, "read"):
         content = await upload.read()
         if content:
             raw = content.decode("utf-8-sig", errors="replace")
     if not raw and pasted:
-        raw = pasted
+        raw = str(pasted)
 
     if not raw:
         return Template(
@@ -421,12 +417,15 @@ async def import_submit(
             context={
                 "results": [],
                 "created": 0,
+                "updated": 0,
                 "error": "Provide a CSV file or paste CSV text.",
             },
         )
 
     try:
-        results, created, updated = import_csv(db, raw)
+        results, created, updated = await anyio.to_thread.run_sync(
+            lambda: import_csv(db, raw)
+        )
     except Exception as exc:
         db.rollback()
         return Template(
