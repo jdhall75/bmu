@@ -164,25 +164,5 @@
     });
   });
   </script>
-  <script>
-  function showToast(message, kind) {
-    var container = document.getElementById('toast-container');
-    var toast = document.createElement('div');
-    toast.className = 'toast' + (kind ? ' toast-' + kind : '');
-    toast.textContent = message;
-    container.appendChild(toast);
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() { toast.classList.add('show'); });
-    });
-    setTimeout(function() {
-      toast.classList.remove('show');
-      setTimeout(function() { toast.remove(); }, 250);
-    }, 4500);
-  }
-  document.addEventListener('showToast', function(evt) {
-    showToast(evt.detail.message, evt.detail.kind);
-  });
-  </script>
-  <div id="toast-container"></div>
 </body>
 </html>
