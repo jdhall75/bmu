@@ -57,6 +57,23 @@
     <input type="text" name="bulk_model" placeholder="(no change)">
     <label>Role</label>
     <input type="text" name="bulk_role" placeholder="(no change)">
+    <label>Platform</label>
+    <select name="bulk_platform_value">
+      <option value="">(no change)</option>
+      <optgroup label="Built-in">
+        {% for p in builtin_platforms %}
+          <option value="builtin:{{ p }}">{{ p }}</option>
+        {% endfor %}
+      </optgroup>
+      {% if custom_platforms %}
+      <optgroup label="Custom">
+        {% for cp in custom_platforms %}
+          <option value="custom:{{ cp.id }}">{{ cp.name }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endif %}
+      <option value="NONE">(clear)</option>
+    </select>
     <label>Enabled</label>
     <select name="bulk_enabled">
       <option value="">(no change)</option>

@@ -382,6 +382,12 @@ async def bulk_devices(
                 device.role = data["bulk_role"] or None
             if "bulk_worker_pool" in data:
                 device.worker_pool = data["bulk_worker_pool"] or None
+            bulk_platform = data.get("bulk_platform_value", "")
+            if bulk_platform == "NONE":
+                device.platform = None
+                device.custom_platform_id = None
+            elif bulk_platform:
+                _apply_platform(device, {"platform_value": bulk_platform})
         db.commit()
 
     return Redirect(path="/devices")
