@@ -23,6 +23,9 @@ import tempfile
 import time
 import traceback
 from datetime import datetime, timezone
+from pathlib import Path
+
+_DEFINITIONS_DIR = Path(__file__).parent / "definitions"
 
 from scrapli import (
     AuthOptions,
@@ -95,7 +98,8 @@ def _build_cli_driver(
             fh.write(spec.custom_platform_yaml)
         definition: str | None = temp_path
     elif platform_name:
-        definition = platform_name
+        local_def = _DEFINITIONS_DIR / f"{platform_name}.yaml"
+        definition = str(local_def) if local_def.exists() else platform_name
     else:
         raise ValueError("device has no platform or custom_platform_yaml configured")
 

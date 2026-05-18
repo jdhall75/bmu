@@ -1,0 +1,99 @@
+---
+# Kiroku-patched copy of the scrapli built-in juniper_junos definition.
+#
+# The upstream global prompt_pattern ('^.*[>#$%]\s?+$') is too broad: the
+# '$' in the character class matches a literal dollar sign, so JunOS
+# community-member regex values that end with '$' (e.g.
+#   set policy-options community foo members ^46887:[0-9]+$
+# ) trigger a false-positive prompt match and truncate the backup output.
+#
+# Fix: require the user@hostname structure (max 63 chars, hostname-safe
+# character set) before the trailing mode indicator.  The same tightening
+# is applied to the shell-mode prompt_pattern for the same reason.
+prompt_pattern: '^({\w+(:(\w+){0,1}\d){0,1}}\n){0,1}[\w\-@()/:\.]{1,63}[>#$%]\s?$'
+default_mode: 'exec'
+modes:
+  - name: 'exec'
+    prompt_pattern: '^({\w+(:(\w+){0,1}\d){0,1}}\n){0,1}[\w\-@()/:\.]{1,63}>\s?$'
+    accessible_modes:
+      - name: 'configuration'
+        instructions:
+          - send_input:
+              input: 'configure'
+      - name: 'configuration_exclusive'
+        instructions:
+          - send_input:
+              input: 'configure exclusive'
+      - name: 'configuration_private'
+        instructions:
+          - send_input:
+              input: 'configure private'
+      - name: 'shell'
+        instructions:
+          - send_input:
+              input: 'start shell'
+      - name: 'root_shell'
+        instructions:
+          - send_prompted_input:
+              input: 'start shell user root'
+              prompt_pattern: '^[pP]assword:\s?$'
+              response: '__lookup::root'
+  - name: 'configuration'
+    prompt_pattern: '^({\w+(:(\w+){0,1}\d){0,1}}\[edit\]\n){0,1}[\w\-@()/:\.]{1,63}#\s?$'
+    accessible_modes:
+      - name: 'exec'
+        instructions:
+          - send_input:
+              input: 'exit configuration-mode'
+  - name: 'configuration_exclusive'
+    prompt_pattern: '^({\w+(:(\w+){0,1}\d){0,1}}\[edit\]\n){0,1}[\w\-@()/:\.]{1,63}#\s?$'
+    accessible_modes:
+      - name: 'exec'
+        instructions:
+          - send_input:
+              input: 'exit configuration-mode'
+  - name: 'configuration_private'
+    prompt_pattern: '^({\w+(:(\w+){0,1}\d){0,1}}\[edit\]\n){0,1}[\w\-@()/:\.]{1,63}#\s?$'
+    accessible_modes:
+      - name: 'exec'
+        instructions:
+          - send_input:
+              input: 'exit configuration-mode'
+  - name: 'shell'
+    prompt_pattern: '^[\w\-@()/:\.]{1,63}[%$]\s?$'
+    prompt_excludes:
+      - 'root'
+    accessible_modes:
+      - name: 'exec'
+        instructions:
+          - send_input:
+              input: 'exit'
+  - name: 'root_shell'
+    prompt_pattern: '^.*root@(?:\S*:?\S*\s?)?[%#]\s?$'
+    accessible_modes:
+      - name: 'exec'
+        instructions:
+          - send_input:
+              input: 'exit'
+failure_indicators:
+  - 'is ambiguous'
+  - 'No valid completions'
+  - 'unknown command'
+  - 'syntax error'
+  - 'missing mandatory argument'
+  - 'invalid numeric value'
+on_open_instructions:
+  - enter_mode:
+      requested_mode: 'exec'
+  - send_input:
+      input: 'set cli screen-width 511'
+  - send_input:
+      input: 'set cli screen-length 0'
+  - send_input:
+      input: 'set cli complete-on-space off'
+on_close_instructions:
+  - enter_mode:
+      requested_mode: 'exec'
+  - write:
+      input: 'exit'
+ntc_templates_platform: 'juniper_junos'
