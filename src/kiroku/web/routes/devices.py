@@ -1,6 +1,11 @@
+import threading
+import time
+import uuid
+
 import anyio
 
 from litestar import Router, get, post
+from litestar.background_tasks import BackgroundTask
 from litestar.connection import Request
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
@@ -10,6 +15,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from kiroku.config import get_settings
+from kiroku.db import SessionLocal
 from kiroku.models import (
     Credential,
     CveScan,
@@ -27,6 +33,77 @@ from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 from kiroku.web.import_devices import import_csv
 from kiroku.web.routes.runs import _parsed_display
+
+# ---------------------------------------------------------------------------
+# In-process import task store (single-worker; no Redis dependency needed)
+# ---------------------------------------------------------------------------
+
+_import_tasks: dict[str, dict] = {}
+_import_tasks_lock = threading.Lock()
+_TASK_TTL = 600.0  # 10 minutes
+
+
+def _set_task(task_id: str, data: dict) -> None:
+    with _import_tasks_lock:
+        _import_tasks[task_id] = {**data, "_ts": time.monotonic()}
+
+
+def _get_task(task_id: str) -> dict | None:
+    with _import_tasks_lock:
+        task = _import_tasks.get(task_id)
+    if task is None:
+        return None
+    if time.monotonic() - task.get("_ts", 0) > _TASK_TTL:
+        with _import_tasks_lock:
+            _import_tasks.pop(task_id, None)
+        return None
+    return task
+
+
+def _prune_tasks() -> None:
+    cutoff = time.monotonic() - _TASK_TTL
+    with _import_tasks_lock:
+        expired = [k for k, v in _import_tasks.items() if v.get("_ts", 0) < cutoff]
+        for k in expired:
+            del _import_tasks[k]
+
+
+async def _run_import_bg(task_id: str, raw: str) -> None:
+    _set_task(task_id, {"status": "running"})
+    db = SessionLocal()
+    try:
+        results, created, updated = await anyio.to_thread.run_sync(
+            lambda: import_csv(db, raw)
+        )
+        _set_task(task_id, {
+            "status": "done",
+            "results": [
+                {"line": r.line, "name": r.name, "ok": r.ok,
+                 "message": r.message, "action": r.action}
+                for r in results
+            ],
+            "created": created,
+            "updated": updated,
+            "error": None,
+        })
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        _set_task(task_id, {
+            "status": "error",
+            "results": [],
+            "created": 0,
+            "updated": 0,
+            "error": f"{type(exc).__name__}: {exc}",
+        })
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
+    _prune_tasks()
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
 _PAGE_SIZE = 100
@@ -397,8 +474,8 @@ async def import_template() -> Response:
     )
 
 
-@post("/import", dependencies={"db": provide_db}, guards=[require_admin])
-async def import_submit(request: Request, db: Session) -> Template:
+@post("/import", guards=[require_admin])
+async def import_submit(request: Request) -> Redirect | Template:
     form = await request.form()
     upload = form.get("file")
     pasted = (form.get("pasted") or "").strip()
@@ -413,39 +490,52 @@ async def import_submit(request: Request, db: Session) -> Template:
 
     if not raw:
         return Template(
-            template_name="devices/import_results.html",
-            context={
-                "results": [],
-                "created": 0,
-                "updated": 0,
-                "error": "Provide a CSV file or paste CSV text.",
-            },
+            template_name="devices/import.html",
+            context={"error": "Provide a CSV file or paste CSV text."},
         )
 
-    try:
-        results, created, updated = await anyio.to_thread.run_sync(
-            lambda: import_csv(db, raw)
-        )
-    except Exception as exc:
-        db.rollback()
-        return Template(
-            template_name="devices/import_results.html",
-            context={
-                "results": [],
-                "created": 0,
-                "updated": 0,
-                "error": f"{type(exc).__name__}: {exc}",
-            },
-        )
+    task_id = uuid.uuid4().hex[:16]
+    _set_task(task_id, {"status": "pending"})
+    return Redirect(
+        path=f"/devices/import/status/{task_id}",
+        status_code=HTTP_303_SEE_OTHER,
+        background=BackgroundTask(_run_import_bg, task_id, raw),
+    )
+
+
+@get("/import/status/{task_id:str}")
+async def import_status_page(task_id: str) -> Template:
+    return Template(
+        template_name="devices/import_status.html",
+        context={"task_id": task_id},
+    )
+
+
+@get("/import/status/{task_id:str}/poll")
+async def import_poll(task_id: str) -> Template:
+    import json as _json
+
+    task = _get_task(task_id)
+    status = task.get("status", "unknown") if task else "expired"
+
+    headers: dict[str, str] = {}
+    if status not in ("pending", "running"):
+        if task and not task.get("error") and (task.get("created") or task.get("updated")):
+            msg = ""
+            if task.get("created"):
+                msg += f"Created {task['created']} device(s)"
+            if task.get("created") and task.get("updated"):
+                msg += ", "
+            if task.get("updated"):
+                msg += f"updated {task['updated']} device(s)"
+            headers["HX-Trigger"] = _json.dumps({"showToast": {"message": msg, "kind": "ok"}})
+        elif status == "error" or (task and task.get("error")):
+            headers["HX-Trigger"] = _json.dumps({"showToast": {"message": "Import failed.", "kind": "bad"}})
 
     return Template(
-        template_name="devices/import_results.html",
-        context={
-            "results": results,
-            "created": created,
-            "updated": updated,
-            "error": None,
-        },
+        template_name="devices/_import_poll.html",
+        context={"task_id": task_id, "task": task, "status": status},
+        headers=headers,
     )
 
 
@@ -598,6 +688,8 @@ router = Router(
         import_form,
         import_template,
         import_submit,
+        import_status_page,
+        import_poll,
         view_config,
         view_config_diff,
         view_config_history,
