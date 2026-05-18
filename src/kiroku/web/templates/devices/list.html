@@ -23,6 +23,21 @@
       <option value="1" {% if enabled_filter == '1' %}selected{% endif %}>Enabled</option>
       <option value="0" {% if enabled_filter == '0' %}selected{% endif %}>Disabled</option>
     </select>
+    <select name="platform">
+      <option value="">Any platform</option>
+      <optgroup label="Built-in">
+        {% for p in builtin_platforms %}
+          <option value="builtin:{{ p }}" {% if platform_filter == 'builtin:' ~ p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </optgroup>
+      {% if custom_platforms %}
+      <optgroup label="Custom">
+        {% for cp in custom_platforms %}
+          <option value="custom:{{ cp.id }}" {% if platform_filter == 'custom:' ~ cp.id|string %}selected{% endif %}>{{ cp.name }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endif %}
+    </select>
     <button type="submit">Filter</button>
     {% if has_filters %}<a href="/devices">Clear</a>{% endif %}
   </div>

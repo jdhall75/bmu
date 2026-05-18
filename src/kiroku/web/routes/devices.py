@@ -185,7 +185,8 @@ def _apply_platform(device: Device, data: dict) -> None:
 
 
 def _build_filter_qs(
-    q: str, group_id: str, make_filter: str, role_filter: str, enabled_filter: str
+    q: str, group_id: str, make_filter: str, role_filter: str,
+    enabled_filter: str, platform_filter: str,
 ) -> str:
     parts = []
     if q:
@@ -198,6 +199,8 @@ def _build_filter_qs(
         parts.append(f"role={role_filter}")
     if enabled_filter:
         parts.append(f"enabled={enabled_filter}")
+    if platform_filter:
+        parts.append(f"platform={platform_filter}")
     return "&".join(parts)
 
 
@@ -210,6 +213,7 @@ async def list_devices(
     make: str = "",
     role: str = "",
     enabled: str = "",
+    platform: str = "",
 ) -> Template:
     page = max(1, page)
 
@@ -237,6 +241,18 @@ async def list_devices(
         filt = Device.enabled == (enabled == "1")
         base = base.where(filt)
         count_base = count_base.where(filt)
+    if platform:
+        if platform.startswith("builtin:"):
+            pname = platform[len("builtin:"):]
+            filt = Device.platform == pname
+        elif platform.startswith("custom:"):
+            cid = int(platform[len("custom:"):])
+            filt = Device.custom_platform_id == cid
+        else:
+            filt = None
+        if filt is not None:
+            base = base.where(filt)
+            count_base = count_base.where(filt)
 
     total = db.scalar(count_base) or 0
     total_pages = max(1, (total + _PAGE_SIZE - 1) // _PAGE_SIZE)
@@ -247,8 +263,8 @@ async def list_devices(
         base.order_by(Device.name).offset(offset).limit(_PAGE_SIZE)
     ).all()
 
-    has_filters = any([q, group_id, make, role, enabled])
-    filter_qs = _build_filter_qs(q, group_id, make, role, enabled)
+    has_filters = any([q, group_id, make, role, enabled, platform])
+    filter_qs = _build_filter_qs(q, group_id, make, role, enabled, platform)
 
     return Template(
         template_name="devices/list.html",
@@ -263,6 +279,7 @@ async def list_devices(
             "make_filter": make,
             "role_filter": role,
             "enabled_filter": enabled,
+            "platform_filter": platform,
             "has_filters": has_filters,
             "filter_qs": filter_qs,
             **_device_form_options(db),
