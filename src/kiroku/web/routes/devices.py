@@ -2,8 +2,6 @@ import threading
 import time
 import uuid
 
-import anyio
-
 from litestar import Router, get, post
 from litestar.background_tasks import BackgroundTask
 from litestar.connection import Request
@@ -68,13 +66,11 @@ def _prune_tasks() -> None:
             del _import_tasks[k]
 
 
-async def _run_import_bg(task_id: str, raw: str) -> None:
+def _run_import_bg(task_id: str, raw: str) -> None:
     _set_task(task_id, {"status": "running"})
     db = SessionLocal()
     try:
-        results, created, updated = await anyio.to_thread.run_sync(
-            lambda: import_csv(db, raw)
-        )
+        results, created, updated = import_csv(db, raw)
         _set_task(task_id, {
             "status": "done",
             "results": [
