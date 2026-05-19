@@ -24,7 +24,7 @@ services:
 
       # Per-device timeouts in seconds (optional — defaults shown).
       KIROKU_WORKER_CONNECT_TIMEOUT: ${KIROKU_WORKER_CONNECT_TIMEOUT:-30}
-      KIROKU_WORKER_COMMAND_TIMEOUT: ${KIROKU_WORKER_COMMAND_TIMEOUT:-60}
+      KIROKU_WORKER_COMMAND_TIMEOUT: ${KIROKU_WORKER_COMMAND_TIMEOUT:-100}
 
       # TLS CA bundle for Redis TLS verification.
       # Mount the cert below and point this var at the mounted path.

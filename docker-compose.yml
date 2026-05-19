@@ -80,6 +80,8 @@ services:
     environment:
       KIROKU_REDIS_URL: redis://redis:6379/0
       KIROKU_WORKER_CONCURRENCY: "8"
+      KIROKU_WORKER_CONNECT_TIMEOUT: 30
+      KIROKU_WORKER_COMMAND_TIMEOUT: 100
     deploy:
       replicas: 1
 
