@@ -459,6 +459,20 @@ dl.detail-grid dd {
   width: 100%;
 }
 
+/* Sortable column headers */
+th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+th.th-sortable::after {
+  content: '\00a0\00a0\2195'; /* ↕ */
+  opacity: 0.35;
+  font-size: 0.8em;
+}
+th.th-sort-asc::after  { content: '\00a0\00a0\2191'; opacity: 0.75; } /* ↑ */
+th.th-sort-desc::after { content: '\00a0\00a0\2193'; opacity: 0.75; } /* ↓ */
+
 /* Action columns: no wrapping, compact spacing */
 table td [role="button"]:not(.icon-btn),
 table td button:not(.icon-btn) {

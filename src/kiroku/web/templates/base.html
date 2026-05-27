@@ -143,6 +143,55 @@
     anchor.parentNode.insertBefore(p, anchor);
   });
 
+  // Column sort for any <table data-sortable>.
+  // Click a <th> to sort ascending; click again to reverse.
+  // Columns whose <th> contains only a checkbox or has data-nosort are skipped.
+  (function () {
+    var CLS_ASC  = 'th-sort-asc';
+    var CLS_DESC = 'th-sort-desc';
+
+    function cellText(tr, idx) {
+      var td = tr.cells[idx];
+      return td ? td.textContent.trim().toLowerCase() : '';
+    }
+
+    function sortTable(table, colIdx, asc) {
+      var tbody = table.tBodies[0];
+      if (!tbody) return;
+      var rows = Array.from(tbody.rows);
+      rows.sort(function (a, b) {
+        var av = cellText(a, colIdx);
+        var bv = cellText(b, colIdx);
+        // Numeric sort when both values look like numbers.
+        var an = parseFloat(av), bn = parseFloat(bv);
+        var cmp = (!isNaN(an) && !isNaN(bn)) ? (an - bn) : av.localeCompare(bv);
+        return asc ? cmp : -cmp;
+      });
+      rows.forEach(function (r) { tbody.appendChild(r); });
+    }
+
+    document.querySelectorAll('table[data-sortable]').forEach(function (table) {
+      var headerRow = table.tHead && table.tHead.rows[0];
+      if (!headerRow) return;
+      Array.from(headerRow.cells).forEach(function (th, idx) {
+        // Skip checkbox-only headers and explicitly excluded columns.
+        if (th.dataset.nosort !== undefined) return;
+        if (th.querySelector('input[type="checkbox"]') && !th.textContent.trim()) return;
+        th.classList.add('th-sortable');
+        var asc = true;
+        th.addEventListener('click', function () {
+          // Clear sibling indicators.
+          Array.from(headerRow.cells).forEach(function (s) {
+            s.classList.remove(CLS_ASC, CLS_DESC);
+          });
+          sortTable(table, idx, asc);
+          th.classList.add(asc ? CLS_ASC : CLS_DESC);
+          asc = !asc;
+        });
+      });
+    });
+  }());
+
   // Tab inserts 2 spaces in code textareas; ESC toggles it off/on per textarea.
   // Help buttons inside forms must not submit — enforce type=button globally.
   document.querySelectorAll('button.help-btn').forEach(function (btn) { btn.type = 'button'; });

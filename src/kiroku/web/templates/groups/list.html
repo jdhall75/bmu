@@ -12,11 +12,11 @@
     {% endif %}
   </div>
   <div class="table-wrap">
-  <table>
+  <table data-sortable>
     <thead>
       <tr>
         {% if cu and cu.is_admin %}<th><input type="checkbox" id="select-all" title="Select all"></th>{% endif %}
-        <th>Name</th><th>Devices</th><th>Default credential</th><th>Max parallel</th><th>Actions</th>
+        <th>Name</th><th>Devices</th><th>Default credential</th><th>Max parallel</th><th data-nosort>Actions</th>
       </tr>
     </thead>
     <tbody>
