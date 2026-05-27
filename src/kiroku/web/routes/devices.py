@@ -112,22 +112,27 @@ def _apply_platform(device: Device, data: dict) -> None:
 
 
 def _build_filter_qs(
-    q: str, group_id: str, make_filter: str, role_filter: str,
-    enabled_filter: str, platform_filter: str,
+    q: str, group_id: str, make_filter: str, model_filter: str,
+    role_filter: str, enabled_filter: str, platform_filter: str,
+    backed_up_filter: str,
 ) -> str:
     parts = []
     if q:
         parts.append(f"q={q}")
     if group_id:
         parts.append(f"group_id={group_id}")
+    if platform_filter:
+        parts.append(f"platform={platform_filter}")
     if make_filter:
         parts.append(f"make={make_filter}")
+    if model_filter:
+        parts.append(f"model={model_filter}")
     if role_filter:
         parts.append(f"role={role_filter}")
     if enabled_filter:
         parts.append(f"enabled={enabled_filter}")
-    if platform_filter:
-        parts.append(f"platform={platform_filter}")
+    if backed_up_filter:
+        parts.append(f"backed_up={backed_up_filter}")
     return "&".join(parts)
 
 
@@ -138,9 +143,11 @@ async def list_devices(
     q: str = "",
     group_id: str = "",
     make: str = "",
+    model: str = "",
     role: str = "",
     enabled: str = "",
     platform: str = "",
+    backed_up: str = "",
 ) -> Template:
     page = max(1, page)
 
@@ -160,6 +167,10 @@ async def list_devices(
         filt = Device.make.ilike(f"%{make}%")
         base = base.where(filt)
         count_base = count_base.where(filt)
+    if model:
+        filt = Device.model.ilike(f"%{model}%")
+        base = base.where(filt)
+        count_base = count_base.where(filt)
     if role:
         filt = Device.role.ilike(f"%{role}%")
         base = base.where(filt)
@@ -168,6 +179,12 @@ async def list_devices(
         filt = Device.enabled == (enabled == "1")
         base = base.where(filt)
         count_base = count_base.where(filt)
+    if backed_up == "1":
+        base = base.where(Device.latest_backup_at.is_not(None))
+        count_base = count_base.where(Device.latest_backup_at.is_not(None))
+    elif backed_up == "0":
+        base = base.where(Device.latest_backup_at.is_(None))
+        count_base = count_base.where(Device.latest_backup_at.is_(None))
     if platform:
         if platform.startswith("builtin:"):
             pname = platform[len("builtin:"):]
@@ -190,8 +207,8 @@ async def list_devices(
         base.order_by(Device.name).offset(offset).limit(_PAGE_SIZE)
     ).all()
 
-    has_filters = any([q, group_id, make, role, enabled, platform])
-    filter_qs = _build_filter_qs(q, group_id, make, role, enabled, platform)
+    has_filters = any([q, group_id, make, model, role, enabled, platform, backed_up])
+    filter_qs = _build_filter_qs(q, group_id, make, model, role, enabled, platform, backed_up)
 
     return Template(
         template_name="devices/list.html",
@@ -204,9 +221,11 @@ async def list_devices(
             "q": q,
             "group_id": group_id,
             "make_filter": make,
+            "model_filter": model,
             "role_filter": role,
             "enabled_filter": enabled,
             "platform_filter": platform,
+            "backed_up_filter": backed_up,
             "has_filters": has_filters,
             "filter_qs": filter_qs,
             **_device_form_options(db),

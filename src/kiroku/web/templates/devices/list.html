@@ -16,13 +16,6 @@
       <option value="">All groups</option>
       {% for g in groups %}<option value="{{ g.id }}" {% if group_id == g.id|string %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
     </select>
-    <input type="text" name="make" value="{{ make_filter }}" placeholder="Make…">
-    <input type="text" name="role" value="{{ role_filter }}" placeholder="Role…">
-    <select name="enabled">
-      <option value="" {% if enabled_filter == '' %}selected{% endif %}>Any status</option>
-      <option value="1" {% if enabled_filter == '1' %}selected{% endif %}>Enabled</option>
-      <option value="0" {% if enabled_filter == '0' %}selected{% endif %}>Disabled</option>
-    </select>
     <select name="platform">
       <option value="">Any platform</option>
       <optgroup label="Built-in">
@@ -37,6 +30,19 @@
         {% endfor %}
       </optgroup>
       {% endif %}
+    </select>
+    <input type="text" name="make" value="{{ make_filter }}" placeholder="Make…">
+    <input type="text" name="model" value="{{ model_filter }}" placeholder="Model…">
+    <input type="text" name="role" value="{{ role_filter }}" placeholder="Role…">
+    <select name="enabled">
+      <option value="" {% if enabled_filter == '' %}selected{% endif %}>Any status</option>
+      <option value="1" {% if enabled_filter == '1' %}selected{% endif %}>Enabled</option>
+      <option value="0" {% if enabled_filter == '0' %}selected{% endif %}>Disabled</option>
+    </select>
+    <select name="backed_up">
+      <option value="" {% if backed_up_filter == '' %}selected{% endif %}>Any backed up</option>
+      <option value="1" {% if backed_up_filter == '1' %}selected{% endif %}>Backed up</option>
+      <option value="0" {% if backed_up_filter == '0' %}selected{% endif %}>Never backed up</option>
     </select>
     <button type="submit">Filter</button>
     {% if has_filters %}<a href="/devices">Clear</a>{% endif %}
@@ -107,7 +113,7 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="select-all" title="Select all"></th>
-        <th>Name</th><th>Hostname</th><th>Group</th><th>Platform</th><th>Make / Model</th><th>Role</th><th>Enabled</th><th>CVEs</th><th>Actions</th>
+        <th>Name</th><th>Hostname</th><th>Group</th><th>Platform</th><th>Make / Model</th><th>Role</th><th>Enabled</th><th>Backed up</th><th>CVEs</th><th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -129,6 +135,7 @@
         </td>
         <td>{{ d.role or '-' }}</td>
         <td>{{ 'yes' if d.enabled else 'no' }}</td>
+        <td>{{ 'yes' if d.latest_backup_at else 'no' }}</td>
         <td>
           {% set badge = cve_badges.get(d.id) %}
           {% if badge %}
@@ -146,7 +153,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="10">No devices{% if has_filters %} matching the current filters{% endif %}.</td></tr>
+      <tr><td colspan="11">No devices{% if has_filters %} matching the current filters{% endif %}.</td></tr>
     {% endfor %}
     </tbody>
   </table>
