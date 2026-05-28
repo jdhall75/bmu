@@ -23,6 +23,9 @@ class Schedule(Base, TimestampMixin):
 
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # Set True to have the scheduler skip (and clear) the next firing.
+    skip_next_run: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Scheduler bookkeeping.
     last_run_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

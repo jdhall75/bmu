@@ -3,6 +3,11 @@
 {% block content %}
 <div class="toolbar">
   <button class="help-btn" onclick="openHelp('runs')">? Help</button>
+  {% if cu and cu.is_admin %}
+  <form method="POST" action="/runs/purge-queue" style="display:inline">
+    <button onclick="return confirm('Remove all undelivered jobs from the queue and cancel their runs?')">Purge queue</button>
+  </form>
+  {% endif %}
 </div>
 
 <form class="search-form" method="GET" action="/runs">

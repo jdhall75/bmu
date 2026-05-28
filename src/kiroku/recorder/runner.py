@@ -107,6 +107,10 @@ def _persist(
             db.get(RunBatch, run.batch_id) if run.batch_id else None
         )
 
+        if run.status == RunStatus.CANCELLED:
+            log.info("recorder: run already cancelled; discarding result", run_id=result.run_id)
+            return
+
         run.started_at = _parse_iso(result.started_at) or run.started_at
         run.finished_at = _parse_iso(result.finished_at) or run.finished_at
         run.error = result.error

@@ -111,6 +111,20 @@ async def delete_schedule(schedule_id: int, db: Session) -> Redirect:
     return Redirect(path="/schedules")
 
 
+@post(
+    "/{schedule_id:int}/skip-next",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
+)
+async def skip_next_run(schedule_id: int, db: Session) -> Redirect:
+    schedule = db.get(Schedule, schedule_id)
+    if schedule:
+        schedule.skip_next_run = not schedule.skip_next_run
+        db.commit()
+    return Redirect(path="/schedules")
+
+
 router = Router(
     path="/schedules",
     guards=[require_authenticated],
@@ -122,5 +136,6 @@ router = Router(
         edit_schedule,
         update_schedule,
         delete_schedule,
+        skip_next_run,
     ],
 )

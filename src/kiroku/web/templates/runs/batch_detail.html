@@ -5,5 +5,12 @@
 
 {% include "runs/_batch_live.html" %}
 
-<p><a href="/runs">&larr; All runs</a></p>
+<div class="toolbar" style="margin-top:1rem">
+  <a href="/runs">&larr; All runs</a>
+  {% if cu and cu.is_admin and batch and batch.finished_at is none %}
+  <form method="POST" action="/runs/batches/{{ batch.id }}/cancel" style="display:inline">
+    <button onclick="return confirm('Cancel all pending runs in this batch?')">Cancel batch</button>
+  </form>
+  {% endif %}
+</div>
 {% endblock %}

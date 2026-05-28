@@ -1,13 +1,17 @@
 import json
+from datetime import datetime, timezone
 
-from litestar import Router, get
-from litestar.response import Template
+from litestar import Router, get, post
+from litestar.response import Redirect, Template
+from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kiroku.models import Run, RunBatch
+from kiroku.config import get_settings
+from kiroku.models import Run, RunBatch, RunStatus
+from kiroku.queue import job_stream_names, purge_undelivered
 from kiroku.recorder.git_store import GitStore
-from kiroku.web.auth import require_authenticated
+from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import sandbox as _sandbox
 
@@ -142,6 +146,69 @@ def _parsed_display(
     return {"type": "json", "value": json.dumps(data, indent=2)}
 
 
+@post(
+    "/purge-queue",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
+)
+async def purge_queue(db: Session) -> Redirect:
+    settings = get_settings()
+    now = datetime.now(tz=timezone.utc)
+
+    purged: list[tuple[str, int]] = []
+    for stream in job_stream_names():
+        purged.extend(purge_undelivered(stream, settings.job_consumer_group))
+
+    if purged:
+        run_ids = {run_id for _, run_id in purged}
+        runs = db.scalars(select(Run).where(Run.id.in_(run_ids))).all()
+        batch_cancelled: dict[int, int] = {}
+        for run in runs:
+            if run.status in (RunStatus.PENDING, RunStatus.RUNNING):
+                run.status = RunStatus.CANCELLED
+                run.finished_at = now
+                if run.batch_id:
+                    batch_cancelled[run.batch_id] = batch_cancelled.get(run.batch_id, 0) + 1
+
+        for batch_id, count in batch_cancelled.items():
+            batch = db.get(RunBatch, batch_id)
+            if batch:
+                batch.failed += count
+                if batch.finished_at is None and (batch.succeeded + batch.failed) >= batch.total:
+                    batch.finished_at = now
+
+        db.commit()
+
+    return Redirect(path="/runs")
+
+
+@post(
+    "/batches/{batch_id:int}/cancel",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
+)
+async def cancel_batch(batch_id: int, db: Session) -> Redirect:
+    batch = db.get(RunBatch, batch_id)
+    if batch and batch.finished_at is None:
+        now = datetime.now(tz=timezone.utc)
+        pending = db.scalars(
+            select(Run).where(
+                Run.batch_id == batch_id,
+                Run.status.in_([RunStatus.PENDING, RunStatus.RUNNING]),
+            )
+        ).all()
+        for run in pending:
+            run.status = RunStatus.CANCELLED
+            run.finished_at = now
+            batch.failed += 1
+        if (batch.succeeded + batch.failed) >= batch.total:
+            batch.finished_at = now
+        db.commit()
+    return Redirect(path=f"/runs/batches/{batch_id}")
+
+
 router = Router(
     path="/runs",
     guards=[require_authenticated],
@@ -151,5 +218,7 @@ router = Router(
         batch_live_fragment,
         batch_row_fragment,
         view_run,
+        purge_queue,
+        cancel_batch,
     ],
 )

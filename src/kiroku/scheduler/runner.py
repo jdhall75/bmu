@@ -80,28 +80,47 @@ def _fire_due(db: Session, now: datetime) -> int:
         if sched.next_run_at > now:
             continue
 
+        # Always advance next_run_at first so a persistent failure can't pin the
+        # schedule in the past and re-fire on every tick.
+        next_run = _next_fire(sched.cron, sched.timezone, now)
+
+        if sched.skip_next_run:
+            log.info("schedule skipped (skip_next_run set)", schedule=sched.name)
+            sched.skip_next_run = False
+            sched.last_run_at = now
+            sched.next_run_at = next_run
+            continue
+
         job: Job | None = sched.job
         if job is None:
             log.warning("schedule has no job; skipping", schedule=sched.name)
             sched.last_run_at = now
-            sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
+            sched.next_run_at = next_run
             continue
 
-        batch = fire_job(job, db, schedule_id=sched.id, schedule_name=sched.name, commit=False)
-        fired = batch.total - batch.failed
+        try:
+            batch = fire_job(job, db, schedule_id=sched.id, schedule_name=sched.name, commit=False)
+            fired = batch.total - batch.failed
+            log.info(
+                "schedule due",
+                schedule=sched.name,
+                job=job.name,
+                kind=job.kind.value,
+                devices=batch.total,
+                queued=fired,
+            )
+            queued += fired
+        except Exception as exc:
+            log.error(
+                "schedule fire failed",
+                schedule=sched.name,
+                job=job.name,
+                error=str(exc),
+                exc_info=True,
+            )
 
-        log.info(
-            "schedule due",
-            schedule=sched.name,
-            job=job.name,
-            kind=job.kind.value,
-            devices=batch.total,
-            queued=fired,
-        )
-
-        queued += fired
         sched.last_run_at = now
-        sched.next_run_at = _next_fire(sched.cron, sched.timezone, now)
+        sched.next_run_at = next_run
 
     return queued
 

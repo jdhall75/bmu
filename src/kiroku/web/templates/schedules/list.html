@@ -30,10 +30,14 @@
         <td>{{ s.cron }}</td>
         <td>{{ s.timezone }}</td>
         <td>{{ 'yes' if s.enabled else 'no' }}</td>
-        <td>{{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}</td>
+        <td>
+          {{ s.next_run_at.strftime('%Y-%m-%d %H:%M %Z') if s.next_run_at else '-' }}
+          {% if s.skip_next_run %}<span class="status status-cancelled" title="Next run will be skipped">skip</span>{% endif %}
+        </td>
         {% if cu and cu.is_admin %}
         <td>
           <a class="icon-btn" role="button" href="/schedules/{{ s.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn" formaction="/schedules/{{ s.id }}/skip-next" title="{{ 'Clear skip' if s.skip_next_run else 'Skip next run' }}" aria-label="{{ 'Clear skip' if s.skip_next_run else 'Skip next run' }}">{{ '↺' if s.skip_next_run else '⏭' }}</button>
           <button class="icon-btn icon-btn-delete" formaction="/schedules/{{ s.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ s.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </td>
         {% endif %}
