@@ -13,9 +13,14 @@ from kiroku.logging import get_logger
 
 log = get_logger(__name__)
 
+_cached_client: redis.Redis | None = None
+
 
 def _client() -> redis.Redis:
-    return redis.Redis.from_url(get_settings().redis_url, decode_responses=True)
+    global _cached_client
+    if _cached_client is None:
+        _cached_client = redis.Redis.from_url(get_settings().redis_url, decode_responses=True)
+    return _cached_client
 
 
 def ensure_consumer_group(stream: str, group: str) -> None:
