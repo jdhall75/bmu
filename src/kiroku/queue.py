@@ -21,7 +21,7 @@ def _client() -> redis.Redis:
 def ensure_consumer_group(stream: str, group: str) -> None:
     r = _client()
     try:
-        r.xgroup_create(name=stream, groupname=group, id="$", mkstream=True)
+        r.xgroup_create(name=stream, groupname=group, id="0", mkstream=True)
     except redis.ResponseError as exc:
         if "BUSYGROUP" not in str(exc):
             raise
