@@ -19,11 +19,30 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import tempfile
 import time
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
+
+_ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
+
+def _normalize_config(text: str) -> str:
+    """Strip terminal control sequences, normalize line endings, and trim trailing whitespace.
+
+    SSH binary transport frequently injects \\r\\n or ANSI codes into device output.
+    Without normalization identical configs hash differently each run, producing
+    spurious git commits.
+    """
+    text = _ANSI_ESCAPE.sub('', text)
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    lines = [line.rstrip() for line in text.splitlines()]
+    while lines and not lines[-1]:
+        lines.pop()
+    return '\n'.join(lines)
+
 
 _DEFINITIONS_DIR = Path(__file__).parent / "definitions"
 
@@ -139,7 +158,7 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 )
             )
             if spec.kind == "backup":
-                config_chunks.append(resp.result)
+                config_chunks.append(_normalize_config(resp.result))
         driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
@@ -222,7 +241,7 @@ def _run_netconf(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
         if not spec.rpc:
             raise ValueError("netconf profile is missing rpc")
         resp = driver.raw_rpc(rpc=spec.rpc)
-        raw_xml = resp.result
+        raw_xml = _normalize_config(resp.result)
         driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
