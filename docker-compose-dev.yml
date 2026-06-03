@@ -17,6 +17,14 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: >
+      redis-server
+      --save ""
+      --appendonly no
+      --maxmemory 128mb
+      --maxmemory-policy noeviction
+      --hz 5
+      --loglevel warning
     ports:
       - "6379:6379"
     healthcheck:
@@ -24,6 +32,10 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 192M
 
   migrate:
     build:
