@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     # Should exceed the longest expected batch duration (devices × command_timeout / concurrency).
     recorder_batch_timeout: int = 1800
 
+    # Redis stream back-pressure controls.
+    # stream_max_len is applied as xadd maxlen ~ (approximate trim) on every write.
+    # New batches are rejected when undelivered entries + incoming count would
+    # exceed stream_max_len * stream_high_water_ratio.
+    stream_max_len: int = 10000
+    stream_high_water_ratio: float = 0.8
+
     web_host: str = "0.0.0.0"
     web_port: int = 8000
     web_workers: int = 5

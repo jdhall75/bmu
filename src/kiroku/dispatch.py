@@ -7,10 +7,11 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from kiroku.config import get_settings
 from kiroku.credentials.registry import resolve_credential
 from kiroku.jobs import CredentialRef, EmbeddedCredential, JobSpec
 from kiroku.models import Credential, Device, DeviceGroup, Job, Run, RunBatch, RunStatus
-from kiroku.queue import publish_job
+from kiroku.queue import job_stream_for, job_stream_pressure, publish_job
 
 
 def _spec_for(
@@ -107,6 +108,35 @@ def fire_job(
             seen.add(d.id)
             device_group_pairs.append((d, None))
 
+    # Pre-flight: check stream capacity before creating any DB rows.
+    # Count how many jobs would land on each stream (pool-specific or default).
+    settings = get_settings()
+    stream_counts: dict[str, int] = {}
+    for device, group in device_group_pairs:
+        pool = device.worker_pool or (group.worker_pool if group else None)
+        stream = job_stream_for(pool)
+        stream_counts[stream] = stream_counts.get(stream, 0) + 1
+
+    capacity_error: str | None = None
+    high_water = int(settings.stream_max_len * settings.stream_high_water_ratio)
+    for stream, count in stream_counts.items():
+        undelivered, max_len = job_stream_pressure(stream)
+        if undelivered + count > high_water:
+            capacity_error = (
+                f"job stream {stream!r} at capacity: {undelivered} undelivered "
+                f"+ {count} incoming exceeds high-water mark {high_water}/{max_len}; "
+                f"retry when workers catch up"
+            )
+            log.warning(
+                "batch rejected: stream at capacity",
+                stream=stream,
+                undelivered=undelivered,
+                incoming=count,
+                high_water=high_water,
+                max_len=max_len,
+            )
+            break
+
     batch = RunBatch(
         schedule_id=schedule_id,
         schedule_name=schedule_name or job.name,
@@ -129,6 +159,17 @@ def fire_job(
         db.add(run)
         pairs.append((device, group, run))
     db.flush()
+
+    if capacity_error:
+        for _, _, run in pairs:
+            run.status = RunStatus.FAILED
+            run.error = capacity_error
+            run.finished_at = now
+            batch.failed += 1
+        batch.finished_at = now
+        if commit:
+            db.commit()
+        return batch
 
     for device, group, run in pairs:
         spec = _spec_for(

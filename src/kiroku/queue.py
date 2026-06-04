@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Iterable
 
 import redis
@@ -32,18 +31,48 @@ def ensure_consumer_group(stream: str, group: str) -> None:
             raise
 
 
-def _job_stream_for(spec: JobSpec) -> str:
+def job_stream_for(pool: str | None) -> str:
+    """Return the Redis stream name for a given worker pool (None = default)."""
     settings = get_settings()
-    if spec.worker_pool:
-        return f"{settings.job_stream}:{spec.worker_pool}"
-    return settings.job_stream
+    return f"{settings.job_stream}:{pool}" if pool else settings.job_stream
+
+
+def _job_stream_for(spec: JobSpec) -> str:
+    return job_stream_for(spec.worker_pool)
+
+
+def job_stream_pressure(stream: str) -> tuple[int, int]:
+    """Return (undelivered_count, max_len) for a job stream.
+
+    undelivered_count is xlen minus entries-read for the consumer group —
+    i.e. entries not yet fetched by any worker.  Returns (0, max_len) if the
+    stream does not exist yet.
+    """
+    settings = get_settings()
+    r = _client()
+    try:
+        length = r.xlen(stream)
+    except redis.ResponseError:
+        return 0, settings.stream_max_len
+
+    entries_read = 0
+    try:
+        for g in r.xinfo_groups(stream):
+            if g["name"] == settings.job_consumer_group:
+                entries_read = g.get("entries-read") or 0
+                break
+    except redis.ResponseError:
+        pass
+
+    return max(0, length - entries_read), settings.stream_max_len
 
 
 def publish_job(spec: JobSpec) -> str:
+    settings = get_settings()
     r = _client()
     stream = _job_stream_for(spec)
     payload = spec.model_dump_json()
-    msg_id = r.xadd(stream, {"data": payload})
+    msg_id = r.xadd(stream, {"data": payload}, maxlen=settings.stream_max_len, approximate=True)
     log.debug(
         "queued job",
         run_id=spec.run_id,
@@ -57,7 +86,12 @@ def publish_job(spec: JobSpec) -> str:
 def publish_result(result: JobResult) -> str:
     settings = get_settings()
     r = _client()
-    msg_id = r.xadd(settings.result_stream, {"data": result.model_dump_json()})
+    msg_id = r.xadd(
+        settings.result_stream,
+        {"data": result.model_dump_json()},
+        maxlen=settings.stream_max_len,
+        approximate=True,
+    )
     return msg_id
 
 
