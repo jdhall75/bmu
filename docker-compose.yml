@@ -1,8 +1,6 @@
-services:
+gervices:
   postgres:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: bmu
       POSTGRES_PASSWORD: bmu
@@ -25,8 +23,6 @@ services:
       --maxmemory-policy noeviction
       --hz 5
       --loglevel warning
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -36,6 +32,8 @@ services:
       resources:
         limits:
           memory: 576M
+    sysctls:
+      - net.core.somaxconn=65535
 
   migrate:
     build:
