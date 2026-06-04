@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import signal
 import traceback
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait as futures_wait
 from datetime import datetime, timezone
 
 from kiroku.config import get_settings
@@ -104,25 +104,40 @@ def run_worker() -> None:
     settings = get_settings()
     _install_signals()
     consumer = f"worker-{os.getpid()}"
+    concurrency = settings.worker_concurrency
 
-    log.info(
-        "worker starting", consumer=consumer, concurrency=settings.worker_concurrency
-    )
+    log.info("worker starting", consumer=consumer, concurrency=concurrency)
 
-    with ProcessPoolExecutor(max_workers=settings.worker_concurrency) as pool:
+    pending: set = set()
+
+    with ProcessPoolExecutor(max_workers=concurrency) as pool:
         while not _stop:
-            try:
-                jobs = read_jobs(
-                    consumer, count=settings.worker_concurrency, block_ms=2000
+            # Reap any futures that finished since the last iteration.
+            done = {f for f in pending if f.done()}
+            for f in done:
+                if f.exception():
+                    log.error("job subprocess failed", error=str(f.exception()))
+            pending -= done
+
+            slots = concurrency - len(pending)
+
+            if slots <= 0:
+                # All workers busy — wait for at least one to finish before
+                # reading more jobs, so we never queue more than concurrency
+                # specs in Redis or in the pool at once.
+                done, pending = futures_wait(
+                    pending, timeout=1.0, return_when=FIRST_COMPLETED
                 )
+                for f in done:
+                    if f.exception():
+                        log.error("job subprocess failed", error=str(f.exception()))
+                continue
+
+            try:
+                jobs = read_jobs(consumer, count=slots, block_ms=2000)
             except Exception as exc:
                 log.error("read_jobs failed", error=str(exc))
                 continue
+
             for msg_id, spec in jobs:
-                future = pool.submit(_handle, msg_id, spec)
-                future.add_done_callback(
-                    lambda f: (
-                        f.exception()
-                        and log.error("job subprocess failed", error=str(f.exception()))
-                    )
-                )
+                pending.add(pool.submit(_handle, msg_id, spec))
