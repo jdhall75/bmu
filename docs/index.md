@@ -105,3 +105,18 @@ Go to **Schedules → New schedule** to automate a job on a recurring basis.
 ### Search stored configurations
 
 Use **Search** to find any text across all backed-up device configs. Use **Exact** mode for IP addresses and interface names; use **Full-text** for keywords that may appear in inflected forms.
+
+## Tuning for large device inventories
+
+### Stream capacity
+
+Jobs are queued through a Redis Stream before workers pick them up. Two settings control how large that queue can grow:
+
+| Variable | Default | When to change |
+|---|---|---|
+| `KIROKU_STREAM_MAX_LEN` | `10000` | Increase if you have a very large device inventory and batches are being rejected (see below). Decrease to reduce Redis memory usage on small deployments. |
+| `KIROKU_STREAM_HIGH_WATER_RATIO` | `0.8` | Fraction of max length at which new batches are refused. Lower this to leave more headroom; raise it if you want to allow the queue to fill closer to the hard cap before blocking. |
+
+**What happens when the queue is full:** if the number of undelivered jobs in the stream plus the incoming batch size would exceed `KIROKU_STREAM_MAX_LEN × KIROKU_STREAM_HIGH_WATER_RATIO`, the entire batch is rejected before any jobs are published. All runs in the batch are immediately marked **Failed** with a message explaining the rejection and telling you to retry when workers catch up. The batch is visible in the run history so you can see exactly when and why it was refused.
+
+**Sizing guidance:** the default 10 000-entry cap with the 128 MB Redis memory limit (set in `docker-compose.yml`) comfortably handles inventories of several thousand devices. If a single scheduled batch exceeds `max_len × high_water_ratio` devices, either raise `KIROKU_STREAM_MAX_LEN` or split the job into smaller device groups.

@@ -76,6 +76,8 @@ so the stack runs out of the box with `docker compose up`.
 | `KIROKU_RESULT_STREAM` | `kiroku:results` | Redis stream name for job results |
 | `KIROKU_JOB_CONSUMER_GROUP` | `workers` | Redis consumer group for the job stream |
 | `KIROKU_RESULT_CONSUMER_GROUP` | `recorders` | Redis consumer group for the result stream |
+| `KIROKU_STREAM_MAX_LEN` | `10000` | Hard cap on entries per stream. Applied as `XADD MAXLEN ~` on every write — Redis trims already-consumed entries at natural boundaries. Raise this if large device counts cause batches to be rejected at high-water before workers drain the queue. |
+| `KIROKU_STREAM_HIGH_WATER_RATIO` | `0.8` | Fraction of `KIROKU_STREAM_MAX_LEN` at which new batches are refused. When undelivered entries + incoming batch size exceeds `max_len × ratio`, all runs in the batch are immediately marked failed with a clear error visible in the UI. Default `0.8` = refuse at 8 000 undelivered entries (with a 10 000 max). |
 
 ### Security
 
