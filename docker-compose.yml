@@ -122,3 +122,10 @@ services:
 volumes:
   pg_data:
   backups:
+
+# networks:
+#   default:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.1.0/24
