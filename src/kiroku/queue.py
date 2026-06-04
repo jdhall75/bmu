@@ -89,7 +89,7 @@ def publish_result(result: JobResult) -> str:
     msg_id = r.xadd(
         settings.result_stream,
         {"data": result.model_dump_json()},
-        maxlen=settings.stream_max_len,
+        maxlen=settings.result_stream_max_len,
         approximate=True,
     )
     return msg_id

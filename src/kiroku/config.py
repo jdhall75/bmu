@@ -45,11 +45,13 @@ class Settings(BaseSettings):
     recorder_batch_timeout: int = 1800
 
     # Redis stream back-pressure controls.
-    # stream_max_len is applied as xadd maxlen ~ (approximate trim) on every write.
-    # New batches are rejected when undelivered entries + incoming count would
-    # exceed stream_max_len * stream_high_water_ratio.
+    # Job stream: specs are small (a few KB each); 10 000 is a generous cap.
+    # Result stream: entries carry full config text (can be hundreds of KB each)
+    # so the cap must be much tighter. The recorder processes results within
+    # seconds of arrival, so a few hundred entries of headroom is ample.
     stream_max_len: int = 10000
     stream_high_water_ratio: float = 0.8
+    result_stream_max_len: int = 500
 
     web_host: str = "0.0.0.0"
     web_port: int = 8000

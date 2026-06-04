@@ -21,7 +21,7 @@ services:
       redis-server
       --save ""
       --appendonly no
-      --maxmemory 128mb
+      --maxmemory 512mb
       --maxmemory-policy noeviction
       --hz 5
       --loglevel warning
@@ -35,7 +35,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 192M
+          memory: 576M
 
   migrate:
     build:
