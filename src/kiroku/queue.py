@@ -130,12 +130,17 @@ def read_results(
 
 def ack_job(msg_id: str) -> None:
     settings = get_settings()
-    _client().xack(settings.effective_job_stream, settings.job_consumer_group, msg_id)
+    r = _client()
+    stream = settings.effective_job_stream
+    r.xack(stream, settings.job_consumer_group, msg_id)
+    r.xdel(stream, msg_id)
 
 
 def ack_result(msg_id: str) -> None:
     settings = get_settings()
-    _client().xack(settings.result_stream, settings.result_consumer_group, msg_id)
+    r = _client()
+    r.xack(settings.result_stream, settings.result_consumer_group, msg_id)
+    r.xdel(settings.result_stream, msg_id)
 
 
 def job_stream_names() -> list[str]:
