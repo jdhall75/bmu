@@ -29,6 +29,19 @@ from pathlib import Path
 _ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
+def _strip_echo(text: str, cmd: str) -> str:
+    """Remove command echo from the first line of normalized output.
+
+    When InputHandling.IGNORE is used, scrapli returns output verbatim, including
+    the device's echo of the command we sent. Strip it with an exact match so we
+    never accidentally discard real config lines the way FUZZY matching can.
+    """
+    lines = text.splitlines()
+    if lines and lines[0].strip() == cmd.strip():
+        return "\n".join(lines[1:])
+    return text
+
+
 def _normalize_config(text: str) -> str:
     """Strip terminal control sequences, normalize line endings, and trim trailing whitespace.
 
@@ -55,6 +68,7 @@ from scrapli import (
     TransportBinOptions,
     TransportTelnetOptions,
 )
+from scrapli.cli import InputHandling
 
 from kiroku.config import get_settings
 from kiroku.credentials.base import CredentialMaterial
@@ -147,18 +161,37 @@ def _run_cli(spec: JobSpec, cred: CredentialMaterial) -> JobResult:
                 temp_path = None
         for cmd in spec.commands:
             t0 = time.perf_counter()
-            resp = driver.send_input(input_=cmd)
+            # For backup, bypass FUZZY echo-stripping: return raw output and strip
+            # the echo ourselves. FUZZY occasionally misidentifies config content as
+            # the echo (e.g. a banner or alias containing the command text) and
+            # silently drops everything before the false match, causing alternating
+            # incomplete captures.
+            if spec.kind == "backup":
+                resp = driver.send_input(input_=cmd, input_handling=InputHandling.IGNORE)
+            else:
+                resp = driver.send_input(input_=cmd)
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            if spec.kind == "backup":
+                output = _strip_echo(_normalize_config(resp.result), cmd)
+                log.debug(
+                    "backup capture",
+                    device=spec.device_name,
+                    command=cmd,
+                    bytes=len(output),
+                    raw_bytes=len(resp.result_raw),
+                )
+            else:
+                output = resp.result
             cmd_results.append(
                 CommandResult(
                     command=cmd,
-                    output=resp.result,
+                    output=output,
                     elapsed_ms=elapsed_ms,
                     failed=resp.failed,
                 )
             )
             if spec.kind == "backup":
-                config_chunks.append(_normalize_config(resp.result))
+                config_chunks.append(output)
         driver.close()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
