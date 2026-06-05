@@ -153,7 +153,13 @@ async def search_configs(
                     )
 
         elif mode == "exact":
-            params["pattern"] = f"%{q}%"
+            # Escape ILIKE metacharacters so the user's literal text is matched.
+            # PostgreSQL ILIKE treats \ as the escape character, so \ → \\, % → \%, _ → \_.
+            # Escape \ first to avoid double-escaping the others.
+            # The original q is kept for _extract_context (Python `in` operator,
+            # no escaping needed).
+            ilike_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            params["pattern"] = f"%{ilike_q}%"
             rows = (
                 db.execute(
                     text(f"""
