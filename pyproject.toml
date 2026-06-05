@@ -52,7 +52,7 @@ testpaths = ["tests"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-kiroku = ["web/templates/**/*.html", "web/static/**/*", "web/docs/**/*.md"]
+kiroku = ["web/templates/**/*.html", "web/static/**/*", "web/docs/**/*.md", "worker/definitions/**/*.yaml"]
 
 [dependency-groups]
 dev = [
