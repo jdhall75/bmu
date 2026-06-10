@@ -33,6 +33,7 @@ web = [
     "python-multipart>=0.0.9",
     "markdown>=3.6",
     "authlib>=1.3",
+    "joserfc>=1.0",
 ]
 worker = [
     "scrapli2>=2.0.0rc7",
