@@ -53,7 +53,9 @@
 
 {% if q and not error %}
   {% if results %}
-    <p class="muted">{{ results|length }} device(s) matched{% if results|length == 50 %} (showing first 50){% endif %}.</p>
+    <p class="muted">
+      Showing {{ (page - 1) * 50 + 1 }}–{{ (page - 1) * 50 + results|length }} device(s){% if has_next %} — more results available{% endif %}.
+    </p>
     {% for r in results %}
     <div class="search-result">
       <div class="search-result-header">
@@ -80,6 +82,15 @@
       {% endif %}
     </div>
     {% endfor %}
+    <div class="pagination">
+      {% if page > 1 %}
+        <a role="button" href="/search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page - 1 }}">← Previous</a>
+      {% endif %}
+      <span class="muted">Page {{ page }}</span>
+      {% if has_next %}
+        <a role="button" href="/search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page + 1 }}">Next →</a>
+      {% endif %}
+    </div>
   {% else %}
     <p>No configs matched <strong>{{ q }}</strong>.</p>
   {% endif %}

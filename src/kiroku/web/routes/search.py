@@ -85,15 +85,21 @@ async def search_configs(
     mode: str = "fts",
     case_sensitive: str = "",
     context_lines: int = 3,
+    page: int = 1,
 ) -> Template:
     groups = db.scalars(select(DeviceGroup).order_by(DeviceGroup.name)).all()
     results: list[dict] = []
     error: str | None = None
+    has_next = False
+
+    page = max(1, page)
+    offset = (page - 1) * PAGE_SIZE
 
     q = q.strip()
     if q:
         gid = int(group_id) if group_id.isdigit() else 0
-        params: dict = {"q": q, "limit": PAGE_SIZE}
+        # Fetch one extra row to detect whether a next page exists.
+        params: dict = {"q": q, "limit": PAGE_SIZE + 1, "offset": offset}
         where_group = _GROUP_FILTER if gid else ""
         extra_params = {"gid": gid} if gid else {}
 
@@ -122,7 +128,7 @@ async def search_configs(
                         WHERE dc.content {op} :q
                           {where_group}
                         ORDER BY dc.captured_at DESC
-                        LIMIT :limit
+                        LIMIT :limit OFFSET :offset
                     """),
                             {**params, **extra_params},
                         )
@@ -136,7 +142,8 @@ async def search_configs(
                     error = f"PostgreSQL regex error: {msg.splitlines()[0]}"
                     rows = []
 
-                for row in rows:
+                has_next = len(rows) > PAGE_SIZE
+                for row in rows[:PAGE_SIZE]:
                     results.append(
                         {
                             "device_id": row["device_id"],
@@ -171,14 +178,15 @@ async def search_configs(
                 WHERE dc.content ILIKE :pattern
                   {where_group}
                 ORDER BY dc.captured_at DESC
-                LIMIT :limit
+                LIMIT :limit OFFSET :offset
             """),
                     {**params, **extra_params},
                 )
                 .mappings()
                 .all()
             )
-            for row in rows:
+            has_next = len(rows) > PAGE_SIZE
+            for row in rows[:PAGE_SIZE]:
                 results.append(
                     {
                         "device_id": row["device_id"],
@@ -207,14 +215,15 @@ async def search_configs(
                 WHERE dc.content_fts @@ websearch_to_tsquery('simple', :q)
                   {where_group}
                 ORDER BY dc.captured_at DESC
-                LIMIT :limit
+                LIMIT :limit OFFSET :offset
             """),
                     {**params, **extra_params},
                 )
                 .mappings()
                 .all()
             )
-            for row in rows:
+            has_next = len(rows) > PAGE_SIZE
+            for row in rows[:PAGE_SIZE]:
                 results.append(
                     {
                         "device_id": row["device_id"],
@@ -241,6 +250,8 @@ async def search_configs(
             "groups": groups,
             "results": results,
             "error": error,
+            "page": page,
+            "has_next": has_next,
         },
     )
 
