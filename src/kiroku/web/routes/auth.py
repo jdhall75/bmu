@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import secrets
-
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
@@ -17,6 +15,7 @@ from litestar.status_codes import HTTP_303_SEE_OTHER
 
 from kiroku.config import get_settings
 from kiroku.logging import get_logger
+from kiroku.web.redir import redir
 
 log = get_logger(__name__)
 
@@ -43,9 +42,9 @@ def _extract_roles(claims: dict, claim_path: str) -> list[str]:
 async def login(request: Request) -> Redirect | Template:
     s = get_settings()
     if s.auth_provider == "none":
-        return Redirect("/")
+        return redir("/")
     if s.auth_provider == "dev":
-        return Redirect("/auth/dev-login")
+        return redir("/auth/dev-login")
 
     try:
         async with AsyncOAuth2Client(
@@ -134,7 +133,7 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
         request.session.pop(k, None)
 
     log.info("user logged in", sub=claims.get("sub"), role=role)
-    return Redirect("/")
+    return redir("/")
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +143,7 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
 @post("/logout", status_code=HTTP_303_SEE_OTHER, exclude_from_auth=True)
 async def logout(request: Request) -> Redirect:
     request.session.clear()
-    return Redirect("/auth/login")
+    return redir("/auth/login")
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +153,7 @@ async def logout(request: Request) -> Redirect:
 @get("/dev-login", exclude_from_auth=True)
 async def dev_login_form(request: Request) -> Template | Redirect:
     if get_settings().auth_provider != "dev":
-        return Redirect("/")
+        return redir("/")
     return Template("auth/dev_login.html", context={})
 
 
@@ -164,7 +163,7 @@ async def dev_login_submit(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect | Template:
     if get_settings().auth_provider != "dev":
-        return Redirect("/")
+        return redir("/")
     role = data.get("role", "operator")
     if role not in ("admin", "operator"):
         role = "operator"
@@ -172,7 +171,7 @@ async def dev_login_submit(
     request.session["user_name"] = f"Dev {role.capitalize()}"
     request.session["user_email"] = f"{role}@dev.local"
     request.session["user_role"] = role
-    return Redirect("/")
+    return redir("/")
 
 
 router = Router(
