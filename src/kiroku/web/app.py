@@ -6,13 +6,14 @@ from litestar import Litestar, Request
 from litestar.contrib.jinja import JinjaTemplateEngine
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import DefineMiddleware
-from litestar.response import Redirect, Response
+from litestar.response import Response
 from litestar.static_files import create_static_files_router
 from litestar.template.config import TemplateConfig
 
 from kiroku.config import get_settings
 from kiroku.logging import configure_logging
 from kiroku.web.auth import KirokuAuthMiddleware, _request_ctx, current_user
+from kiroku.web.redir import redir
 from kiroku.web.routes import (
     compliance,
     credentials,
@@ -41,6 +42,8 @@ async def _stamp_start(request: Request) -> None:
 
 
 def _configure_jinja(engine: JinjaTemplateEngine) -> None:
+    settings = get_settings()
+
     def elapsed_ms(request: Request) -> float | None:
         start = getattr(request.state, "start_time", None)
         if start is None:
@@ -49,12 +52,13 @@ def _configure_jinja(engine: JinjaTemplateEngine) -> None:
 
     engine.engine.globals["elapsed_ms"] = elapsed_ms
     engine.engine.globals["current_user"] = current_user
+    engine.engine.globals["root_path"] = settings.root_path
 
 
 def _auth_exception_handler(request: Request, exc: NotAuthorizedException) -> Response:
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
-        return Redirect("/auth/login")
+        return redir("/auth/login")
     return Response(content={"detail": "Unauthorized"}, status_code=401, media_type="application/json")
 
 
@@ -73,7 +77,7 @@ def _build_middleware(settings) -> list:
     )
     return [
         session_config.middleware,
-        DefineMiddleware(KirokuAuthMiddleware, exclude=["^/static"]),
+        DefineMiddleware(KirokuAuthMiddleware, exclude=["^/static", "^/auth"]),
     ]
 
 
