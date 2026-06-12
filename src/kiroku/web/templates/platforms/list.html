@@ -3,7 +3,7 @@
 {% block content %}
 <div class="toolbar">
   <!-- <h2 style="margin:0">Custom Platforms</h2> -->
-  {% if cu and cu.is_admin %}<a role="button" href="/platforms/new">New platform</a>{% endif %}
+  {% if cu and cu.is_admin %}<a role="button" href="platforms/new">New platform</a>{% endif %}
   <button class="help-btn" onclick="openHelp('platforms')">? Help</button>
 </div>
 
@@ -26,8 +26,8 @@
       <td>{{ p.description or '-' }}</td>
       {% if cu and cu.is_admin %}
       <td>
-        <a class="icon-btn" role="button" href="/platforms/{{ p.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
-        <form method="post" action="/platforms/{{ p.id }}/delete" style="display:inline">
+        <a class="icon-btn" role="button" href="platforms/{{ p.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+        <form method="post" action="platforms/{{ p.id }}/delete" style="display:inline">
           <button class="icon-btn icon-btn-delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete platform {{ p.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
         </form>
       </td>

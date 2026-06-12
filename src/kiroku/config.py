@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     # "dev"   – fake login form; pick operator or admin role locally
     # "oidc"  – full Keycloak OIDC flow (production)
     auth_provider: str = "none"
+    root_path: str = ""   # e.g. "/kiroku" when behind nginx; empty for dev
     # Public base URL of this app (used to build the OIDC redirect_uri).
     base_url: str = "http://localhost:8000"
     # Keycloak realm URL, e.g. https://keycloak.example.com/realms/myrealm

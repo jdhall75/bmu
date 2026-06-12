@@ -59,7 +59,11 @@ def _auth_exception_handler(request: Request, exc: NotAuthorizedException) -> Re
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
         return redir("/auth/login")
-    return Response(content={"detail": "Unauthorized"}, status_code=401, media_type="application/json")
+    return Response(
+        content={"detail": "Unauthorized"},
+        status_code=401,
+        media_type="application/json",
+    )
 
 
 def _build_middleware(settings) -> list:

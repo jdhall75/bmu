@@ -5,19 +5,19 @@
 
 {% if not sha and device.latest_backup_at %}
 <p class="muted">Captured {{ device.latest_backup_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-  &bull; <a href="/devices/{{ device.id }}/config/history">Git history</a>
-  &bull; <a href="/devices/{{ device.id }}/config/search">Search history</a>
+  &bull; <a href="devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="devices/{{ device.id }}/config/search">Search history</a>
 </p>
 {% elif sha %}
 <p class="muted">
   Viewing commit <code>{{ sha[:8] }}</code>
-  &bull; <a href="/devices/{{ device.id }}/config">View latest</a>
-  &bull; <a href="/devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="devices/{{ device.id }}/config">View latest</a>
+  &bull; <a href="devices/{{ device.id }}/config/history">Git history</a>
 </p>
 {% endif %}
 
 {% if content %}
-<form class="search-form" method="GET" action="/devices/{{ device.id }}/config/search">
+<form class="search-form" method="GET" action="devices/{{ device.id }}/config/search">
   <div class="filter-row">
     <input type="text" name="q" placeholder="Search config history…">
     <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:14px;margin:0">
@@ -32,5 +32,5 @@
 <p>No config available{% if sha %} at this commit{% else %} — this device has not been backed up yet{% endif %}.</p>
 {% endif %}
 
-<p><a href="/devices/{{ device.id }}">&larr; Back to device</a></p>
+<p><a href="devices/{{ device.id }}">&larr; Back to device</a></p>
 {% endblock %}

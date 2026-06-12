@@ -15,13 +15,13 @@
   A blank <code>enabled</code> cell leaves the current state unchanged (new devices default to enabled).
   Set <code>worker_pool</code> to pin a device to a specific remote worker pool (e.g. <code>site-a</code>); blank = default pool.
 </p>
-<p><a href="/devices/import/template">Download CSV template</a></p>
+<p><a href="devices/import/template">Download CSV template</a></p>
 
 {% if error %}
 <p style="color:var(--bad)"><strong>{{ error }}</strong></p>
 {% endif %}
 
-<form method="post" action="/devices/import" enctype="multipart/form-data">
+<form method="post" action="devices/import" enctype="multipart/form-data">
   <label>CSV file</label>
   <input type="file" name="file" accept=".csv,text/csv">
 
@@ -31,7 +31,7 @@ edge-rtr-01,10.0.0.1,22,,core,cisco_iosxe,ssh,cli,core-admin,1"></textarea>
 
   <div class="actions">
     <button type="submit">Import</button>
-    <a class="secondary" role="button" href="/devices">Cancel</a>
+    <a class="secondary" role="button" href="devices">Cancel</a>
   </div>
 </form>
 {% endblock %}

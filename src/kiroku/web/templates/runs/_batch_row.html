@@ -4,11 +4,11 @@
 {% set status_lbl = "complete" if complete else "running" %}
 <tr
   {% if not done %}
-  hx-get="/runs/batches/{{ b.id }}/row"
+  hx-get="{{ root_path }}/runs/batches/{{ b.id }}/row"
   hx-trigger="every 5s"
   hx-swap="outerHTML"
   {% endif %}>
-  <td><a href="/runs/batches/{{ b.id }}">{{ b.schedule_name }}</a></td>
+  <td><a href="runs/batches/{{ b.id }}">{{ b.schedule_name }}</a></td>
   <td>{{ b.kind }}</td>
   <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '-' }}</td>
   <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '-' }}</td>

@@ -63,10 +63,15 @@ services:
       KIROKU_REDIS_URL: redis://redis:6379/0
       KIROKU_SECRET_KEY: ${KIROKU_SECRET_KEY:-dev-secret-please-change-me-32-bytes-min}
       KIROKU_BACKUP_REPO_PATH: /var/lib/kiroku/backups
-      KIROKU_AUTH_PROVIDER: dev
+      KIROKU_AUTH_PROVIDER: oidc
       KIROKU_ROOT_PATH: /kiroku
-      KIROKU_BASE_URL: http://192.168.1.5
-      KIROKU_LOG_LEVEL: DEBUG
+      KIROKU_BASE_URL: https://neteng.dcn.crowncastle.com/kiroku
+      KIROKU_OIDC_ISSUER_URL: https://keycloak.nss.fiberco.local/auth/realms/NSS
+      KIROKU_OIDC_CLIENT_ID: kiroku
+      KIROKU_OIDC_CLIENT_SECRET:
+      KIROKU_OIDC_ROLE_CLAIM: resource_access.kiroku.roles
+      KIROKU_OIDC_ADMIN_ROLE: admin
+      KIROKU_OIDC_OPERATOR_ROLE: operator
     volumes:
       - backups:/var/lib/kiroku/backups:ro
     networks:
@@ -78,7 +83,7 @@ services:
   nginx:
     image: nginx:1.27-alpine
     ports:
-      - 80:80
+      - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -137,9 +142,16 @@ services:
 
 volumes:
   pg_data:
-  backups:
 
 networks:
   proxy:
     name: kiroku-proxy
     driver: bridge
+  backups:
+
+# networks:
+#   default:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.1.0/24

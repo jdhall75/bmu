@@ -2,7 +2,7 @@
 {% block title %}{% if parser %}Edit parser template - Kiroku{% else %}New parser template - Kiroku{% endif %}{% endblock %}
 {% block content %}
 <h2>{% if parser %}Edit parser template{% else %}New parser template{% endif %}</h2>
-<form method="post" action="{% if parser %}/parsers/{{ parser.id }}{% else %}/parsers{% endif %}">
+<form method="post" action="{% if parser %}parsers/{{ parser.id }}{% else %}parsers{% endif %}">
   <label>Name</label>
   <input type="text" name="name" value="{{ parser.name or '' }}" required>
 
@@ -28,9 +28,9 @@
   <div class="actions">
     <button type="submit">{% if parser %}Save{% else %}Create{% endif %}</button>
     {% if parser %}
-      <a class="secondary" role="button" href="/parsers/test?load={{ parser.id }}">Test this template</a>
+      <a class="secondary" role="button" href="parsers/test?load={{ parser.id }}">Test this template</a>
     {% endif %}
-    <a class="secondary" role="button" href="/parsers">Cancel</a>
+    <a class="secondary" role="button" href="parsers">Cancel</a>
   </div>
 </form>
 {% endblock %}

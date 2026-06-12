@@ -11,6 +11,7 @@ from kiroku.models import Credential, CredentialProvider
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
+from kiroku.web.redir import redir
 
 
 def _cred_form_context(cred=None) -> dict:
@@ -74,7 +75,7 @@ async def create_cred(
     db.flush()
     _apply_default(cred, bool(data.get("is_default")), db)
     db.commit()
-    return Redirect(path="/credentials")
+    return redir("/credentials")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -87,7 +88,7 @@ async def bulk_creds(
         for cred in db.scalars(select(Credential).where(Credential.id.in_(ids))).all():
             db.delete(cred)
         db.commit()
-    return Redirect(path="/credentials")
+    return redir("/credentials")
 
 
 @get("/{cred_id:int}/edit", dependencies={"db": provide_db}, guards=[require_admin])
@@ -116,7 +117,7 @@ async def update_cred(
         cred.encrypted_payload = _build_payload(provider, data)
     _apply_default(cred, bool(data.get("is_default")), db)
     db.commit()
-    return Redirect(path="/credentials")
+    return redir("/credentials")
 
 
 @post(
@@ -130,7 +131,7 @@ async def delete_cred(cred_id: int, db: Session) -> Redirect:
     if cred:
         db.delete(cred)
         db.commit()
-    return Redirect(path="/credentials")
+    return redir("/credentials")
 
 
 router = Router(

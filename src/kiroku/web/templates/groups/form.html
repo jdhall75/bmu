@@ -2,7 +2,7 @@
 {% block title %}{% if group %}Edit group - Kiroku{% else %}New group - Kiroku{% endif %}{% endblock %}
 {% block content %}
 <h2>{% if group %}Edit group{% else %}New group{% endif %}</h2>
-<form method="post" action="{% if group %}/groups/{{ group.id }}{% else %}/groups{% endif %}">
+<form method="post" action="{% if group %}groups/{{ group.id }}{% else %}groups{% endif %}">
   <label>Name</label><input type="text" name="name" value="{{ group.name or '' }}" required>
   <label>Description</label><input type="text" name="description" value="{{ group.description or '' }}">
   <label>Default credential</label>
@@ -25,7 +25,7 @@
 
   <div class="actions">
     <button type="submit">{% if group %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="/groups">Cancel</a>
+    <a class="secondary" role="button" href="groups">Cancel</a>
   </div>
 </form>
 {% endblock %}

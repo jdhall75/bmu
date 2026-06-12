@@ -2,7 +2,7 @@
 {% block title %}{% if job %}Edit job - Kiroku{% else %}New job - Kiroku{% endif %}{% endblock %}
 {% block content %}
 <h2>{% if job %}Edit job{% else %}New job{% endif %}</h2>
-<form method="post" action="{% if job %}/jobs/{{ job.id }}{% else %}/jobs{% endif %}">
+<form method="post" action="{% if job %}jobs/{{ job.id }}{% else %}jobs{% endif %}">
   <label>Name</label><input type="text" name="name" value="{{ job.name or '' }}" required>
   <label>Description</label><input type="text" name="description" value="{{ job.description or '' }}">
   <label>Kind</label>
@@ -52,7 +52,7 @@
 
   <div class="actions">
     <button type="submit">{% if job %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="/jobs">Cancel</a>
+    <a class="secondary" role="button" href="jobs">Cancel</a>
   </div>
 </form>
 {% endblock %}

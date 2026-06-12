@@ -14,6 +14,7 @@ from kiroku.recorder.git_store import GitStore
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import sandbox as _sandbox
+from kiroku.web.redir import redir
 
 
 def _changed_run_ids(runs: list[Run], commit_sha: str) -> set[int]:
@@ -180,7 +181,7 @@ async def purge_queue(db: Session) -> Redirect:
 
         db.commit()
 
-    return Redirect(path="/runs")
+    return redir("/runs")
 
 
 @post(
@@ -206,7 +207,7 @@ async def cancel_batch(batch_id: int, db: Session) -> Redirect:
         if (batch.succeeded + batch.failed) >= batch.total:
             batch.finished_at = now
         db.commit()
-    return Redirect(path=f"/runs/batches/{batch_id}")
+    return redir(f"/runs/batches/{batch_id}")
 
 
 router = Router(

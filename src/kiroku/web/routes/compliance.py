@@ -22,6 +22,7 @@ from kiroku.models.compliance import ComplianceCheck, CompliancePolicy
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
+from kiroku.web.redir import redir
 
 _MODES = ("any", "all", "none")
 _SEVERITY_ORDER = {"critical": 0, "major": 1, "minor": 2, "info": 3}
@@ -177,7 +178,7 @@ async def create_policy(
     db.flush()
     _apply_policy_data(policy, data, db)
     db.commit()
-    return Redirect(f"/compliance/{policy.id}", status_code=HTTP_303_SEE_OTHER)
+    return redir(f"/compliance/{policy.id}")
 
 
 @get("/{policy_id:int}", dependencies={"db": provide_db})
@@ -218,7 +219,7 @@ async def update_policy(
         raise NotFoundException(detail=f"Policy {policy_id} not found")
     _apply_policy_data(policy, data, db)
     db.commit()
-    return Redirect(f"/compliance/{policy_id}", status_code=HTTP_303_SEE_OTHER)
+    return redir(f"/compliance/{policy_id}")
 
 
 @post("/{policy_id:int}/run", dependencies={"db": provide_db})
@@ -228,7 +229,7 @@ async def run_policy(policy_id: int, db: Session) -> Redirect:
         raise NotFoundException(detail=f"Policy {policy_id} not found")
     _run_policy(policy, db)
     db.commit()
-    return Redirect(f"/compliance/{policy_id}", status_code=HTTP_303_SEE_OTHER)
+    return redir(f"/compliance/{policy_id}")
 
 
 @post("/{policy_id:int}/delete", dependencies={"db": provide_db}, guards=[require_admin])
@@ -238,7 +239,7 @@ async def delete_policy(policy_id: int, db: Session) -> Redirect:
         raise NotFoundException(detail=f"Policy {policy_id} not found")
     db.delete(policy)
     db.commit()
-    return Redirect("/compliance", status_code=HTTP_303_SEE_OTHER)
+    return redir("/compliance")
 
 
 router = Router(

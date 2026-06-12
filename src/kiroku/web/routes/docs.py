@@ -9,6 +9,8 @@ from pathlib import Path
 import markdown
 from litestar import Router, get
 
+from kiroku.config import get_settings
+
 # Docs live alongside the package so they're always available after install.
 DOCS_ROOT = Path(__file__).parents[1] / "docs"
 
@@ -25,8 +27,8 @@ _HELP_SHELL = """\
 <head>
   <meta charset="utf-8">
   <title>Kiroku Help</title>
-  <link rel="stylesheet" href="/static/pico.min.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="{root_path}/static/pico.min.css">
+  <link rel="stylesheet" href="{root_path}/static/app.css">
   <script>
   (function() {{
     function getCookie(name) {{
@@ -71,7 +73,7 @@ async def get_help_page(page: str) -> str:
         content = "<p>Invalid page name.</p>"
     else:
         content = _render(page)
-    return _HELP_SHELL.format(content=content)
+    return _HELP_SHELL.format(content=content, root_path=get_settings().root_path)
 
 
 router = Router(path="/", route_handlers=[get_doc, get_help_page])

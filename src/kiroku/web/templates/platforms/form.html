@@ -9,7 +9,7 @@
   run on open and close. See the annotated example below the form.
 </p>
 
-<form method="post" action="{% if platform %}/platforms/{{ platform.id }}{% else %}/platforms{% endif %}">
+<form method="post" action="{% if platform %}platforms/{{ platform.id }}{% else %}platforms{% endif %}">
   <label>Name</label>
   <input type="text" name="name" value="{{ platform.name or '' }}"
          required placeholder="e.g. nokia-srl, adtran-aos, mikrotik-routeros">
@@ -23,7 +23,7 @@
 
   <div class="actions">
     <button type="submit">{% if platform %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="/platforms">Cancel</a>
+    <a class="secondary" role="button" href="platforms">Cancel</a>
   </div>
 </form>
 

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Parser Templates - Kiroku{% endblock %}
 {% block content %}
-<form class="table-form" method="POST" action="/parsers/bulk">
+<form class="table-form" method="POST" action="parsers/bulk">
   <div class="toolbar">
-    {% if cu and cu.is_admin %}<a role="button" href="/parsers/new">New parser template</a>{% endif %}
-    {% if cu and cu.is_admin %}<a class="secondary" role="button" href="/parsers/test">Test bed</a>{% endif %}
+    {% if cu and cu.is_admin %}<a role="button" href="parsers/new">New parser template</a>{% endif %}
+    {% if cu and cu.is_admin %}<a class="secondary" role="button" href="parsers/test">Test bed</a>{% endif %}
     <button class="help-btn" onclick="openHelp('parsers')">? Help</button>
     {% if cu and cu.is_admin %}
     <span class="bulk-actions" id="bulk-actions" style="display:none">
@@ -24,14 +24,14 @@
     {% for p in parsers %}
       <tr>
         {% if cu and cu.is_admin %}<td><input type="checkbox" name="ids" value="{{ p.id }}"></td>{% endif %}
-        <td><a href="/parsers/{{ p.id }}/edit">{{ p.name }}</a></td>
+        <td><a href="parsers/{{ p.id }}/edit">{{ p.name }}</a></td>
         <td><code>{{ p.type.value }}</code></td>
         <td>{{ p.description or '' }}</td>
         <td>
           {% if cu and cu.is_admin %}
-          <a class="icon-btn" role="button" href="/parsers/{{ p.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
-          <a class="secondary" role="button" href="/parsers/test?load={{ p.id }}" title="Test in test bed" style="font-size:11px;padding:3px 8px">test</a>
-          <button class="icon-btn icon-btn-delete" formaction="/parsers/{{ p.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ p.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
+          <a class="icon-btn" role="button" href="parsers/{{ p.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <a class="secondary" role="button" href="parsers/test?load={{ p.id }}" title="Test in test bed" style="font-size:11px;padding:3px 8px">test</a>
+          <button class="icon-btn icon-btn-delete" formaction="parsers/{{ p.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ p.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
           {% endif %}
         </td>
       </tr>

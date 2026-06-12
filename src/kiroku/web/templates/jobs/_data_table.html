@@ -15,18 +15,18 @@
     {% if item.rows %}
       {% for row in item.rows %}
       <tr>
-        <td><a href="/devices/{{ item.device.id }}">{{ item.device.name }}</a></td>
+        <td><a href="devices/{{ item.device.id }}">{{ item.device.name }}</a></td>
         {% for h in headers %}<td>{{ row.get(h, '') }}</td>{% endfor %}
         <td>
           {% if loop.first and item.run %}
-            <a href="/runs/{{ item.run.id }}" class="muted" style="font-size:12px;white-space:nowrap">{{ item.run.finished_at.strftime('%Y-%m-%d %H:%M') }}</a>
+            <a href="runs/{{ item.run.id }}" class="muted" style="font-size:12px;white-space:nowrap">{{ item.run.finished_at.strftime('%Y-%m-%d %H:%M') }}</a>
           {% endif %}
         </td>
       </tr>
       {% endfor %}
     {% else %}
       <tr>
-        <td><a href="/devices/{{ item.device.id }}">{{ item.device.name }}</a></td>
+        <td><a href="devices/{{ item.device.id }}">{{ item.device.name }}</a></td>
         <td colspan="{{ headers | length + 1 }}" class="muted" style="font-style:italic">No data collected</td>
       </tr>
     {% endif %}

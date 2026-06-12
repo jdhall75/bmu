@@ -5,7 +5,7 @@
   <button class="help-btn" onclick="openHelp('search')">? Help</button>
 </div>
 
-<form method="GET" action="/search" class="search-form">
+<form method="GET" action="search" class="search-form">
   <div class="search-row">
     <input type="text" name="q" value="{{ q }}" placeholder="Search configs…" autofocus>
     <button type="submit">Search</button>
@@ -59,12 +59,12 @@
     {% for r in results %}
     <div class="search-result">
       <div class="search-result-header">
-        <a href="/devices/{{ r.device_id }}"><strong>{{ r.device_name }}</strong></a>
+        <a href="devices/{{ r.device_id }}"><strong>{{ r.device_name }}</strong></a>
         <span class="muted">{{ r.group_name }}</span>
         {% if r.captured_at %}
           <span class="muted">— {{ r.captured_at.strftime('%Y-%m-%d %H:%M') }}</span>
         {% endif %}
-        <a class="secondary" role="button" href="/devices/{{ r.device_id }}/config" style="margin-left:auto">View config</a>
+        <a class="secondary" role="button" href="devices/{{ r.device_id }}/config" style="margin-left:auto">View config</a>
       </div>
       {% if r.blocks %}
         {% for block in r.blocks %}
@@ -84,11 +84,11 @@
     {% endfor %}
     <div class="pagination">
       {% if page > 1 %}
-        <a role="button" href="/search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page - 1 }}">← Previous</a>
+        <a role="button" href="search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page - 1 }}">← Previous</a>
       {% endif %}
       <span class="muted">Page {{ page }}</span>
       {% if has_next %}
-        <a role="button" href="/search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page + 1 }}">Next →</a>
+        <a role="button" href="search?q={{ q|urlencode }}&mode={{ mode }}&group_id={{ group_id }}&case_sensitive={{ '1' if case_sensitive else '' }}&context_lines={{ context_lines }}&page={{ page + 1 }}">Next →</a>
       {% endif %}
     </div>
   {% else %}

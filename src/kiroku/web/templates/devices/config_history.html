@@ -28,7 +28,7 @@
       <td>{{ entry.date[:19].replace('T', ' ') }}</td>
       <td><code>{{ entry.sha }}</code></td>
       <td>{{ entry.message }}</td>
-      <td><a class="secondary" role="button" href="/devices/{{ device.id }}/config?sha={{ entry.sha_full }}" style="font-size:12px; padding:3px 8px">View</a></td>
+      <td><a class="secondary" role="button" href="devices/{{ device.id }}/config?sha={{ entry.sha_full }}" style="font-size:12px; padding:3px 8px">View</a></td>
     </tr>
   {% endfor %}
   </tbody>
@@ -39,9 +39,9 @@
 {% endif %}
 
 <p>
-  <a href="/devices/{{ device.id }}/config">View current config</a>
-  &bull; <a href="/devices/{{ device.id }}/config/search">Search history</a>
-  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+  <a href="devices/{{ device.id }}/config">View current config</a>
+  &bull; <a href="devices/{{ device.id }}/config/search">Search history</a>
+  &bull; <a href="devices/{{ device.id }}">&larr; Back to device</a>
 </p>
 
 <script>
@@ -64,7 +64,7 @@ function submitCompare(deviceId) {
   // Older commit first (from), newer second (to) — table is newest-first
   var from = checked[1].value;
   var to = checked[0].value;
-  location.href = '/devices/' + deviceId + '/config/diff?from_sha=' + from + '&to_sha=' + to;
+  location.href = ROOT_PATH + '/devices/' + deviceId + '/config/diff?from_sha=' + from + '&to_sha=' + to;
 }
 
 // Enforce max 2 checkboxes

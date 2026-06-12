@@ -21,10 +21,10 @@
 </dl>
 
 <div class="actions">
-  {% if cu and cu.is_admin %}<a role="button" href="/devices/{{ device.id }}/edit">Edit</a>{% endif %}
+  {% if cu and cu.is_admin %}<a role="button" href="devices/{{ device.id }}/edit">Edit</a>{% endif %}
   {% if device.latest_backup_path %}
-    <a role="button" href="/devices/{{ device.id }}/config">View Config</a>
-    <a class="secondary" role="button" href="/devices/{{ device.id }}/config/history">Git History</a>
+    <a role="button" href="devices/{{ device.id }}/config">View Config</a>
+    <a class="secondary" role="button" href="devices/{{ device.id }}/config/history">Git History</a>
   {% endif %}
 </div>
 
@@ -40,7 +40,7 @@
 <h3>Collected data</h3>
 {% for item in pinned_data %}
 <h4>{{ item.job.name }}</h4>
-<p class="muted" style="font-size:0.85rem">Collected <a href="/runs/{{ item.run.id }}">{{ item.run.finished_at.strftime('%Y-%m-%d %H:%M UTC') if item.run.finished_at else '' }}</a></p>
+<p class="muted" style="font-size:0.85rem">Collected <a href="runs/{{ item.run.id }}">{{ item.run.finished_at.strftime('%Y-%m-%d %H:%M UTC') if item.run.finished_at else '' }}</a></p>
 {% set d = item.display %}
 {% if d.type == 'jinja2' %}
 <div class="parsed-output">{{ d.html | safe }}</div>
@@ -68,12 +68,12 @@
   <tbody>
   {% for r in recent_runs %}
     <tr>
-      <td><a href="/runs/{{ r.id }}">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</a></td>
+      <td><a href="runs/{{ r.id }}">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</a></td>
       <td>{{ r.kind }}</td>
       <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
-      <td>{% if r.batch_id %}<a href="/runs/batches/{{ r.batch_id }}">#{{ r.batch_id }}</a>{% else %}-{% endif %}</td>
-      <td>{% if r.parsed_data is not none %}<a href="/runs/{{ r.id }}" title="View parsed output">&#10003;</a>{% endif %}</td>
-      <td>{% if r.error %}<a href="/runs/{{ r.id }}">{{ r.error[:60] }}{% if r.error|length > 60 %}…{% endif %}</a>{% endif %}</td>
+      <td>{% if r.batch_id %}<a href="runs/batches/{{ r.batch_id }}">#{{ r.batch_id }}</a>{% else %}-{% endif %}</td>
+      <td>{% if r.parsed_data is not none %}<a href="runs/{{ r.id }}" title="View parsed output">&#10003;</a>{% endif %}</td>
+      <td>{% if r.error %}<a href="runs/{{ r.id }}">{{ r.error[:60] }}{% if r.error|length > 60 %}…{% endif %}</a>{% endif %}</td>
     </tr>
   {% else %}
     <tr><td colspan="6">No runs yet.</td></tr>
@@ -82,5 +82,5 @@
 </table>
 </div>
 
-<p><a href="/devices">&larr; All devices</a></p>
+<p><a href="devices">&larr; All devices</a></p>
 {% endblock %}

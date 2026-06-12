@@ -10,6 +10,7 @@ from kiroku.models import Job, Schedule
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids
+from kiroku.web.redir import redir
 
 
 def _schedule_form_context(db: Session, schedule=None) -> dict:
@@ -50,7 +51,7 @@ async def create_schedule(
     )
     db.add(s)
     db.commit()
-    return Redirect(path="/schedules")
+    return redir("/schedules")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -63,7 +64,7 @@ async def bulk_schedules(
         for schedule in db.scalars(select(Schedule).where(Schedule.id.in_(ids))).all():
             db.delete(schedule)
         db.commit()
-    return Redirect(path="/schedules")
+    return redir("/schedules")
 
 
 @get("/{schedule_id:int}/edit", dependencies={"db": provide_db})
@@ -98,7 +99,7 @@ async def update_schedule(
     schedule.timezone = new_tz
     schedule.enabled = bool(data.get("enabled"))
     db.commit()
-    return Redirect(path="/schedules")
+    return redir("/schedules")
 
 
 @post(
@@ -112,7 +113,7 @@ async def delete_schedule(schedule_id: int, db: Session) -> Redirect:
     if schedule:
         db.delete(schedule)
         db.commit()
-    return Redirect(path="/schedules")
+    return redir("/schedules")
 
 
 @post(
@@ -126,7 +127,7 @@ async def skip_next_run(schedule_id: int, db: Session) -> Redirect:
     if schedule:
         schedule.skip_next_run = not schedule.skip_next_run
         db.commit()
-    return Redirect(path="/schedules")
+    return redir("/schedules")
 
 
 router = Router(

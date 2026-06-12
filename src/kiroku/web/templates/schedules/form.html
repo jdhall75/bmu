@@ -2,7 +2,7 @@
 {% block title %}{% if schedule %}Edit schedule - Kiroku{% else %}New schedule - Kiroku{% endif %}{% endblock %}
 {% block content %}
 <h2>{% if schedule %}Edit schedule{% else %}New schedule{% endif %}</h2>
-<form method="post" action="{% if schedule %}/schedules/{{ schedule.id }}{% else %}/schedules{% endif %}">
+<form method="post" action="{% if schedule %}schedules/{{ schedule.id }}{% else %}schedules{% endif %}">
   <label>Name</label><input type="text" name="name" value="{{ schedule.name or '' }}" required>
   <label>Description</label><input type="text" name="description" value="{{ schedule.description or '' }}">
   <label>Job</label>
@@ -19,7 +19,7 @@
   <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not schedule or schedule.enabled %} checked{% endif %}>
   <div class="actions">
     <button type="submit">{% if schedule %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="/schedules">Cancel</a>
+    <a class="secondary" role="button" href="schedules">Cancel</a>
   </div>
 </form>
 {% endblock %}

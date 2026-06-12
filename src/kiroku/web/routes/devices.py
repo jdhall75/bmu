@@ -26,6 +26,7 @@ from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
 from kiroku.web.import_devices import import_csv
+from kiroku.web.redir import redir
 from kiroku.web.routes.runs import _parsed_display
 
 _SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
@@ -296,7 +297,7 @@ async def create_device(
         )
     db.add(d)
     db.commit()
-    return Redirect(path="/devices")
+    return redir("/devices")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -308,7 +309,7 @@ async def bulk_devices(
     action = data.get("action")
 
     if not ids:
-        return Redirect(path="/devices")
+        return redir("/devices")
 
     if action == "delete":
         for device in db.scalars(select(Device).where(Device.id.in_(ids))).all():
@@ -353,7 +354,7 @@ async def bulk_devices(
                 _apply_platform(device, {"platform_value": bulk_platform})
         db.commit()
 
-    return Redirect(path="/devices")
+    return redir("/devices")
 
 
 @get("/{device_id:int}/edit", dependencies={"db": provide_db})
@@ -406,7 +407,7 @@ async def update_device(
         else []
     )
     db.commit()
-    return Redirect(path="/devices")
+    return redir("/devices")
 
 
 @post(
@@ -420,7 +421,7 @@ async def delete_device(device_id: int, db: Session) -> Redirect:
     if device:
         db.delete(device)
         db.commit()
-    return Redirect(path="/devices")
+    return redir("/devices")
 
 
 @get("/import")

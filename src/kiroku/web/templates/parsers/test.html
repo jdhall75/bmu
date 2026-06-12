@@ -75,7 +75,7 @@
     resultEl.classList.remove('testbed-result-error');
 
     try {
-      var resp = await fetch('/parsers/test/run', {
+      var resp = await fetch(ROOT_PATH + '/parsers/test/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: type, input: input, template: template }),

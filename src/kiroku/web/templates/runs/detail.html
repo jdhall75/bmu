@@ -48,12 +48,12 @@
 
 <p>
   {% if run.batch_id %}
-    <a href="/runs/batches/{{ run.batch_id }}">&larr; Back to batch #{{ run.batch_id }}</a>
+    <a href="runs/batches/{{ run.batch_id }}">&larr; Back to batch #{{ run.batch_id }}</a>
   {% else %}
-    <a href="/runs">&larr; All runs</a>
+    <a href="runs">&larr; All runs</a>
   {% endif %}
   {% if run.device %}
-    &bull; <a href="/devices/{{ run.device_id }}">View device</a>
+    &bull; <a href="devices/{{ run.device_id }}">View device</a>
   {% endif %}
 </p>
 {% endblock %}

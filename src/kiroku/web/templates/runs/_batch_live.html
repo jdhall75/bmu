@@ -2,7 +2,7 @@
 {% set changed_run_ids = changed_run_ids if changed_run_ids is defined else [] %}
 <div id="batch-live"
   {% if not done %}
-  hx-get="/runs/batches/{{ batch.id }}/live"
+  hx-get="{{ root_path }}/runs/batches/{{ batch.id }}/live"
   hx-trigger="every 2s"
   hx-swap="outerHTML"
   {% endif %}>
@@ -43,7 +43,7 @@
     <tr class="{{ 'row-failed' if r.status.value == 'failed' else '' }}">
       <td>
         {% if r.device %}
-          <a href="/devices/{{ r.device_id }}">{{ r.device.name }}</a>
+          <a href="devices/{{ r.device_id }}">{{ r.device.name }}</a>
         {% else %}
           device #{{ r.device_id }}
         {% endif %}
@@ -55,7 +55,7 @@
       {% if batch.kind == 'backup' %}
       <td>
         {% if r.id in changed_run_ids %}
-          <a href="/devices/{{ r.device_id }}/config" title="View config">&#x2713; changed</a>
+          <a href="devices/{{ r.device_id }}/config" title="View config">&#x2713; changed</a>
         {% elif r.status.value == 'success' %}
           <span class="muted">unchanged</span>
         {% endif %}
@@ -63,12 +63,12 @@
       {% endif %}
       <td>
         {% if r.parsed_data is not none %}
-          <a href="/runs/{{ r.id }}" title="View parsed output">&#10003;</a>
+          <a href="runs/{{ r.id }}" title="View parsed output">&#10003;</a>
         {% endif %}
       </td>
       <td>
         {% if r.error %}
-          <a href="/runs/{{ r.id }}">{{ r.error[:80] }}{% if r.error|length > 80 %}…{% endif %}</a>
+          <a href="runs/{{ r.id }}">{{ r.error[:80] }}{% if r.error|length > 80 %}…{% endif %}</a>
         {% endif %}
       </td>
     </tr>

@@ -6,7 +6,7 @@
   <button type="button" class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>
 
-<form method="post" action="{% if policy %}/compliance/{{ policy.id }}{% else %}/compliance{% endif %}">
+<form method="post" action="{% if policy %}compliance/{{ policy.id }}{% else %}compliance{% endif %}">
 
   <fieldset>
     <legend>Policy</legend>
@@ -41,7 +41,7 @@
       <span class="muted" style="font-size:0.8em;font-weight:normal">
         — TextFSM/TTP template or <code>parse</code> format string (e.g. <code>ntp server {NTP_SERVER}</code>)
         — <a href="#" onclick="openHelp('compliance');return false">see docs</a>
-        — <a href="/parsers/test" target="_blank">test bed</a>
+        — <a href="parsers/test" target="_blank">test bed</a>
       </span>
     </label>
     <textarea name="parser_body" rows="8" data-code required>{{ policy.parser_body if policy else '' }}</textarea>
@@ -131,7 +131,7 @@
 
   <div class="actions">
     <button type="submit">{% if policy %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="{% if policy %}/compliance/{{ policy.id }}{% else %}/compliance{% endif %}">Cancel</a>
+    <a class="secondary" role="button" href="{% if policy %}compliance/{{ policy.id }}{% else %}compliance{% endif %}">Cancel</a>
   </div>
 </form>
 

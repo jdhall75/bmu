@@ -4,13 +4,13 @@
 <div class="toolbar">
   <button class="help-btn" onclick="openHelp('runs')">? Help</button>
   {% if cu and cu.is_admin %}
-  <form method="POST" action="/runs/purge-queue" style="display:inline">
+  <form method="POST" action="runs/purge-queue" style="display:inline">
     <button onclick="return confirm('Remove all undelivered jobs from the queue and cancel their runs?')">Purge queue</button>
   </form>
   {% endif %}
 </div>
 
-<form class="search-form" method="GET" action="/runs">
+<form class="search-form" method="GET" action="runs">
   <div class="filter-row">
     <input type="text" name="q" value="{{ q }}" placeholder="Schedule name…">
     <select name="kind">
@@ -27,7 +27,7 @@
       <option value="failed"{{ ' selected' if status == 'failed' }}>Any failures</option>
     </select>
     <button type="submit">Filter</button>
-    {% if has_filters %}<a href="/runs">Clear</a>{% endif %}
+    {% if has_filters %}<a href="runs">Clear</a>{% endif %}
   </div>
 </form>
 

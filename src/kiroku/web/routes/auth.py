@@ -38,12 +38,14 @@ def _extract_roles(claims: dict, claim_path: str) -> list[str]:
 # /auth/login
 # ---------------------------------------------------------------------------
 
+
 @get("/login", exclude_from_auth=True)
 async def login(request: Request) -> Redirect | Template:
     s = get_settings()
     if s.auth_provider == "none":
         return redir("/")
     if s.auth_provider == "dev":
+        request.logger.debug("Redirecting to /auth/dev-login based on auth_provider")
         return redir("/auth/dev-login")
 
     try:
@@ -53,13 +55,17 @@ async def login(request: Request) -> Redirect | Template:
             scope="openid profile email",
             timeout=10,
         ) as client:
-            resp = await client.get(f"{s.oidc_issuer_url}/.well-known/openid-configuration")
+            resp = await client.get(
+                f"{s.oidc_issuer_url}/.well-known/openid-configuration"
+            )
             resp.raise_for_status()
             oidc = resp.json()
             url, state = client.create_authorization_url(oidc["authorization_endpoint"])
     except Exception as exc:
         log.error("oidc discovery failed", error=str(exc))
-        return Template("auth/error.html", context={"error": f"OIDC discovery failed: {exc}"})
+        return Template(
+            "auth/error.html", context={"error": f"OIDC discovery failed: {exc}"}
+        )
 
     request.session["oidc_state"] = state
     request.session["oidc_token_endpoint"] = oidc["token_endpoint"]
@@ -71,15 +77,23 @@ async def login(request: Request) -> Redirect | Template:
 # /auth/callback  (OIDC only)
 # ---------------------------------------------------------------------------
 
+
 @get("/callback", exclude_from_auth=True)
-async def callback(request: Request, code: str = "", error: str = "") -> Redirect | Template:
+async def callback(
+    request: Request, code: str = "", error: str = ""
+) -> Redirect | Template:
     if error:
-        return Template("auth/error.html", context={"error": f"Keycloak error: {error}"})
+        return Template(
+            "auth/error.html", context={"error": f"Keycloak error: {error}"}
+        )
 
     oauth_state = request.query_params.get("state", "")
     expected_state = request.session.get("oidc_state")
     if not oauth_state or oauth_state != expected_state:
-        return Template("auth/error.html", context={"error": "Invalid state parameter — possible CSRF."})
+        return Template(
+            "auth/error.html",
+            context={"error": "Invalid state parameter — possible CSRF."},
+        )
 
     s = get_settings()
     token_endpoint = request.session.get("oidc_token_endpoint", "")
@@ -102,7 +116,9 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
             jwks = jwks_resp.json()
     except Exception as exc:
         log.error("oidc token exchange failed", error=str(exc))
-        return Template("auth/error.html", context={"error": f"Token exchange failed: {exc}"})
+        return Template(
+            "auth/error.html", context={"error": f"Token exchange failed: {exc}"}
+        )
 
     try:
         key_set = KeySet.import_key_set(jwks)
@@ -110,7 +126,9 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
         JWTClaimsRegistry().validate(token.claims)
     except Exception as exc:
         log.error("oidc jwt validation failed", error=str(exc))
-        return Template("auth/error.html", context={"error": f"JWT validation failed: {exc}"})
+        return Template(
+            "auth/error.html", context={"error": f"JWT validation failed: {exc}"}
+        )
 
     claims = token.claims
     roles = _extract_roles(claims, s.oidc_role_claim)
@@ -119,14 +137,20 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
     elif s.oidc_operator_role in roles:
         role = "operator"
     else:
-        log.warning("oidc login denied: no matching role", sub=claims.get("sub"), roles=roles)
+        log.warning(
+            "oidc login denied: no matching role", sub=claims.get("sub"), roles=roles
+        )
         return Template(
             "auth/error.html",
-            context={"error": "Your account has no Kiroku role assigned. Contact your administrator."},
+            context={
+                "error": "Your account has no Kiroku role assigned. Contact your administrator."
+            },
         )
 
     request.session["user_sub"] = claims.get("sub", "")
-    request.session["user_name"] = claims.get("name") or claims.get("preferred_username", "")
+    request.session["user_name"] = claims.get("name") or claims.get(
+        "preferred_username", ""
+    )
     request.session["user_email"] = claims.get("email", "")
     request.session["user_role"] = role
     for k in ("oidc_state", "oidc_token_endpoint", "oidc_jwks_uri"):
@@ -140,6 +164,7 @@ async def callback(request: Request, code: str = "", error: str = "") -> Redirec
 # /auth/logout
 # ---------------------------------------------------------------------------
 
+
 @post("/logout", status_code=HTTP_303_SEE_OTHER, exclude_from_auth=True)
 async def logout(request: Request) -> Redirect:
     request.session.clear()
@@ -150,10 +175,14 @@ async def logout(request: Request) -> Redirect:
 # /auth/dev-login  (dev mode only)
 # ---------------------------------------------------------------------------
 
+
 @get("/dev-login", exclude_from_auth=True)
 async def dev_login_form(request: Request) -> Template | Redirect:
-    if get_settings().auth_provider != "dev":
+    s = get_settings()
+    if s.auth_provider != "dev":
+        log.debug("Redirecting to /")
         return redir("/")
+    log.debug("[GET /auth/dev-login] returning a template")
     return Template("auth/dev_login.html", context={})
 
 

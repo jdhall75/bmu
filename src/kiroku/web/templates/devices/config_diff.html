@@ -4,8 +4,8 @@
 <h2>{{ device.name }} &mdash; config diff</h2>
 <p class="muted">
   <code>{{ from_sha[:8] }}</code> &rarr; <code>{{ to_sha[:8] }}</code>
-  &bull; <a href="/devices/{{ device.id }}/config/history">Git history</a>
-  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+  &bull; <a href="devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="devices/{{ device.id }}">&larr; Back to device</a>
 </p>
 
 {% if diff_rows %}

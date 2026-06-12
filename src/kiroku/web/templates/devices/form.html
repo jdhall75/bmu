@@ -2,7 +2,7 @@
 {% block title %}{% if device %}Edit device - Kiroku{% else %}New device - Kiroku{% endif %}{% endblock %}
 {% block content %}
 <h2>{% if device %}Edit device{% else %}New device{% endif %}</h2>
-<form method="post" action="{% if device %}/devices/{{ device.id }}{% else %}/devices{% endif %}">
+<form method="post" action="{% if device %}devices/{{ device.id }}{% else %}devices{% endif %}">
   <label>Name</label><input type="text" name="name" value="{{ device.name or '' }}" required>
   <label>Hostname</label><input type="text" name="hostname" value="{{ device.hostname or '' }}" required>
   <label>Port</label><input type="number" name="port" value="{{ device.port or '' }}">
@@ -48,7 +48,7 @@
   <label></label>
   <span class="muted" style="font-size:12px">
     Built-in platforms use scrapli's bundled definition.
-    <a href="/platforms/new" target="_blank">Define a custom platform</a> for any other vendor.
+    <a href="platforms/new" target="_blank">Define a custom platform</a> for any other vendor.
   </span>
 
   <label>Transport</label>
@@ -93,7 +93,7 @@
   <label>Enabled</label><input type="checkbox" name="enabled" value="1"{% if not device or device.enabled %} checked{% endif %}>
   <div class="actions">
     <button type="submit">{% if device %}Save{% else %}Create{% endif %}</button>
-    <a class="secondary" role="button" href="/devices">Cancel</a>
+    <a class="secondary" role="button" href="devices">Cancel</a>
   </div>
 </form>
 {% endblock %}

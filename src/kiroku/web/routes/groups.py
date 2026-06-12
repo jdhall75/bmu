@@ -10,6 +10,7 @@ from kiroku.models import Credential, DeviceGroup
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, worker_pools as _worker_pools
+from kiroku.web.redir import redir
 
 
 def _group_form_context(db: Session, group=None) -> dict:
@@ -50,7 +51,7 @@ async def create_group(
     )
     db.add(g)
     db.commit()
-    return Redirect(path="/groups")
+    return redir("/groups")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -65,7 +66,7 @@ async def bulk_groups(
         ).all():
             db.delete(group)
         db.commit()
-    return Redirect(path="/groups")
+    return redir("/groups")
 
 
 @get("/{group_id:int}/edit", dependencies={"db": provide_db})
@@ -96,7 +97,7 @@ async def update_group(
     )
     group.worker_pool = data.get("worker_pool") or None
     db.commit()
-    return Redirect(path="/groups")
+    return redir("/groups")
 
 
 @post(
@@ -110,7 +111,7 @@ async def delete_group(group_id: int, db: Session) -> Redirect:
     if group:
         db.delete(group)
         db.commit()
-    return Redirect(path="/groups")
+    return redir("/groups")
 
 
 @get("/{group_id:int}", dependencies={"db": provide_db})

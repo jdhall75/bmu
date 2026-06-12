@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from kiroku.models import Platform
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
+from kiroku.web.redir import redir
 
 # Shown in the form as a reference when the operator creates a new platform.
 EXAMPLE_YAML = """\
@@ -87,7 +88,7 @@ async def create_platform(
     )
     db.add(p)
     db.commit()
-    return Redirect(path="/platforms")
+    return redir("/platforms")
 
 
 @get("/{platform_id:int}/edit", dependencies={"db": provide_db})
@@ -115,7 +116,7 @@ async def update_platform(
     platform.description = data.get("description") or None
     platform.yaml_body = data["yaml_body"]
     db.commit()
-    return Redirect(path="/platforms")
+    return redir("/platforms")
 
 
 @post(
@@ -129,7 +130,7 @@ async def delete_platform(platform_id: int, db: Session) -> Redirect:
     if platform:
         db.delete(platform)
         db.commit()
-    return Redirect(path="/platforms")
+    return redir("/platforms")
 
 
 router = Router(

@@ -3,13 +3,13 @@
 {% block content %}
 
 <div class="toolbar">
-  {% if cu and cu.is_admin %}<a role="button" href="/devices/new">New device</a>{% endif %}
-  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="/devices/import">Bulk import</a>{% endif %}
-  <a class="secondary" role="button" href="/devices/report">Report</a>
+  {% if cu and cu.is_admin %}<a role="button" href="devices/new">New device</a>{% endif %}
+  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="devices/import">Bulk import</a>{% endif %}
+  <a class="secondary" role="button" href="devices/report">Report</a>
   <button class="help-btn" onclick="openHelp('devices')">? Help</button>
 </div>
 
-<form class="search-form device-filters" method="GET" action="/devices">
+<form class="search-form device-filters" method="GET" action="devices">
   <div class="filter-row">
     <input type="text" name="q" value="{{ q }}" placeholder="Name or hostname…">
     <select name="group_id">
@@ -45,11 +45,11 @@
       <option value="0" {% if backed_up_filter == '0' %}selected{% endif %}>Never backed up</option>
     </select>
     <button type="submit">Filter</button>
-    {% if has_filters %}<a href="/devices">Clear</a>{% endif %}
+    {% if has_filters %}<a href="devices">Clear</a>{% endif %}
   </div>
 </form>
 
-<form class="table-form" method="POST" action="/devices/bulk">
+<form class="table-form" method="POST" action="devices/bulk">
   {% if cu and cu.is_admin %}
   <div class="toolbar" style="margin-top:8px">
     <span class="bulk-actions" id="bulk-actions" style="display:none">
@@ -120,7 +120,7 @@
     {% for d in devices %}
       <tr>
         <td><input type="checkbox" name="ids" value="{{ d.id }}"></td>
-        <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
+        <td><a href="devices/{{ d.id }}">{{ d.name }}</a></td>
         <td>{{ d.hostname }}{% if d.port %}:{{ d.port }}{% endif %}</td>
         <td>{{ d.groups | map(attribute='name') | join(', ') or '-' }}</td>
         <td>
@@ -140,15 +140,15 @@
           {% set badge = cve_badges.get(d.id) %}
           {% if badge %}
             {% set sev = badge.severity | lower if badge.severity else 'none' %}
-            <a href="/cve" class="severity-badge severity-{{ sev }}">{{ badge.count }} {{ badge.severity or 'NONE' }}</a>
+            <a href="cve" class="severity-badge severity-{{ sev }}">{{ badge.count }} {{ badge.severity or 'NONE' }}</a>
           {% else %}
             <span class="severity-badge severity-unscanned">-</span>
           {% endif %}
         </td>
         <td>
           {% if cu and cu.is_admin %}
-          <a class="icon-btn" role="button" href="/devices/{{ d.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
-          <button class="icon-btn icon-btn-delete" formaction="/devices/{{ d.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ d.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
+          <a class="icon-btn" role="button" href="devices/{{ d.id }}/edit" title="Edit" aria-label="Edit"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg></a>
+          <button class="icon-btn icon-btn-delete" formaction="devices/{{ d.id }}/delete" title="Delete" aria-label="Delete" onclick="return confirm('Delete {{ d.name }}?')"><svg class="icon" aria-hidden="true"><use href="#icon-delete"></use></svg></button>
           {% endif %}
         </td>
       </tr>

@@ -2,7 +2,7 @@
 {% block title %}Compliance - Kiroku{% endblock %}
 {% block content %}
 <div class="toolbar">
-  {% if cu and cu.is_admin %}<a role="button" href="/compliance/new">New policy</a>{% endif %}
+  {% if cu and cu.is_admin %}<a role="button" href="compliance/new">New policy</a>{% endif %}
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>
 
@@ -25,7 +25,7 @@
   {% for p in policies %}
     {% set s = summaries[p.id] %}
     <tr>
-      <td><a href="/compliance/{{ p.id }}"><strong>{{ p.name }}</strong></a>
+      <td><a href="compliance/{{ p.id }}"><strong>{{ p.name }}</strong></a>
         {% if not p.enabled %}<span class="muted" style="font-size:0.8em"> (disabled)</span>{% endif %}
       </td>
       <td><code>{{ p.parser_type }}</code></td>
@@ -35,16 +35,16 @@
       <td>{% if s.skip or s.error %}<span class="status status-running">{{ s.skip + s.error }}</span>{% else %}-{% endif %}</td>
       <td>{% if p.auto_evaluate %}&#10003;{% else %}-{% endif %}</td>
       <td style="white-space:nowrap">
-        <form method="post" action="/compliance/{{ p.id }}/run" style="display:inline">
+        <form method="post" action="compliance/{{ p.id }}/run" style="display:inline">
           <button class="icon-btn icon-btn-run" title="Run now">
             <svg class="icon"><use href="#icon-run"/></svg>
           </button>
         </form>
         {% if cu and cu.is_admin %}
-        <a class="icon-btn" role="button" href="/compliance/{{ p.id }}/edit" title="Edit">
+        <a class="icon-btn" role="button" href="compliance/{{ p.id }}/edit" title="Edit">
           <svg class="icon"><use href="#icon-edit"/></svg>
         </a>
-        <form method="post" action="/compliance/{{ p.id }}/delete" style="display:inline"
+        <form method="post" action="compliance/{{ p.id }}/delete" style="display:inline"
               onsubmit="return confirm('Delete policy {{ p.name }}?')">
           <button class="icon-btn icon-btn-delete" title="Delete">
             <svg class="icon"><use href="#icon-delete"/></svg>
@@ -58,6 +58,6 @@
 </table>
 </div>
 {% else %}
-<p class="muted">No compliance policies yet.{% if cu and cu.is_admin %} <a href="/compliance/new">Create one.</a>{% endif %}</p>
+<p class="muted">No compliance policies yet.{% if cu and cu.is_admin %} <a href="compliance/new">Create one.</a>{% endif %}</p>
 {% endif %}
 {% endblock %}

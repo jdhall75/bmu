@@ -3,8 +3,8 @@
 {% block content %}
 <div class="toolbar">
   {% if cu and cu.is_admin %}
-  <a class="secondary" role="button" href="/groups/{{ group.id }}/edit">Edit group</a>
-  <form method="POST" action="/groups/{{ group.id }}/delete" style="display:contents">
+  <a class="secondary" role="button" href="groups/{{ group.id }}/edit">Edit group</a>
+  <form method="POST" action="groups/{{ group.id }}/delete" style="display:contents">
     <button onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
   </form>
   {% endif %}
@@ -39,7 +39,7 @@
   <tbody>
   {% for d in group.devices %}
     <tr>
-      <td><a href="/devices/{{ d.id }}">{{ d.name }}</a></td>
+      <td><a href="devices/{{ d.id }}">{{ d.name }}</a></td>
       <td>{{ d.hostname }}</td>
       <td>{{ d.platform or (d.custom_platform.name if d.custom_platform else '-') }}</td>
       <td>{{ 'yes' if d.enabled else 'no' }}</td>

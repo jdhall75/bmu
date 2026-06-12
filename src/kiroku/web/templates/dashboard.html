@@ -30,7 +30,7 @@
   {% for row in recent_batches %}
     {% set b = row.batch %}
     <tr{% if b.failed %} class="row-failed"{% endif %}>
-      <td><a href="/runs/batches/{{ b.id }}">{{ row.job_name }}</a></td>
+      <td><a href="runs/batches/{{ b.id }}">{{ row.job_name }}</a></td>
       <td>{{ b.started_at.strftime('%Y-%m-%d %H:%M') if b.started_at else '—' }}</td>
       <td>{{ b.finished_at.strftime('%Y-%m-%d %H:%M') if b.finished_at else '<span class="status status-running">running</span>' | safe }}</td>
       <td class="col-num">{{ b.total }}</td>

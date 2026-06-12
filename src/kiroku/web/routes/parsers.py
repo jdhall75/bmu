@@ -16,6 +16,7 @@ from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.logging import get_logger
 from kiroku.web.helpers import parse_ids
+from kiroku.web.redir import redir
 
 logger = get_logger(__name__)
 
@@ -53,7 +54,7 @@ async def create_parser(
     )
     db.add(p)
     db.commit()
-    return Redirect(path="/parsers")
+    return redir("/parsers")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -68,7 +69,7 @@ async def bulk_parsers(
         ).all():
             db.delete(p)
         db.commit()
-    return Redirect(path="/parsers")
+    return redir("/parsers")
 
 
 @get("/{parser_id:int}/edit", dependencies={"db": provide_db})
@@ -93,7 +94,7 @@ async def update_parser(
     parser.jinja2_template = data.get("jinja2_template") or None
     parser.aggregate_template = data.get("aggregate_template") or None
     db.commit()
-    return Redirect(path="/parsers")
+    return redir("/parsers")
 
 
 @post(
@@ -107,7 +108,7 @@ async def delete_parser(parser_id: int, db: Session) -> Redirect:
     if parser:
         db.delete(parser)
         db.commit()
-    return Redirect(path="/parsers")
+    return redir("/parsers")
 
 
 # ---------------------------------------------------------------------------

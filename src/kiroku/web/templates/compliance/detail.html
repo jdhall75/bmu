@@ -3,11 +3,11 @@
 {% block content %}
 <h2>{{ policy.name }}</h2>
 <div class="toolbar" style="margin-bottom:16px">
-  <form method="post" action="/compliance/{{ policy.id }}/run" style="display:contents">
+  <form method="post" action="compliance/{{ policy.id }}/run" style="display:contents">
     <button type="submit">Run now</button>
   </form>
-  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="/compliance/{{ policy.id }}/edit">Edit</a>{% endif %}
-  <a class="secondary" role="button" href="/compliance">Back</a>
+  {% if cu and cu.is_admin %}<a class="secondary" role="button" href="compliance/{{ policy.id }}/edit">Edit</a>{% endif %}
+  <a class="secondary" role="button" href="compliance">Back</a>
   <button class="help-btn" onclick="openHelp('compliance')">? Help</button>
 </div>
 
@@ -33,9 +33,9 @@
 </dl>
 
 {% if not devices %}
-<p class="muted">No devices in scope. Add device groups or individual devices via <a href="/compliance/{{ policy.id }}/edit">Edit</a>.</p>
+<p class="muted">No devices in scope. Add device groups or individual devices via <a href="compliance/{{ policy.id }}/edit">Edit</a>.</p>
 {% elif not policy.checks %}
-<p class="muted">No checks defined. <a href="/compliance/{{ policy.id }}/edit">Add checks</a> to start evaluating.</p>
+<p class="muted">No checks defined. <a href="compliance/{{ policy.id }}/edit">Add checks</a> to start evaluating.</p>
 {% else %}
 
 {# Build check id→name index for column headers #}
@@ -69,7 +69,7 @@
       {% endfor %}
     {% endif %}
     <tr>
-      <td><a href="/devices/{{ device.id }}">{{ device.name }}</a></td>
+      <td><a href="devices/{{ device.id }}">{{ device.name }}</a></td>
       <td>
         {% if not result %}
           <span class="muted">—</span>
@@ -117,7 +117,7 @@
   {% set result = result_map.get(device.id) %}
   {% if result and result.status == 'fail' and result.detail %}
     {% set ns.any_fail = true %}
-    <h4><a href="/devices/{{ device.id }}">{{ device.name }}</a></h4>
+    <h4><a href="devices/{{ device.id }}">{{ device.name }}</a></h4>
     {% for outcome in result.detail %}
       {% if outcome.status is defined and outcome.status == 'fail' %}
       <details style="margin-bottom:8px">

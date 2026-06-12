@@ -11,6 +11,7 @@ from kiroku.models import Device, DeviceGroup, Job, JobKind, ParserTemplate, Run
 from kiroku.web.auth import require_admin, require_authenticated
 from kiroku.web.deps import provide_db
 from kiroku.web.helpers import parse_ids, sandbox as _sandbox
+from kiroku.web.redir import redir
 
 
 def _job_form_context(db: Session, job=None) -> dict:
@@ -79,7 +80,7 @@ async def create_job(
     _apply_job_data(j, data, db)
     db.add(j)
     db.commit()
-    return Redirect(path="/jobs")
+    return redir("/jobs")
 
 
 @post("/bulk", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER, guards=[require_admin])
@@ -92,7 +93,7 @@ async def bulk_jobs(
         for job in db.scalars(select(Job).where(Job.id.in_(ids))).all():
             db.delete(job)
         db.commit()
-    return Redirect(path="/jobs")
+    return redir("/jobs")
 
 
 @get("/{job_id:int}/edit", dependencies={"db": provide_db})
@@ -113,7 +114,7 @@ async def update_job(
     job = db.get(Job, job_id)
     _apply_job_data(job, data, db)
     db.commit()
-    return Redirect(path="/jobs")
+    return redir("/jobs")
 
 
 @post(
@@ -127,7 +128,7 @@ async def delete_job(job_id: int, db: Session) -> Redirect:
     if job:
         db.delete(job)
         db.commit()
-    return Redirect(path="/jobs")
+    return redir("/jobs")
 
 
 @post(
@@ -136,16 +137,16 @@ async def delete_job(job_id: int, db: Session) -> Redirect:
 async def run_job_adhoc(job_id: int, db: Session) -> Redirect:
     job = db.get(Job, job_id)
     if job is None:
-        return Redirect(path="/jobs")
+        return redir("/jobs")
     batch = fire_job(job, db)
-    return Redirect(path=f"/runs/batches/{batch.id}")
+    return redir(f"/runs/batches/{batch.id}")
 
 
 @get("/{job_id:int}/data", dependencies={"db": provide_db})
 async def job_data(job_id: int, db: Session) -> Template:
     job = db.get(Job, job_id)
     if job is None:
-        return Redirect(path="/jobs")
+        return redir("/jobs")
 
     # Union of explicitly selected devices + all devices from assigned groups
     device_map: dict[int, Device] = {d.id: d for d in job.devices}

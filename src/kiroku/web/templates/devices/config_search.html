@@ -3,7 +3,7 @@
 {% block content %}
 <h2>{{ device.name }} &mdash; config history search</h2>
 
-<form class="search-form" method="GET" action="/devices/{{ device.id }}/config/search">
+<form class="search-form" method="GET" action="devices/{{ device.id }}/config/search">
   <div class="filter-row">
     <input type="text" name="q" value="{{ q }}" placeholder="Search across all backups…" autofocus>
     <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:14px;margin:0">
@@ -11,7 +11,7 @@
       Regex
     </label>
     <button type="submit">Search</button>
-    {% if has_filters %}<a href="/devices/{{ device.id }}/config/search">Clear</a>{% endif %}
+    {% if has_filters %}<a href="devices/{{ device.id }}/config/search">Clear</a>{% endif %}
   </div>
 </form>
 
@@ -39,7 +39,7 @@
         <td style="text-align:right;font-variant-numeric:tabular-nums">{{ hit.line_no }}</td>
         <td><pre style="margin:0;white-space:pre-wrap;font-size:0.85em">{{ hit.line }}</pre></td>
         <td style="white-space:nowrap">
-          <a class="secondary" role="button" href="/devices/{{ device.id }}/config?sha={{ hit.sha_full }}" style="font-size:12px;padding:3px 8px">View</a>
+          <a class="secondary" role="button" href="devices/{{ device.id }}/config?sha={{ hit.sha_full }}" style="font-size:12px;padding:3px 8px">View</a>
         </td>
       </tr>
     {% endfor %}
@@ -52,8 +52,8 @@
 {% endif %}
 
 <p>
-  <a href="/devices/{{ device.id }}/config/history">Git history</a>
-  &bull; <a href="/devices/{{ device.id }}/config">Current config</a>
-  &bull; <a href="/devices/{{ device.id }}">&larr; Back to device</a>
+  <a href="devices/{{ device.id }}/config/history">Git history</a>
+  &bull; <a href="devices/{{ device.id }}/config">Current config</a>
+  &bull; <a href="devices/{{ device.id }}">&larr; Back to device</a>
 </p>
 {% endblock %}
