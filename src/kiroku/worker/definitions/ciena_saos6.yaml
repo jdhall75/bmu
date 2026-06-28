@@ -1,0 +1,60 @@
+---
+# Kiroku custom scrapli platform definition for Ciena SAOS 6.x (3902/3916/3930/5150-class
+# carrier-Ethernet switches).
+#
+# Prompt grammar and on_open command sequence are taken directly from Ciena's own
+# Ansible automation collection (github.com/ciena/ciena.saos6,
+# plugins/terminal/saos6.py), not guessed: SAOS prompts are
+#   <name>[(context)[(context)[(context)]]][*]> "   operator mode
+#   <name>[(context)...][*]# "                       privileged/config mode
+# where up to 3 nested parenthesized context segments can appear (e.g. when
+# inside a sub-context) and a trailing '*' marks unsaved/uncommitted changes.
+#
+# The mode transition (operator '>' -> privileged '#' via the bare "config"
+# command, and back via "exit") is INFERRED, not independently confirmed for
+# SAOS6: it is confirmed for SAOS10 via that platform's own cliconf plugin
+# (edit_config sends "config", commands, "exit" with no separate enable/login
+# step), and SAOS6 shares the identical prompt regex with SAOS10 in Ciena's
+# own collections, implying the same underlying CLI engine. Persisting the
+# change ("configuration save") matches the local lab fixture at
+# Test_Device_Configurations/ciena/saos6/configs/*.cfg, which shows config
+# commands typed directly with no separate config-mode entry and a single
+# trailing "configuration save" line.
+#
+# VALIDATE AGAINST REAL OR LAB SAOS6 HARDWARE before relying on this for
+# production backups — the operator->config transition has not been observed
+# on a live SAOS6 session.
+prompt_pattern: '^[\w+\-.:/\[\]]+(?:\([^)]+\)){0,3}\*?[>#]\s?$'
+default_mode: 'operator'
+modes:
+  - name: 'operator'
+    prompt_pattern: '^[\w+\-.:/\[\]]+(?:\([^)]+\)){0,3}\*?>\s?$'
+    accessible_modes:
+      - name: 'config'
+        instructions:
+          - send_input:
+              input: 'config'
+  - name: 'config'
+    prompt_pattern: '^[\w+\-.:/\[\]]+(?:\([^)]+\)){0,3}\*?#\s?$'
+    accessible_modes:
+      - name: 'operator'
+        instructions:
+          - send_input:
+              input: 'exit'
+failure_indicators:
+  - 'SHELL PARSER FAILURE'
+  - 'ERROR:'
+  - 'Error:'
+on_open_instructions:
+  - enter_mode:
+      requested_mode: 'operator'
+  - send_input:
+      input: 'system shell session set more off'
+  - send_input:
+      input: 'system shell session set window-width 512'
+on_close_instructions:
+  - enter_mode:
+      requested_mode: 'operator'
+  - write:
+      input: 'exit'
+ntc_templates_platform: 'ciena_saos'
