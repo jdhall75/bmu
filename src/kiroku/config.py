@@ -30,7 +30,7 @@ class Settings(BaseSettings):
             return f"{self.job_stream}:{self.worker_pool}"
         return self.job_stream
 
-    secret_key: str = "change-me-32-bytes-min-change-me-32-bytes"
+    secret_key: str
     backup_repo_path: Path = Path("/var/lib/kiroku/backups")
 
     scheduler_tick_seconds: int = 15

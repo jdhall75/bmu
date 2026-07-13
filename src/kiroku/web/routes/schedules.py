@@ -88,6 +88,8 @@ async def update_schedule(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     schedule = db.get(Schedule, schedule_id)
+    if not schedule:
+        return redir("/schedules")
     new_cron = data["cron"]
     new_tz = data.get("timezone") or "UTC"
     if schedule.cron != new_cron or schedule.timezone != new_tz:

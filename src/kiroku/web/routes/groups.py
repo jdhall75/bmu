@@ -87,6 +87,8 @@ async def update_group(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     group = db.get(DeviceGroup, group_id)
+    if not group:
+        return redir("/groups")
     group.name = data["name"]
     group.description = data.get("description") or None
     group.max_parallel = int(data.get("max_parallel") or 8)

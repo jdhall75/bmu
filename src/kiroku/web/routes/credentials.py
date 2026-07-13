@@ -107,6 +107,8 @@ async def update_cred(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     cred = db.get(Credential, cred_id)
+    if not cred:
+        return redir("/credentials")
     provider = CredentialProvider(data["provider"])
     cred.name = data["name"]
     cred.description = data.get("description") or None

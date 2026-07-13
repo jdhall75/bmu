@@ -18,3 +18,4 @@ backups/
 htmlcov/
 build/
 dist/
+file::memory:

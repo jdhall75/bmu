@@ -112,6 +112,8 @@ async def update_platform(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     platform = db.get(Platform, platform_id)
+    if not platform:
+        return redir("/platforms")
     platform.name = data["name"]
     platform.description = data.get("description") or None
     platform.yaml_body = data["yaml_body"]

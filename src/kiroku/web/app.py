@@ -53,6 +53,7 @@ def _configure_jinja(engine: JinjaTemplateEngine) -> None:
     engine.engine.globals["elapsed_ms"] = elapsed_ms
     engine.engine.globals["current_user"] = current_user
     engine.engine.globals["root_path"] = settings.root_path
+    engine.engine.globals["auth_provider"] = settings.auth_provider
 
 
 def _auth_exception_handler(request: Request, exc: NotAuthorizedException) -> Response:

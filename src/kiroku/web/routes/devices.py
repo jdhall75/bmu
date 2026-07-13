@@ -1,5 +1,7 @@
 import anyio
 
+from urllib.parse import urlencode
+
 from litestar import Router, get, post
 from litestar.connection import Request
 from litestar.enums import RequestEncodingType
@@ -7,7 +9,7 @@ from litestar.params import Body
 from litestar.response import Redirect, Response, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, contains_eager
 
 from kiroku.config import get_settings
 from kiroku.models import (
@@ -45,10 +47,18 @@ SCRAPLI_PLATFORMS = [
 
 def _cve_badges(db: Session) -> dict[int, dict]:
     """Return {device_id: {count, severity}} from the latest scan per device."""
+    latest_subq = (
+        select(func.max(CveScan.id).label("max_id"))
+        .group_by(CveScan.device_id)
+        .subquery()
+    )
+    scans = db.scalars(
+        select(CveScan)
+        .join(latest_subq, CveScan.id == latest_subq.c.max_id)
+        .options(selectinload(CveScan.results))
+    ).all()
     badges: dict[int, dict] = {}
-    for scan in db.scalars(select(CveScan).order_by(CveScan.scanned_at.desc())).all():
-        if scan.device_id in badges:
-            continue
+    for scan in scans:
         best_sev = None
         best_rank = -1
         for r in scan.results:
@@ -117,24 +127,24 @@ def _build_filter_qs(
     role_filter: str, enabled_filter: str, platform_filter: str,
     backed_up_filter: str,
 ) -> str:
-    parts = []
+    params: dict[str, str] = {}
     if q:
-        parts.append(f"q={q}")
+        params["q"] = q
     if group_id:
-        parts.append(f"group_id={group_id}")
+        params["group_id"] = group_id
     if platform_filter:
-        parts.append(f"platform={platform_filter}")
+        params["platform"] = platform_filter
     if make_filter:
-        parts.append(f"make={make_filter}")
+        params["make"] = make_filter
     if model_filter:
-        parts.append(f"model={model_filter}")
+        params["model"] = model_filter
     if role_filter:
-        parts.append(f"role={role_filter}")
+        params["role"] = role_filter
     if enabled_filter:
-        parts.append(f"enabled={enabled_filter}")
+        params["enabled"] = enabled_filter
     if backed_up_filter:
-        parts.append(f"backed_up={backed_up_filter}")
-    return "&".join(parts)
+        params["backed_up"] = backed_up_filter
+    return urlencode(params)
 
 
 @get("/", dependencies={"db": provide_db})
@@ -375,6 +385,8 @@ async def update_device(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     device = db.get(Device, device_id)
+    if not device:
+        return redir("/devices")
     device.name = data["name"]
     device.hostname = data["hostname"]
     device.port = int(data["port"]) if data.get("port") else None

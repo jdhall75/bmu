@@ -18,7 +18,7 @@
     document.documentElement.setAttribute('data-theme', theme);
   })();
   </script>
-  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="static/htmx.min.js" defer></script>
   <script>const ROOT_PATH = '{{ root_path }}';</script>
 </head>
 <body>
@@ -48,6 +48,7 @@
     <nav>
       <ul>
         <li><a href="." style="font-size:18px;font-weight:700;color:var(--fg);text-decoration:none">Kiroku</a></li>
+        {% if cu or auth_provider == 'none' %}
         <li><a href="groups" {% if request.url.path.startswith('/groups') %}aria-current="page"{% endif %}>Groups</a></li>
         <li><a href="devices" {% if request.url.path.startswith('/devices') %}aria-current="page"{% endif %}>Devices</a></li>
         <li><a href="platforms" {% if request.url.path.startswith('/platforms') %}aria-current="page"{% endif %}>Platforms</a></li>
@@ -59,6 +60,7 @@
         <li><a href="cve" {% if request.url.path.startswith('/cve') %}aria-current="page"{% endif %}>CVE Scans</a></li>
         <li><a href="search" {% if request.url.path.startswith('/search') %}aria-current="page"{% endif %}>Search</a></li>
         <li><a href="compliance" {% if request.url.path.startswith('/compliance') %}aria-current="page"{% endif %}>Compliance</a></li>
+        {% endif %}
       </ul>
       <ul>
         {% if cu %}
@@ -71,6 +73,8 @@
             <button type="submit" class="nav-signout-btn">Sign out</button>
           </form>
         </li>
+        {% elif auth_provider != 'none' %}
+        <li><a href="auth/login" class="nav-signin-link">Sign in</a></li>
         {% endif %}
         <li><button id="theme-toggle" class="help-nav-btn" onclick="toggleTheme()" title="Toggle light/dark theme">&#9790;</button></li>
         <li><button class="help-nav-btn" onclick="openHelp('index')" title="Getting started &amp; workflow guide">?</button></li>

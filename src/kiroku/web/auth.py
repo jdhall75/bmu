@@ -46,11 +46,14 @@ class KirokuAuthMiddleware(AbstractAuthenticationMiddleware):
         sub = session.get("user_sub")
         if not sub:
             return AuthenticationResult(user=None, auth=None)
+        role = session.get("user_role", "operator")
+        if role not in ("admin", "operator"):
+            role = "operator"
         user = User(
             sub=sub,
             username=session.get("user_name", ""),
             email=session.get("user_email", ""),
-            role=session.get("user_role", "operator"),
+            role=role,
         )
         return AuthenticationResult(user=user, auth=user)
 

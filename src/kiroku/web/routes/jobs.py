@@ -112,6 +112,8 @@ async def update_job(
     data: dict = Body(media_type=RequestEncodingType.URL_ENCODED),
 ) -> Redirect:
     job = db.get(Job, job_id)
+    if not job:
+        return redir("/jobs")
     _apply_job_data(job, data, db)
     db.commit()
     return redir("/jobs")
@@ -132,7 +134,10 @@ async def delete_job(job_id: int, db: Session) -> Redirect:
 
 
 @post(
-    "/{job_id:int}/run", dependencies={"db": provide_db}, status_code=HTTP_303_SEE_OTHER
+    "/{job_id:int}/run",
+    dependencies={"db": provide_db},
+    status_code=HTTP_303_SEE_OTHER,
+    guards=[require_admin],
 )
 async def run_job_adhoc(job_id: int, db: Session) -> Redirect:
     job = db.get(Job, job_id)

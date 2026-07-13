@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from authlib.integrations.httpx_client import AsyncOAuth2Client
+import secrets
+
+import httpx
+from joserfc import jwt as jose_jwt
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
-from joserfc import jwt as jose_jwt
 from litestar import Router, get, post
 from litestar.connection import Request
 from litestar.enums import RequestEncodingType
 from litestar.params import Body
 from litestar.response import Redirect, Template
 from litestar.status_codes import HTTP_303_SEE_OTHER
+from oauthlib.oauth2 import WebApplicationClient
 
 from kiroku.config import get_settings
 from kiroku.logging import get_logger
@@ -49,23 +52,26 @@ async def login(request: Request) -> Redirect | Template:
         return redir("/auth/dev-login")
 
     try:
-        async with AsyncOAuth2Client(
-            client_id=s.oidc_client_id,
-            redirect_uri=_redirect_uri(),
-            scope="openid profile email",
-            timeout=10,
-        ) as client:
-            resp = await client.get(
+        async with httpx.AsyncClient(timeout=10) as http:
+            resp = await http.get(
                 f"{s.oidc_issuer_url}/.well-known/openid-configuration"
             )
             resp.raise_for_status()
             oidc = resp.json()
-            url, state = client.create_authorization_url(oidc["authorization_endpoint"])
     except Exception as exc:
         log.error("oidc discovery failed", error=str(exc))
         return Template(
             "auth/error.html", context={"error": f"OIDC discovery failed: {exc}"}
         )
+
+    state = secrets.token_urlsafe(32)
+    client = WebApplicationClient(s.oidc_client_id)
+    url = client.prepare_request_uri(
+        oidc["authorization_endpoint"],
+        redirect_uri=_redirect_uri(),
+        scope=["openid", "profile", "email"],
+        state=state,
+    )
 
     request.session["oidc_state"] = state
     request.session["oidc_token_endpoint"] = oidc["token_endpoint"]
@@ -99,19 +105,25 @@ async def callback(
     token_endpoint = request.session.get("oidc_token_endpoint", "")
     jwks_uri = request.session.get("oidc_jwks_uri", "")
 
+    client = WebApplicationClient(s.oidc_client_id)
+    _, headers, body = client.prepare_token_request(
+        token_endpoint,
+        redirect_url=_redirect_uri(),
+        code=code,
+    )
+
     try:
-        async with AsyncOAuth2Client(
-            client_id=s.oidc_client_id,
-            client_secret=s.oidc_client_secret,
-            redirect_uri=_redirect_uri(),
-            timeout=15,
-        ) as client:
-            tokens = await client.fetch_token(
+        async with httpx.AsyncClient(timeout=15) as http:
+            token_resp = await http.post(
                 token_endpoint,
-                grant_type="authorization_code",
-                code=code,
+                content=body,
+                headers={**headers, "Content-Type": "application/x-www-form-urlencoded"},
+                auth=(s.oidc_client_id, s.oidc_client_secret),
             )
-            jwks_resp = await client.get(jwks_uri)
+            token_resp.raise_for_status()
+            tokens = client.parse_request_body_response(token_resp.text)
+
+            jwks_resp = await http.get(jwks_uri)
             jwks_resp.raise_for_status()
             jwks = jwks_resp.json()
     except Exception as exc:
@@ -120,9 +132,16 @@ async def callback(
             "auth/error.html", context={"error": f"Token exchange failed: {exc}"}
         )
 
+    id_token = tokens.get("id_token")
+    if not id_token:
+        log.error("oidc callback: no id_token in response")
+        return Template(
+            "auth/error.html", context={"error": "No id_token in token response."}
+        )
+
     try:
         key_set = KeySet.import_key_set(jwks)
-        token = jose_jwt.decode(tokens["id_token"], key_set)
+        token = jose_jwt.decode(id_token, key_set)
         JWTClaimsRegistry().validate(token.claims)
     except Exception as exc:
         log.error("oidc jwt validation failed", error=str(exc))
