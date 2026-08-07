@@ -222,7 +222,7 @@ async def update_policy(
     return redir(f"/compliance/{policy_id}")
 
 
-@post("/{policy_id:int}/run", dependencies={"db": provide_db})
+@post("/{policy_id:int}/run", dependencies={"db": provide_db}, guards=[require_admin])
 async def run_policy(policy_id: int, db: Session) -> Redirect:
     policy = db.get(CompliancePolicy, policy_id)
     if policy is None:

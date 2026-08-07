@@ -10,6 +10,7 @@ import markdown
 from litestar import Router, get
 
 from kiroku.config import get_settings
+from kiroku.web.auth import require_authenticated
 
 # Docs live alongside the package so they're always available after install.
 DOCS_ROOT = Path(__file__).parents[1] / "docs"
@@ -76,4 +77,8 @@ async def get_help_page(page: str) -> str:
     return _HELP_SHELL.format(content=content, root_path=get_settings().root_path)
 
 
-router = Router(path="/", route_handlers=[get_doc, get_help_page])
+router = Router(
+    path="/",
+    guards=[require_authenticated],
+    route_handlers=[get_doc, get_help_page],
+)
