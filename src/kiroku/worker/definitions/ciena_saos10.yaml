@@ -1,0 +1,52 @@
+---
+# Kiroku custom scrapli platform definition for Ciena SAOS 10.x (51xx/81xx-class
+# packet-optical/aggregation platforms).
+#
+# Prompt grammar, mode transition, and on_open command are taken directly from
+# Ciena's own Ansible automation collection (github.com/ciena/ciena.saos10):
+#   - plugins/terminal/saos10.py: prompt regex for operator ('> '), config/admin
+#     ('# ', reached one or more nested context levels deep), and the diag shell
+#     ('diag@<host>$ ' — a real Linux/bash session, intentionally NOT modeled as
+#     a CLI mode here; do not run device-config commands against it).
+#   - plugins/cliconf/saos10.py: edit_config() sends "config", the command list,
+#     then "exit" to return to the operator prompt — no separate enable/login
+#     step. on_open sets "set session more off" to disable output paging.
+#
+# The local lab fixture (Test_Device_Configurations/ciena/saos10/configs/*.cfg)
+# additionally shows a trailing "commit" line after the command block, which
+# the (older) cliconf plugin above does not send — newer SAOS10 firmware may
+# require an explicit commit to apply staged changes. Confirm which applies to
+# the target firmware before relying on this for production backups; the
+# "config" -> "exit" transition modeled below is the one independently
+# confirmed via Ciena's own automation code.
+prompt_pattern: '^[\w+\-.:@/\[\]]+(?:\([^)]+\)){0,3}\*?[>#]\s?$'
+default_mode: 'operator'
+modes:
+  - name: 'operator'
+    prompt_pattern: '^[\w+\-.:/\[\]]+(?:\([^)]+\)){0,3}\*?>\s?$'
+    accessible_modes:
+      - name: 'config'
+        instructions:
+          - send_input:
+              input: 'config'
+  - name: 'config'
+    prompt_pattern: '^[\w+\-.:@/\[\]]+(?:\([^)]+\)){0,3}\*?#\s?$'
+    accessible_modes:
+      - name: 'operator'
+        instructions:
+          - send_input:
+              input: 'exit'
+failure_indicators:
+  - 'SHELL PARSER FAILURE'
+  - 'ERROR:'
+  - 'Error:'
+on_open_instructions:
+  - enter_mode:
+      requested_mode: 'operator'
+  - send_input:
+      input: 'set session more off'
+on_close_instructions:
+  - enter_mode:
+      requested_mode: 'operator'
+  - write:
+      input: 'exit'

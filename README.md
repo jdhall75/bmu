@@ -146,6 +146,11 @@ Built-in platforms (bundled with scrapli2):
 - `arista_eos`
 - `juniper_junos`
 
+Also bundled (Kiroku-local definitions, not part of scrapli2 itself):
+
+- `ciena_saos6` — Ciena SAOS 6.x (3902/3916/3930/5150-class)
+- `ciena_saos10` — Ciena SAOS 10.x (51xx/81xx-class)
+
 For any other vendor (Nokia SR Linux, Mikrotik, Adtran, Calix, etc.) create a
 **Custom Platform** at `/platforms/new`. The form includes an annotated YAML
 example and a full field reference.
